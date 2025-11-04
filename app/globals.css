@@ -124,14 +124,6 @@
   }
 }
 @font-face {
-  font-family: "Genty Sans";
-  
-  src: url("/fonts/genty-sans.otf") format("truetype");
-  font-weight: 500; 
-  font-style: normal;
-}
-
-@font-face {
   font-family: "Kawaii RT";
   src: url("/fonts/kawaii-rt-mona-shine.otf") format("truetype");
   font-weight: 400;
