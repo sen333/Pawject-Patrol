@@ -12,9 +12,50 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import Link from "next/link"; // Link is still needed for the main button
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/utils/supabase/client";
 
 export default function Home() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      setLoading(false);
+    };
+    
+    checkAuth();
+
+    // Listen for auth state changes (like logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#E1E69D] flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </main>
+    );
+  }
+
+  // If authenticated, show user dashboard instead
+  if (isAuthenticated) {
+    // Dynamically import the UserDashboard component
+    const UserDashboard = require("./(user)/page").default;
+    return <UserDashboard />;
+  }
+
   return (
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center overflow-hidden">
       {/* --- Hero Container--- */}

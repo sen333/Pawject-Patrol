@@ -2,8 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { signInWithGoogle } from "@/actions/login/user";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    const result = await signInWithGoogle();
+
+    if (result && !result.success) {
+      setError(result.message);
+      setIsLoading(false);
+    }
+    // If successful, user will be redirected automatically
+  };
+
   return (
     // --- 1. MODIFIED THIS LINE ---
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center justify-center overflow-hidden">
@@ -103,14 +121,22 @@ export default function LoginPage() {
             Use your UP email account to sign in
           </p>
 
+          {error && (
+            <div className="w-full mb-4 p-3 rounded bg-red-100 border border-red-400 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           <button
             type="button"
-            className="w-full rounded-lg bg-[#8D52A7] px-4 py-3 text-white text-base font-medium hover:bg-[#7B4692] focus:outline-none focus:ring-2 focus:ring-[#8D52A7] focus:ring-opacity-50"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full rounded-lg bg-[#8D52A7] px-4 py-3 text-white text-base font-medium hover:bg-[#7B4692] focus:outline-none focus:ring-2 focus:ring-[#8D52A7] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               fontFamily: '"Genty Sans", sans-serif',
             }}
           >
-            Login with Google
+            {isLoading ? "Redirecting to Google..." : "Login with Google"}
           </button>
 
           <Link
