@@ -176,7 +176,7 @@ export default function Home() {
           {/* View Catalog Button */}
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
             <Button className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all">
-              View Catalog
+              <Link href="/catalog">View Catalog</Link>
             </Button>
           </div>
         </div>

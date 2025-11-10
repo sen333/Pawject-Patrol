@@ -80,6 +80,9 @@ export default function UserDashboard() {
               <Link href="#" className="inline-block px-4 py-2 rounded-md bg-white border text-sm hover:bg-gray-50">
                 Settings
               </Link>
+              <Link href="/form" className="inline-block px-4 py-2 rounded-md bg-white border text-sm hover:bg-gray-50">
+                Form
+              </Link>
             </div>
           </div>
 
