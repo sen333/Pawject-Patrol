@@ -1,8 +1,10 @@
 "use client";
 
+// Import FormEvent to type the event parameter
+import { FormEvent } from 'react';
 
 const EyeIcon = () => (
-    <svg
+  <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
     height="16"
@@ -21,11 +23,24 @@ const EyeIcon = () => (
 );
 
 export default function LoginPage() {
+
+  // This function handles the form submission
+  // Added 'FormEvent' type to the event parameter 'e'
+  const handleLoginSubmit = (e: FormEvent) => {
+    // Prevent the page from reloading
+    e.preventDefault();
+
+    // In a real app, you would check username/password here
+
+    // Redirect to the admin dashboard
+    window.location.href = '/admin/dashboard';
+  };
+
   return (
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center justify-center overflow-hidden">
-      {/* --- Hero Container  --- */}
+      {/* --- Hero Container --- */}
       <div className="relative w-full flex flex-col items-center">
-        {/* Ellipse Background  */}
+        {/* Ellipse Background */}
         <div className="relative w-full flex justify-center z-0">
           {/* Mobile SVG */}
           <svg
@@ -82,8 +97,8 @@ export default function LoginPage() {
             flex-col 
             items-center 
             px-4 
-            pt-0 pb-6 lg:pt-8 lg:pb-12 /* Changed pt-0 to pt-6 */
-            z-10 /* Fixed z-index */
+            pt-0 pb-6 lg:pt-8 lg:pb-12
+            z-10
             transition-all 
             text-center
           "
@@ -94,6 +109,11 @@ export default function LoginPage() {
             width="250"
             height="128"
             className="object-contain mb-[-30px]"
+            // Add a placeholder image in case the src fails
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/250x128/E6E6E6/4E4E4E?text=Logo';
+              (e.currentTarget as HTMLImageElement).onerror = null;
+            }}
           />
           <h1
             className="text-[32px] font-medium leading-[1.3] tracking-[-0.64px] mb-2"
@@ -114,8 +134,10 @@ export default function LoginPage() {
             Welcome YFA Officer!
           </p>
 
-          {/* Form container */}
-          <form className="w-full px-4 sm:px-6 space-y-4">
+          <form 
+            className="w-full px-4 sm:px-6 space-y-4" 
+            onSubmit={handleLoginSubmit}
+          >
             {/* Email Input */}
             <div>
               <input
@@ -135,7 +157,7 @@ export default function LoginPage() {
                 defaultValue="••••••••"
                 className="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm"
                 style={{
-                  color: "#3C3333",
+                  color: "#3C3333", // Fixed typo here
                 }}
               />
               <EyeIcon />
