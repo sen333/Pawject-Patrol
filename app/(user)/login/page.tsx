@@ -23,7 +23,6 @@ export default function LoginPage() {
   };
 
   return (
-    // --- 1. MODIFIED THIS LINE ---
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center justify-center overflow-hidden">
       {/* --- Hero Container  --- */}
       <div className="relative w-full flex flex-col items-center">

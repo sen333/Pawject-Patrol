@@ -17,6 +17,19 @@ export default function ReportFormSample() {
 	const [lng, setLng] = useState<number | null>(125.6079);
 	const [submitting, setSubmitting] = useState(false);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
+	
+	// Form field states
+	const [recorderName, setRecorderName] = useState("");
+	const [animalName, setAnimalName] = useState("");
+	const [animalType, setAnimalType] = useState("");
+	const [gender, setGender] = useState("Unknown");
+	const [dateSeen, setDateSeen] = useState("");
+	const [physicalDescription, setPhysicalDescription] = useState("");
+	const [otherInfo, setOtherInfo] = useState("");
+	const [area, setArea] = useState("");
+	const [landmark, setLandmark] = useState("");
+	const [road, setRoad] = useState("");
+	const [theme, setTheme] = useState("");
 	const [hasHealthIssues, setHasHealthIssues] = useState<boolean>(false);
 	const [healthDetails, setHealthDetails] = useState<string>("");
 	const [hasCollar, setHasCollar] = useState<boolean>(false);
@@ -59,11 +72,17 @@ export default function ReportFormSample() {
 				return;
 			}
 			const res = await createAnimalReport({
+				recorder_name: recorderName || undefined,
+				animal_name: animalName || undefined,
+				animal_type: animalType || "other",
+				animal_gender: gender.toLowerCase() as "unknown" | "male" | "female",
+				date_seen: dateSeen || undefined,
+				animal_description: physicalDescription || undefined,
+				area: area || undefined,
+				landmark: landmark || undefined,
+				road: road || undefined,
 				latitude: lat,
 				longitude: lng,
-				animal_type: "other",
-				animal_gender: "unknown",
-				animal_description: preview ? "Image attached" : undefined,
 				photo: photoFile ?? undefined,
 			});
 			if (!res.success) setResultMsg(res.error ?? "Failed to submit");
@@ -140,19 +159,19 @@ export default function ReportFormSample() {
 
 							{/* Recorder & animal */}
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<Field label="Recorder Name" placeholder="Your full name" />
-								<Field label="Animal Name (Optional)" placeholder="e.g., Ginger" />
+								<Field label="Recorder Name" placeholder="Your full name" value={recorderName} onChange={(e) => setRecorderName(e.target.value)} />
+								<Field label="Animal Name (Optional)" placeholder="e.g., Ginger" value={animalName} onChange={(e) => setAnimalName(e.target.value)} />
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<Field label="Type of Animal" placeholder="e.g., Cat, Dog, Bird" />
+								<Field label="Type of Animal" placeholder="e.g., Cat, Dog, Bird" value={animalType} onChange={(e) => setAnimalType(e.target.value)} />
 								<div className="grid grid-cols-2 gap-4">
-									<SelectField label="Gender" options={["Unknown", "Male", "Female"]} />
-									<Field label="Date Seen" type="date" />
+									<SelectField label="Gender" options={["Unknown", "Male", "Female"]} value={gender} onChange={(e) => setGender(e.target.value)} />
+									<Field label="Date Seen" type="date" value={dateSeen} onChange={(e) => setDateSeen(e.target.value)} />
 								</div>
 							</div>
 
-							<TextArea label="Physical Description" placeholder="Color, size, markings, collar, behavior, etc." />
+							<TextArea label="Physical Description" placeholder="Color, size, markings, collar, behavior, etc." value={physicalDescription} onChange={(e) => setPhysicalDescription(e.target.value)} />
 							
 			{/* Extended to 6 rows */}
 							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
@@ -160,6 +179,8 @@ export default function ReportFormSample() {
 								<textarea
 									rows={6}
 									placeholder="Additional details you'd like to add"
+									value={otherInfo}
+									onChange={(e) => setOtherInfo(e.target.value)}
 									className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#3C3333] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
 								/>
 							</div>
@@ -168,9 +189,9 @@ export default function ReportFormSample() {
 						{/* Right column */}
 						<div className="space-y-4">
 							{/* Location */}
-							<Field label="Area Seen (Location)" placeholder="Barangay / Street / Area" />
-							<Field label="Landmark Near Location" placeholder="e.g., 7-Eleven, park, school" />
-							<Field label="What Road?" placeholder="e.g., Matina Pangi Rd" />
+							<Field label="Area Seen (Location)" placeholder="Barangay / Street / Area" value={area} onChange={(e) => setArea(e.target.value)} />
+							<Field label="Landmark Near Location" placeholder="e.g., 7-Eleven, park, school" value={landmark} onChange={(e) => setLandmark(e.target.value)} />
+							<Field label="What Road?" placeholder="e.g., Matina Pangi Rd" value={road} onChange={(e) => setRoad(e.target.value)} />
 							
 							{/* Map section */}
 							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
@@ -192,7 +213,7 @@ export default function ReportFormSample() {
 
 					{/* Theme and Health Issues - Side by side */}
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 mt-5">
-						<TextArea label="Theme" placeholder="e.g., Stray rescue, injured animal, adoption inquiry" />
+						<TextArea label="Theme" placeholder="e.g., Stray rescue, injured animal, adoption inquiry" value={theme} onChange={(e) => setTheme(e.target.value)} />
 						
 						{/* Health / options */}
 						<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">

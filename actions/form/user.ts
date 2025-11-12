@@ -2,8 +2,6 @@
 
 import { createClient } from "@/utils/supabase/server";
 
-// Interface now mirrors exact column names in `animal_report`.
-// user_id is derived from auth.session; not passed in.
 export interface AnimalReportInsert {
 	recorder_name?: string;      // text
 	animal_name?: string;        // text
@@ -19,10 +17,6 @@ export interface AnimalReportInsert {
 	photo?: File;                // Image file to upload
 }
 
-/**
- * Upload an image file to Supabase Storage
- * Returns the public URL or null if upload fails
- */
 async function uploadAnimalPhoto(file: File, reportId: number): Promise<string | null> {
 	const supabase = await createClient();
 	
@@ -32,7 +26,7 @@ async function uploadAnimalPhoto(file: File, reportId: number): Promise<string |
 	const filePath = `animal-reports/${fileName}`;
 
 	const { error: uploadError } = await supabase.storage
-		.from('animal-photos') // Make sure this bucket exists in Supabase
+		.from('Animal Photos') // Using your existing bucket name
 		.upload(filePath, file, {
 			cacheControl: '3600',
 			upsert: false
@@ -43,9 +37,9 @@ async function uploadAnimalPhoto(file: File, reportId: number): Promise<string |
 		return null;
 	}
 
-	// Get public URL
+	// Get public URL from Supabase Storage for Animal Photos bucket
 	const { data: { publicUrl } } = supabase.storage
-		.from('animal-photos')
+		.from('Animal Photos')
 		.getPublicUrl(filePath);
 
 	return publicUrl;

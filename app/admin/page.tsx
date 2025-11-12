@@ -39,6 +39,8 @@ export default function AdminPage() {
       }
 
       setEmail(user.email ?? null)
+
+      // No report fetching here; reports are now shown at /admin/form
     }
 
     checkAdmin()
@@ -66,6 +68,7 @@ export default function AdminPage() {
               Logout
             </button>
             <Link href="/" className="text-sm text-gray-600 hover:underline">Home</Link>
+            <Link href="/form" className="text-sm text-gray-600 hover:underline">Open Report Form</Link>
           </nav>
         </header>
 
@@ -75,7 +78,7 @@ export default function AdminPage() {
             <p className="text-sm text-amber-700">This is a simple admin landing page. From here you can view reports, manage users, and check recent activity.</p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="#" className="inline-block px-4 py-2 rounded-md bg-purple-600 text-white text-sm shadow">View Reports</Link>
+              <Link href="/admin/form" className="inline-block px-4 py-2 rounded-md bg-purple-600 text-white text-sm shadow">View Reports</Link>
               <Link href="#" className="inline-block px-4 py-2 rounded-md bg-white border text-sm">Manage Users</Link>
               <Link href="#" className="inline-block px-4 py-2 rounded-md bg-white border text-sm">Settings</Link>
             </div>
@@ -90,7 +93,6 @@ export default function AdminPage() {
             </ul>
           </aside>
         </section>
-
         <footer className="mt-8 text-xs text-gray-500">Pawject Patrol — Admin panel</footer>
       </div>
     </main>
