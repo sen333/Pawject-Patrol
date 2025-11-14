@@ -23,6 +23,10 @@ type ReportData = {
   longitude: number | null;
   photo_url: string | null;
   report_status: string | null;
+  health_issues?: string | null;
+  animal_collar?: string | null;
+  other_information?: string | null;
+  report_theme?: string | null;
 };
 
 export default function AdminReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -139,6 +143,17 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
+  // Compute a color class for the report theme to tint accents
+  const themeAccent = data.report_theme === 'blue'
+    ? 'border-[#1F4E79] shadow-[0_0_0_3px_rgba(31,78,121,0.15)]'
+    : data.report_theme === 'green'
+      ? 'border-[#2F5E4E] shadow-[0_0_0_3px_rgba(47,94,78,0.15)]'
+      : data.report_theme === 'orange'
+        ? 'border-[#C26437] shadow-[0_0_0_3px_rgba(194,100,55,0.15)]'
+        : data.report_theme === 'purple'
+          ? 'border-[#5C2F74] shadow-[0_0_0_3px_rgba(92,47,116,0.15)]'
+          : 'border-gray-200';
+
   return (
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-4xl mx-auto p-6">
@@ -175,7 +190,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="mt-6 bg-white rounded-xl shadow-sm p-6">
+        <div className={`mt-6 bg-white rounded-xl p-6 border-2 transition-colors ${themeAccent}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Photo */}
             <div className="md:col-span-1">
@@ -233,6 +248,24 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                 <p className="text-sm">{data.road ?? '—'}</p>
               </div>
             </div>
+            {/* Additional Info */}
+            {(data.health_issues || data.animal_collar || data.other_information) && (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold mb-2">Additional Details</h3>
+                <div className="space-y-2 text-sm">
+                  {data.health_issues && (
+                    <p><span className="font-medium text-gray-600">Health Issues:</span> {data.health_issues}</p>
+                  )}
+                  {data.animal_collar && (
+                    <p><span className="font-medium text-gray-600">Collar:</span> {data.animal_collar}</p>
+                  )}
+                  {data.other_information && (
+                    <p><span className="font-medium text-gray-600">Other Info:</span> {data.other_information}</p>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Theme visual is now represented by colored border / glow; textual theme removed */}
             {data.latitude && data.longitude && (
               <div className="mt-4" id="map-section">
                 <label className="text-xs font-medium text-gray-500 block mb-2">Map View</label>

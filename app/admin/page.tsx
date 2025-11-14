@@ -1,100 +1,325 @@
-// NOTE: This is only a prompted admin landing page used to test backend, not yet the final version
+"use client";
 
-"use client"
+import { useEffect, useState } from "react";
+import { Menu, LogIn } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { supabase } from "@/utils/supabase/client";
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/utils/supabase/client'
-
-export default function AdminPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
+export default function HeaderAndBackground() {
+  const router = useRouter();
+  const [paws, setPaws] = useState<
+    { src: string; top: string; left: string; rotate: number }[]
+  >([]);
+  const [dogSrc, setDogSrc] = useState("/dog.png");
+  const [totalAnimals, setTotalAnimals] = useState(0);
+  const [animalReports, setAnimalReports] = useState(0);
+  const [volunteerRequests, setVolunteerRequests] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true
-    
-    const checkAdmin = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (!isMounted) return
-      
-      if (error || !user) {
-        router.replace('/admin/login')
-        return
+    const handleResize = () => {
+      const width = window.innerWidth;
+
+      if (width > 768) {
+        // Desktop/Tablet Layout — 12 paws
+        setPaws([
+          { src: "/paws/paws1.png", top: "8%", left: "10%", rotate: 43 },
+          { src: "/paws/paws2.png", top: "15%", left: "30%", rotate: -15 },
+          { src: "/paws/paws1.png", top: "18%", left: "70%", rotate: 20 },
+          { src: "/paws/paws2.png", top: "30%", left: "85%", rotate: -25 },
+          { src: "/paws/paws1.png", top: "38%", left: "55%", rotate: 10 },
+          { src: "/paws/paws2.png", top: "45%", left: "15%", rotate: -35 },
+          { src: "/paws/paws1.png", top: "55%", left: "75%", rotate: 30 },
+          { src: "/paws/paws2.png", top: "60%", left: "40%", rotate: -10 },
+          { src: "/paws/paws1.png", top: "70%", left: "10%", rotate: 25 },
+          { src: "/paws/paws2.png", top: "75%", left: "85%", rotate: -20 },
+          { src: "/paws/paws1.png", top: "82%", left: "50%", rotate: 15 },
+          { src: "/paws/paws2.png", top: "88%", left: "25%", rotate: -30 },
+        ]);
+        setDogSrc("/dog2.png");
+      } else {
+        // Mobile Layout — 10 paws
+        setPaws([
+          { src: "/paws/paws1.png", top: "8%", left: "10%", rotate: 40 },
+          { src: "/paws/paws2.png", top: "15%", left: "65%", rotate: -30 },
+          { src: "/paws/paws1.png", top: "25%", left: "35%", rotate: 25 },
+          { src: "/paws/paws2.png", top: "35%", left: "80%", rotate: -10 },
+          { src: "/paws/paws1.png", top: "50%", left: "20%", rotate: 15 },
+          { src: "/paws/paws2.png", top: "55%", left: "60%", rotate: -20 },
+          { src: "/paws/paws1.png", top: "65%", left: "10%", rotate: 35 },
+          { src: "/paws/paws2.png", top: "70%", left: "80%", rotate: -40 },
+          { src: "/paws/paws1.png", top: "85%", left: "30%", rotate: 10 },
+          { src: "/paws/paws2.png", top: "90%", left: "70%", rotate: -35 },
+        ]);
+        setDogSrc("/dog.png");
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkAdminAndFetchData = async () => {
+      // Check authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (!mounted) return;
+
+      if (authError || !user) {
+        router.replace("/admin/login");
+        return;
       }
 
-      // Check if user is in admin table
+      // Check if user is admin
       const { data: adminData, error: adminError } = await supabase
-        .from('admin')
-        .select('auth_id')
-        .eq('auth_id', user.id)
-        .single()
+        .from("admin")
+        .select("auth_id")
+        .eq("auth_id", user.id)
+        .single();
 
-      if (!isMounted) return
+      if (!mounted) return;
 
       if (adminError || !adminData) {
-        await supabase.auth.signOut()
-        router.replace('/admin/login?error=unauthorized')
-        return
+        await supabase.auth.signOut();
+        router.replace("/admin/login?error=unauthorized");
+        return;
       }
 
-      setEmail(user.email ?? null)
+      // Fetch counts from database
+      const { count: animalsCount } = await supabase
+        .from("animal")
+        .select("*", { count: "exact", head: true });
 
-      // No report fetching here; reports are now shown at /admin/form
-    }
+      const { count: reportsCount } = await supabase
+        .from("animal_report")
+        .select("*", { count: "exact", head: true });
 
-    checkAdmin()
-    
+      const { count: callCount } = await supabase
+        .from("volunteer_call")
+        .select("*", { count: "exact", head: true });
+
+      if (mounted) {
+        setTotalAnimals(animalsCount || 0);
+        setAnimalReports(reportsCount || 0);
+        setVolunteerRequests(callCount || 0);
+        setLoading(false);
+      }
+    };
+
+    checkAdminAndFetchData();
+
     return () => {
-      isMounted = false
-    }
-  }, [router])
+      mounted = false;
+    };
+  }, [router]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/admin/login')
-  }
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-yellow-200 via-yellow-100 to-yellow-50 flex items-center justify-center">
-      <div className="w-full max-w-3xl p-8 bg-white/80 rounded-2xl shadow-lg backdrop-blur-md">
-        <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Admin Dashboard</h1>
-          <nav className="space-x-4">
-            <button
-              onClick={handleLogout}
-              className="text-sm text-purple-700 hover:underline"
-            >
-              Logout
+    <main className="relative min-h-screen flex flex-col items-center overflow-hidden bg-[#E1E69D]">
+      {/* --- Paw Background --- */}
+      <div className="absolute inset-0 opacity-50 pointer-events-none">
+        {paws.map((paw, index) => (
+          <Image
+            key={index}
+            src={paw.src}
+            alt="paw"
+            width={44}
+            height={44}
+            className="absolute"
+            style={{
+              top: paw.top,
+              left: paw.left,
+              transform: `rotate(${paw.rotate}deg)`,
+              aspectRatio: "43.96 / 43.96",
+              flexShrink: 0,
+              objectFit: "cover",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 w-full flex flex-col items-center flex-1">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
+          <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
+            <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <Menu className="w-6 h-6 text-gray-800" />
+            </Link>
+
+            <div className="flex-1 flex justify-center items-center h-full">
+              <img
+                src="/Moodboard2.png"
+                alt="Pawject Patrol Logo"
+                width={77}
+                height={36}
+                className="flex-shrink-0"
+              />
+            </div>
+
+            <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <LogIn className="w-6 h-6 text-gray-800" />
             </button>
-            <Link href="/" className="text-sm text-gray-600 hover:underline">Home</Link>
-            <Link href="/form" className="text-sm text-gray-600 hover:underline">Open Report Form</Link>
-          </nav>
+          </div>
         </header>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="col-span-2 p-6 bg-amber-50 rounded-xl border border-amber-100">
-            <h2 className="text-xl font-semibold text-amber-900 mb-2">Welcome, Admin</h2>
-            <p className="text-sm text-amber-700">This is a simple admin landing page. From here you can view reports, manage users, and check recent activity.</p>
+        <div className="flex-1 w-full flex flex-col items-center lg:justify-center">
+          {/* --- Stats Section --- */}
+          <section className="w-full max-w-lg md:max-w-2xl lg:max-w-[1400px] mx-auto px-6 mt-8">
+            <div
+              className="flex flex-col gap-4"
+              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+            >
+              {/* Total Animals */}
+              <div className="flex flex-col leading-tight">
+                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#DCB57E]">
+                  {loading ? "..." : totalAnimals}
+                </span>
+                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
+                  Total Animals
+                </span>
+              </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/admin/form" className="inline-block px-4 py-2 rounded-md bg-purple-600 text-white text-sm shadow">View Reports</Link>
-              <Link href="#" className="inline-block px-4 py-2 rounded-md bg-white border text-sm">Manage Users</Link>
-              <Link href="#" className="inline-block px-4 py-2 rounded-md bg-white border text-sm">Settings</Link>
+              {/* Animal Reports */}
+              <div className="flex flex-col leading-tight">
+                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#5E9BBA]">
+                  {loading ? "..." : animalReports}
+                </span>
+                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
+                  Animal Reports
+                </span>
+              </div>
+
+              {/* Volunteer Requests */}
+              <div className="flex flex-col leading-tight">
+                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#8D52A7]">
+                  {loading ? "..." : volunteerRequests}
+                </span>
+                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
+                  Volunteer Requests
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* --- Dog Image --- */}
+          <div className="w-full max-w-[1300px] mx-auto px-6 flex justify-end">
+            <div
+              className="relative w-[400px] h-[400px] -mt-72 mr-0 ml-2 
+                               md:w-[500px] md:h-[440px] md:-mt-84 md:mr-4 
+                               lg:w-[800px] lg:h-[700px] lg:-mt-[34rem] lg:mr-6"
+            >
+              <Image
+                src={dogSrc}
+                alt="Golden Retriever puppy"
+                layout="fill"
+                objectFit="contain"
+              />
             </div>
           </div>
 
-          <aside className="p-6 bg-pink-50 rounded-xl border border-pink-100">
-            <h3 className="text-lg font-medium text-pink-900 mb-2">Quick Info</h3>
-            <ul className="text-sm text-pink-700 space-y-2">
-              <li>Logged in as: <strong>{email ?? '—'}</strong></li>
-              <li>Role: Administrator</li>
-              <li>Welcome back!</li>
-            </ul>
-          </aside>
-        </section>
-        <footer className="mt-8 text-xs text-gray-500">Pawject Patrol — Admin panel</footer>
+          {/* --- Navigation Cards --- */}
+          <section className="w-full max-w-[1400px] mx-auto px-6 -mt-23 md:-mt-12 lg:-mt-24 pb-12">
+            <div className="flex flex-col gap-5 lg:gap-6 self-stretch rounded-2xl bg-[#E6E6E6] py-5 px-5 lg:py-8 lg:px-8 shadow-[0_4px_6px_0_rgba(0,0,0,0.09)]">
+              <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
+                
+                {/* Card 1: Animal Profiles */}
+
+                <Link href="/admin/profiles" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#C575AD] bg-[#fcfcfc]">
+                  <div className="flex-1 px-4 py-5">
+                    <h2
+                      className="text-md lg:text-xl font-medium mb-0.5"
+                      style={{
+                        color: "#C575AD",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Animal Profiles
+                    </h2>
+                    <p
+                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      View and Manage Animal Database
+                    </p>
+                  </div>
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#C575AD]">
+                    <img
+                      src="/paws/paws1.png"
+                      alt="Animal Profiles"
+                      className="w-10 h-10 lg:w-12 lg-h-12"
+                    />
+                  </div>
+                </Link>
+
+                {/* Card 2: Volunteer Requests */}
+                <Link href="/admin/volunteers" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
+                  <div className="flex-1 px-4 py-5">
+                    <h2
+                      className="text-md lg:text-xl font-medium mb-0.5"
+                      style={{
+                        color: "#5E9BBA",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Volunteer Requests
+                    </h2>
+                    <p
+                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      View and Manage Volunteer Tasks and Requests
+                    </p>
+                  </div>
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA]">
+                    <img
+                      src="/nav/user.png"
+                      alt="Volunteer Requests"
+                      className="w-10 h-10 lg:w-12 lg-h-12"
+                    />
+                  </div>
+                </Link>
+              </div>
+
+              {/* Card 3: Animal Reports */}
+              <Link href="/admin/form" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
+                <div className="flex-1 px-4 py-5">
+                  <h2
+                    className="text-md lg:text-xl font-medium mb-0.5"
+                    style={{
+                      color: "#DCB57E",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    Animal Reports
+                  </h2>
+                  <p
+                    className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                    style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    Track Stray Findings and Reports
+                  </p>
+                </div>
+                <div className="w-24 lg:w-32 flex items-center justify-center bg-[#DCB57E]">
+                  <img
+                    src="/nav/report.png"
+                    alt="Animal Reports"
+                    className="w-10 h-10 lg:w-12 lg-h-12"
+                  />
+                </div>
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
-  )
+  );
 }

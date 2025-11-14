@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 
+export type ReportTheme = 'blue' | 'green' | 'orange' | 'purple';
+
 export interface AnimalReportInsert {
 	recorder_name?: string;      // text
 	animal_name?: string;        // text
@@ -12,6 +14,10 @@ export interface AnimalReportInsert {
 	area?: string;
 	landmark?: string;
 	road?: string;
+	health_issues?: string;      // new column: null or description if issues
+	animal_collar?: string;      // new column: null or description if collar present
+	other_information?: string;  // new column: additional info
+	report_theme?: ReportTheme;  // chosen color theme
 	latitude: number;            // float8
 	longitude: number;           // float8
 	photo?: File;                // Image file to upload
@@ -65,6 +71,10 @@ export async function createAnimalReport(data: AnimalReportInsert) {
 		area: data.area ?? null,
 		landmark: data.landmark ?? null,
 		road: data.road ?? null,
+		health_issues: data.health_issues ?? null,
+		animal_collar: data.animal_collar ?? null,
+		other_information: data.other_information ?? null,
+		report_theme: data.report_theme ?? null,
 		latitude: data.latitude,
 		longitude: data.longitude
 	} as const;
