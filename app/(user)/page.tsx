@@ -13,8 +13,10 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Let component be mounted in browser
     let isMounted = true;
 
+    // Check if user is authenticated
     const checkUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!isMounted) return;
@@ -35,11 +37,13 @@ export default function UserDashboard() {
     };
   }, [router]);
 
+  // Handle user logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/");
   };
 
+  // Return loading state
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-yellow-200 via-yellow-100 to-yellow-50 flex items-center justify-center">

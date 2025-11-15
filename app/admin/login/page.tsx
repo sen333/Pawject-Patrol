@@ -24,20 +24,24 @@ const EyeIcon = ({ onClick }: { onClick: () => void }) => (
   </svg>
 );
 
+// Login page component
 export default function LoginPage() {
+  // State variables
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  // Handle admin login form submission
   const handleAdminLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // Prevent default form submission
     setIsLoading(true);
     setMessage("");
 
+    // Extract form data
     const formData = new FormData(event.currentTarget);
 
-    // Do not wrap in try/catch; if the action performs a redirect later, catching would swallow it.
+    // Call the admin login action
     const result = await adminLoginAction(formData);
     if (result?.success) {
       router.push("/admin");

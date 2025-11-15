@@ -1,3 +1,4 @@
+// NOTE: This is a temporarily prompted admin report detail page to test backend, not yet the final version
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,8 +8,10 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/utils/supabase/client";
 import { updateReportStatus } from "@/actions/form/admin";
 
+// Dynamically import the AdminMapView component for client-side rendering only
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
 
+// Define the ReportData type to match the database schema
 type ReportData = {
   report_id: string;
   animal_name: string | null;
@@ -29,8 +32,11 @@ type ReportData = {
   report_theme?: string | null;
 };
 
+// Admin report detail page component - displays full report information and allows status updates
 export default function AdminReportDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  
+  // State management for report data and UI states
   const [id, setId] = useState<string | null>(null);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,9 +44,11 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState<string>('Pending');
 
+  // Fetch report data on component mount
   useEffect(() => {
     let mounted = true;
 
+    // Fetch data with authentication and authorization checks
     const fetchData = async () => {
       // Await params
       const resolvedParams = await params;
@@ -49,6 +57,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
       if (!mounted) return;
       setId(reportId);
 
+      // Validate report ID
       if (!reportId || reportId.trim() === '') {
         setError('Invalid report ID');
         setLoading(false);
@@ -65,7 +74,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         return;
       }
 
-      // Check admin status
+      // Verify user is an admin
       const { data: admin, error: adminError } = await supabase
         .from("admin")
         .select("auth_id")
@@ -80,7 +89,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         return;
       }
 
-      // Fetch report data
+      // Fetch complete report data from database
       const { data: reportData, error: reportError } = await supabase
         .from("animal_report")
         .select("*")
@@ -89,6 +98,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
       if (!mounted) return;
 
+      // Handle report fetch errors
       if (reportError || !reportData) {
         console.error("Report fetch error:", reportError);
         setError(`Report not found (ID: ${reportId})`);
@@ -96,18 +106,22 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         return;
       }
 
+      // Set report data and status in state
       setData(reportData);
       setStatus(reportData.report_status || 'Pending');
       setLoading(false);
     };
 
+    // Execute fetch on mount
     fetchData();
 
+    // Cleanup function to prevent state updates after unmount
     return () => {
       mounted = false;
     };
   }, [params]);
 
+  // Handle report status updates (Accept/Reject)
   const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected') => {
     if (!data) return;
     
@@ -122,6 +136,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     setUpdating(false);
   };
 
+  // Show loading state while fetching data
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -130,6 +145,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
+  // Show error state if data fetch failed
   if (error || !data) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -143,7 +159,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
-  // Compute a color class for the report theme to tint accents
+  // Determine border/shadow color based on report theme
   const themeAccent = data.report_theme === 'blue'
     ? 'border-[#1F4E79] shadow-[0_0_0_3px_rgba(31,78,121,0.15)]'
     : data.report_theme === 'green'
@@ -157,8 +173,10 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   return (
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-4xl mx-auto p-6">
+        {/* Back navigation link */}
         <Link href="/admin/form" className="text-sm text-purple-700 hover:underline">← Back to reports</Link>
         
+        {/* Header with status badge and action buttons */}
         <div className="flex items-center justify-between mt-4">
           <h1 className="text-2xl font-semibold">Report Details</h1>
           <div className="flex items-center gap-3">
@@ -190,9 +208,10 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
+        {/* Main report card with theme-based border */}
         <div className={`mt-6 bg-white rounded-xl p-6 border-2 transition-colors ${themeAccent}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Photo */}
+            {/* Animal photo */}
             <div className="md:col-span-1">
               <div className="w-full aspect-square bg-gray-100 rounded-lg border overflow-hidden flex items-center justify-center">
                 {data.photo_url ? (
@@ -204,7 +223,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* Details */}
+            {/* Animal details */}
             <div className="md:col-span-2 space-y-3">
               <div>
                 <label className="text-xs font-medium text-gray-500">Animal Name</label>
@@ -248,7 +267,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                 <p className="text-sm">{data.road ?? '—'}</p>
               </div>
             </div>
-            {/* Additional Info */}
+            {/* Optional additional information (health, collar, other) */}
             {(data.health_issues || data.animal_collar || data.other_information) && (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold mb-2">Additional Details</h3>
@@ -265,7 +284,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                 </div>
               </div>
             )}
-            {/* Theme visual is now represented by colored border / glow; textual theme removed */}
+            {/* Interactive map view if coordinates are available */}
             {data.latitude && data.longitude && (
               <div className="mt-4" id="map-section">
                 <label className="text-xs font-medium text-gray-500 block mb-2">Map View</label>

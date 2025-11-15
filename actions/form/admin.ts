@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 
+// Define the structure of an admin animal report summary
 export interface AdminAnimalReportSummary {
 	report_id: string; // UUID
 	animal_name: string | null;
@@ -25,7 +26,10 @@ export interface AdminAnimalReportSummary {
 export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalReportSummary[]> {
 	const supabase = await createClient();
 
-	// NOTE: Ensure an admin RLS policy exists for selecting all rows from animal_report
+	// Verify admin authentication
+	const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+	// Fetch animal reports
 	const { data, error } = await supabase
 		.from("animal_report")
 		.select(
@@ -34,6 +38,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 		.order("created_at", { ascending: false })
 		.limit(limit * 3); // Fetch more to sort by status
 
+	// Handle fetch error
 	if (error) {
 		console.error("getRecentAnimalReports error", error);
 		return [];
@@ -47,6 +52,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 		return aOrder - bOrder;
 	});
 
+	// Return only the requested number of reports
 	return sorted.slice(0, limit);
 }
 
@@ -84,6 +90,7 @@ export async function updateReportStatus(reportId: string, status: 'Accepted' | 
 		.eq('auth_id', user.id)
 		.maybeSingle();
 
+	// Handle admin check error
 	if (adminError || !admin) {
 		console.error('updateReportStatus admin check error', adminError);
 		return { success: false, error: 'Not authorized' };
@@ -96,11 +103,13 @@ export async function updateReportStatus(reportId: string, status: 'Accepted' | 
 		.eq('report_id', reportId)
 		.select();
 	
+	// Handle update error
 	if (error) {
 		console.error('updateReportStatus error', error);
 		return { success: false, error: error.message };
 	}
 	
+	// Successfully updated
 	console.log('Report status updated successfully:', data);
 	return { success: true };
 }

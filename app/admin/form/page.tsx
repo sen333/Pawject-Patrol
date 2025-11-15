@@ -1,3 +1,5 @@
+// NOTE: This is only a temporarily prompted admin reports page to test backend, not yet the final version
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 
+// Define the Report type
 type Report = {
   report_id: string; // UUID
   animal_name: string | null;
@@ -23,19 +26,27 @@ type Report = {
 	animal_collar?: string | null;
 	other_information?: string | null;
 };export default function AdminReportsPage() {
+	// State for reports and loading
 	const router = useRouter();
 	const [reports, setReports] = useState<Report[]>([]);
 	const [loading, setLoading] = useState(true);
 
+	// Fetch reports on mount
 	useEffect(() => {
 		let mounted = true;
+
+		// Fetch recent animal reports
 		const run = async () => {
 			const { data: { user } } = await supabase.auth.getUser();
 			if (!mounted) return;
+
+			// Verify admin user
 			if (!user) {
 				router.replace("/admin/login");
 				return;
 			}
+
+			// Verify admin privileges
 			const { data: admin } = await supabase
 				.from("admin")
 				.select("auth_id")
@@ -48,6 +59,7 @@ type Report = {
 				return;
 			}
 
+			// Fetch animal reports
 			const { data, error } = await supabase
 				.from("animal_report")
 				.select(
@@ -57,6 +69,8 @@ type Report = {
 				.limit(50);
 
 			if (!mounted) return;
+
+			// Handle fetch results
 			if (!error && data) {
 				// Prioritize: Pending > Accepted > Rejected
 				const sorted = (data as Report[]).sort((a, b) => {
@@ -69,6 +83,7 @@ type Report = {
 			}
 			setLoading(false);
 		};
+		// Run the fetch
 		run();
 		return () => {
 			mounted = false;

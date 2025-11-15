@@ -1,4 +1,5 @@
 // NOTE: This is only a temporarily prompted catalog page to test backend, not yet the final version
+// NOTE: Not yet fully tested
 
 'use client'
 

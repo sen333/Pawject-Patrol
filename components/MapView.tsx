@@ -1,11 +1,13 @@
+// Map view component for displaying and interacting with a Leaflet map
 "use client";
 
+// Import necessary components and libraries
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix for default marker icon in Leaflet with Next.js
+// Define custom icon for the marker
 const icon = L.icon({
 	iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
 	iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -16,6 +18,7 @@ const icon = L.icon({
 	shadowSize: [41, 41],
 });
 
+// Component to recenter the map
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
 	const map = useMap();
 	useEffect(() => {
@@ -24,6 +27,7 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
 	return null;
 }
 
+// Component to handle map clicks
 function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
 	useMapEvents({
 		click(e) {
@@ -33,6 +37,7 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
 	return null;
 }
 
+// Define the props for the MapView component
 interface MapViewProps {
 	latitude: number;
 	longitude: number;
@@ -40,13 +45,17 @@ interface MapViewProps {
 	className?: string;
 }
 
+// Main MapView component
 export default function MapView({ latitude, longitude, onLocationSelect, className = "" }: MapViewProps) {
+	// State to track if the component is mounted
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {
+		// Set the component as mounted to enable map rendering
 		setIsMounted(true);
 	}, []);
 
+	// Show a loading state until the component is mounted
 	if (!isMounted) {
 		return (
 			<div className="h-full w-full grid place-items-center bg-gray-100">
@@ -55,6 +64,7 @@ export default function MapView({ latitude, longitude, onLocationSelect, classNa
 		);
 	}
 
+	// Render the map
 	return (
 		<MapContainer
 			key={`${latitude}-${longitude}`}

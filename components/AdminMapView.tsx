@@ -1,10 +1,12 @@
+// Map view component for admin interface
 "use client";
 
+// Import necessary components and libraries
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useState, useEffect } from "react";
 
-// Fix default marker icon issue with Leaflet + Webpack
+// Define custom icon for the marker
 const icon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -13,15 +15,18 @@ const icon = L.icon({
   iconAnchor: [12, 41],
 });
 
+// Recenter button component
 function RecenterButton({ latitude, longitude }: { latitude: number; longitude: number }) {
   const map = useMap();
 
+  // Function to recenter the map
   const handleRecenter = () => {
     map.setView([latitude, longitude], 15, {
       animate: true,
     });
   };
 
+  // Render the recenter button
   return (
     <button
       onClick={handleRecenter}
@@ -33,6 +38,7 @@ function RecenterButton({ latitude, longitude }: { latitude: number; longitude: 
   );
 }
 
+// Admin map view component
 export default function AdminMapView({
   latitude,
   longitude,
@@ -43,9 +49,11 @@ export default function AdminMapView({
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // Set the component as mounted to enable map rendering
     setIsMounted(true);
   }, []);
 
+  // Show a loading state until the component is mounted
   if (!isMounted) {
     return (
       <div className="w-full h-64 bg-gray-100 rounded-lg border flex items-center justify-center">
@@ -54,6 +62,7 @@ export default function AdminMapView({
     );
   }
 
+  // Render the map
   return (
     <div className="relative w-full h-64 bg-gray-100 rounded-lg border overflow-hidden">
       <MapContainer

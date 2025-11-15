@@ -1,5 +1,8 @@
+// NOTE: This is a temporarily prompted report form page to test backend, not yet the final version
+
 "use client";
 
+// Import necessary modules
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { ReportTheme } from "@/actions/form/user";
@@ -7,17 +10,25 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
+// Dynamically import MapView with no SSR
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 // Desktop-responsive sample of the mobile form UI
 // - On mobile: single column (similar to provided screenshot)
 // - On md/lg screens: two columns with clear grouping
 export default function ReportFormSample() {
+	// Router for navigation
 	const router = useRouter();
+
+	// Photo preview and file state
 	const [preview, setPreview] = useState<string | null>(null);
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
+	
+	// Location state
 	const [lat, setLat] = useState<number | null>(7.0858); // UP Mindanao Oblation as default
 	const [lng, setLng] = useState<number | null>(125.4853);
+
+	// Submission state
 	const [submitting, setSubmitting] = useState(false);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
 	
@@ -41,6 +52,8 @@ export default function ReportFormSample() {
 	// Restore form state from sessionStorage on mount
 	useEffect(() => {
 		const savedData = sessionStorage.getItem('animalReportFormData');
+
+		// If data exists, parse and restore form state
 		if (savedData) {
 			try {
 				const data = JSON.parse(savedData);
@@ -61,6 +74,8 @@ export default function ReportFormSample() {
 				setCollarDetails(data.collarDetails || "");
 				setLat(data.lat || 7.0858);
 				setLng(data.lng || 125.4853);
+
+				// Restore photo preview and file if available
 				if (data.photoPreview) {
 					setPreview(data.photoPreview);
 					// Convert base64 back to File if needed
@@ -76,21 +91,30 @@ export default function ReportFormSample() {
 				// Clear sessionStorage after restoring
 				sessionStorage.removeItem('animalReportFormData');
 			} catch (error) {
+				// Log any errors during restoration
 				console.error('Failed to restore form data:', error);
 			}
 		}
 	}, []);
 
+	// Function to grab current location using Geolocation API
 	function grabCurrentLocation() {
+
+		// Check if geolocation is supported
 		if (!navigator.geolocation) {
 			setResultMsg("Geolocation unsupported.");
 			return;
 		}
+
+		// Use Geolocation API to get current position
 		navigator.geolocation.getCurrentPosition(
+			// Success callback
 			(pos) => {
 				setLat(pos.coords.latitude);
 				setLng(pos.coords.longitude);
 			},
+
+			// Handle location error
 			(err) => setResultMsg(`Location error: ${err.message}`),
 			{
 				enableHighAccuracy: true,
@@ -100,14 +124,19 @@ export default function ReportFormSample() {
 		);
 	}
 
+	// Handle map click to set location
 	function handleMapClick(newLat: number, newLng: number) {
 		setLat(newLat);
 		setLng(newLng);
 		setResultMsg(null);
 	}
 
+	// Handle form confirmation
 	async function handleConfirm() {
+		// Clear previous messages
 		setResultMsg(null);
+
+		// Ensure location is set
 		if (lat == null || lng == null) {
 			setResultMsg("Please capture location before proceeding.");
 			return;
@@ -138,12 +167,19 @@ export default function ReportFormSample() {
 		// Convert photo File to base64 for storage
 		if (photoFile) {
 			try {
+				// Make FileReader to read file
 				const reader = new FileReader();
+
+				// Convert File to base64 string
 				const base64Promise = new Promise<string>((resolve) => {
 					reader.onloadend = () => resolve(reader.result as string);
 					reader.readAsDataURL(photoFile);
 				});
+
+				// Await base64 conversion
 				const base64 = await base64Promise;
+
+				// Store base64 and file info in formData
 				formData.photoBase64 = base64;
 				formData.photoName = photoFile.name;
 				formData.photoType = photoFile.type;
@@ -152,6 +188,7 @@ export default function ReportFormSample() {
 			}
 		}
 
+		// Save to sessionStorage
 		sessionStorage.setItem('animalReportFormData', JSON.stringify(formData));
 
 		// Build URL params for confirmation page
@@ -174,6 +211,7 @@ export default function ReportFormSample() {
 			photoUrl: preview || ''
 		});
 
+		// Navigate to confirmation page with params
 		router.push(`/form/confirm?${params.toString()}`);
 	}
 

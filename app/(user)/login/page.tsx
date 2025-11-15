@@ -1,3 +1,5 @@
+// Login Page Component
+
 "use client";
 
 import Image from "next/image";
@@ -6,15 +8,20 @@ import { signInWithGoogle } from "@/actions/login/user";
 import { useState } from "react";
 
 export default function LoginPage() {
+  // Loading and error state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Handle Google login
   const handleGoogleLogin = async () => {
+    // Set loading state and clear previous errors
     setIsLoading(true);
     setError("");
 
+    // Call server action to sign in with Google
     const result = await signInWithGoogle();
 
+    // Handle potential error
     if (result && !result.success) {
       setError(result.message);
       setIsLoading(false);

@@ -1,5 +1,8 @@
+// NOTE: This is only a prompted confirmation page used to test backend, not yet the final version
+
 "use client";
 
+// Import necessary modules
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
@@ -7,11 +10,15 @@ import dynamic from "next/dynamic";
 import { createAnimalReport } from "@/actions/form/user";
 import type { ReportTheme } from "@/actions/form/user";
 
+// Dynamically import AdminMapView with no SSR
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
 
 function ConfirmationContent() {
+	// Get URL search params and router
 	const searchParams = useSearchParams();
 	const router = useRouter();
+
+	// Local state
 	const [submitting, setSubmitting] = useState(false);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -37,6 +44,8 @@ function ConfirmationContent() {
 	// Restore photo File from sessionStorage on mount
 	useEffect(() => {
 		const savedData = sessionStorage.getItem('animalReportFormData');
+
+		// If saved data exists, try to reconstruct the File object
 		if (savedData) {
 			try {
 				const data = JSON.parse(savedData);
@@ -62,6 +71,7 @@ function ConfirmationContent() {
 	};
 
 	async function handleConfirmSubmit() {
+		// Submit the report
 		setSubmitting(true);
 		setResultMsg(null);
 		try {
@@ -74,6 +84,7 @@ function ConfirmationContent() {
 			dateSeenWithTime = selectedDate.toISOString();
 		}
 
+		// Submit the report
 		const res = await createAnimalReport({
 			recorder_name: recorderName || undefined,
 			animal_name: animalName || undefined,
@@ -93,6 +104,7 @@ function ConfirmationContent() {
 			photo: photoFile || undefined,
 		});
 
+		// Handle submission result
 		if (!res.success) {
 				setResultMsg(res.error ?? "Failed to submit");
 			} else {
