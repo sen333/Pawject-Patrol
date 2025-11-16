@@ -1,16 +1,18 @@
 "use client";
 
-// Import FormEvent to type the event parameter
-import { FormEvent } from 'react';
+import { useState } from 'react';
+import { adminLoginAction } from '@/actions/login/admin';
+import { useRouter } from "next/navigation";
 
-const EyeIcon = () => (
-  <svg
+const EyeIcon = ({ onClick }: { onClick: () => void }) => (
+    <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
     height="16"
     viewBox="0 0 16 16"
     fill="none"
     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+    onClick={onClick}
   >
     <path
       d="M7.05671 7.05794C6.8067 7.30804 6.66628 7.64721 6.66634 8.00085C6.6664 8.35448 6.80694 8.6936 7.05704 8.94361C7.30714 9.19362 7.64631 9.33404 7.99994 9.33398C8.35358 9.33392 8.6927 9.19338 8.94271 8.94328M11.1207 11.1154C10.1855 11.7005 9.1031 12.0073 8 12C5.6 12 3.6 10.6667 2 8.00002C2.848 6.58669 3.808 5.54802 4.88 4.88402M6.78667 4.12002C7.18603 4.03917 7.59254 3.99897 8 4.00002C10.4 4.00002 12.4 5.33335 14 8.00002C13.556 8.74002 13.0807 9.37802 12.5747 9.91335M2 2L14 14"
@@ -22,18 +24,35 @@ const EyeIcon = () => (
   </svg>
 );
 
+// Login page component
 export default function LoginPage() {
+  // State variables
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
 
-  // This function handles the form submission
-  // Added 'FormEvent' type to the event parameter 'e'
-  const handleLoginSubmit = (e: FormEvent) => {
-    // Prevent the page from reloading
-    e.preventDefault();
+  // Handle admin login form submission
+  const handleAdminLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); // Prevent default form submission
+    setIsLoading(true);
+    setMessage("");
 
-    // In a real app, you would check username/password here
+    // Extract form data
+    const formData = new FormData(event.currentTarget);
 
-    // Redirect to the admin dashboard
-    window.location.href = '/admin/dashboard';
+    // Call the admin login action
+    const result = await adminLoginAction(formData);
+    if (result?.success) {
+      router.push("/admin");
+      return;
+    }
+    if (result?.message) {
+      setMessage(result.message);
+    } else {
+      setMessage("Login failed. Please try again.");
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -134,15 +153,24 @@ export default function LoginPage() {
             Welcome YFA Officer!
           </p>
 
-          <form 
-            className="w-full px-4 sm:px-6 space-y-4" 
-            onSubmit={handleLoginSubmit}
-          >
+          {/* Error message */}
+          {message && (
+            <div className="w-full px-4 sm:px-6 mb-4">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {message}
+              </div>
+            </div>
+          )}
+
+          {/* Form container */}
+          <form className="w-full px-4 sm:px-6 space-y-4" onSubmit={handleAdminLogin}>
             {/* Email Input */}
             <div>
               <input
                 type="email"
-                defaultValue="yfaupmindanao@gmail.com"
+                name="email"
+                placeholder="yfaupmindanao@gmail.com"
+                required
                 className="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm"
                 style={{
                   color: "#3C3333",
@@ -153,14 +181,16 @@ export default function LoginPage() {
             {/* Password Input */}
             <div className="relative">
               <input
-                type="password"
-                defaultValue="••••••••"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="••••••••"
+                required
                 className="w-full rounded-lg border-gray-300 shadow-sm p-3 text-sm"
                 style={{
                   color: "#3C3333", // Fixed typo here
                 }}
               />
-              <EyeIcon />
+              <EyeIcon onClick={() => setShowPassword(!showPassword)} />
             </div>
 
             {/* Forgot Password Link */}
@@ -179,12 +209,13 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#8D52A7] px-4 py-3 text-white text-base font-medium hover:bg-[#7B4692] focus:outline-none focus:ring-2 focus:ring-[#8D52A7] focus:ring-opacity-50"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-[#8D52A7] px-4 py-3 text-white text-base font-medium hover:bg-[#7B4692] focus:outline-none focus:ring-2 focus:ring-[#8D52A7] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 fontFamily: '"Genty Sans", sans-serif',
               }}
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
