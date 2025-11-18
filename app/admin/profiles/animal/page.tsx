@@ -192,7 +192,7 @@ export default function AdminProfilesPage() {
 			photoUrl: photoPreview || '',
 		});
 		
-		router.push(`/admin/profiles/form/confirm?${params.toString()}`);
+		router.push(`/admin/profiles/animal/confirm?${params.toString()}`);
 	};
 
 	return (

@@ -70,7 +70,7 @@ export default function AdminProfilesListPage() {
 					</div>
 					<div className="flex items-center gap-3">
 						<Link
-							href="/admin/profiles/form"
+							href="/admin/profiles/animal"
 							className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 shadow"
 						>
 							Add Animal Profile

@@ -304,7 +304,7 @@ export default function HeaderAndBackground() {
               </div>
 
               {/* Card 3: Animal Reports - Track stray findings and reports */}
-              <Link href="/admin/form" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
+              <Link href="/admin/report" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
                 <div className="flex-1 px-4 py-5">
                   <h2
                     className="text-md lg:text-xl font-medium mb-0.5"
