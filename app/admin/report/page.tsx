@@ -25,7 +25,10 @@ type Report = {
 	health_issues?: string | null;
 	animal_collar?: string | null;
 	other_information?: string | null;
-};export default function AdminReportsPage() {
+};
+
+// Admin Reports Page Component
+export default function AdminReportsPage() {
 	// State for reports and loading
 	const router = useRouter();
 	const [reports, setReports] = useState<Report[]>([]);
@@ -33,11 +36,15 @@ type Report = {
 
 	// Fetch reports on mount
 	useEffect(() => {
+		// Mounting flag to prevent state updates after unmount
 		let mounted = true;
 
 		// Fetch recent animal reports
 		const run = async () => {
+			// Verify authenticated user
 			const { data: { user } } = await supabase.auth.getUser();
+			
+			// Check if still mounted
 			if (!mounted) return;
 
 			// Verify admin user
@@ -52,7 +59,11 @@ type Report = {
 				.select("auth_id")
 				.eq("auth_id", user.id)
 				.maybeSingle();
+
+			// Check if still mounted
 			if (!mounted) return;
+
+			// If not an admin, redirect to login with error
 			if (!admin) {
 				await supabase.auth.signOut();
 				router.replace("/admin/login?error=unauthorized");
@@ -67,7 +78,8 @@ type Report = {
 				)
 				.order("created_at", { ascending: false })
 				.limit(50);
-
+			
+			// Check if still mounted
 			if (!mounted) return;
 
 			// Handle fetch results
@@ -79,8 +91,10 @@ type Report = {
 					const bOrder = statusOrder[b.report_status || 'Pending'] ?? 3;
 					return aOrder - bOrder;
 				});
+				// Set the sorted reports
 				setReports(sorted);
 			}
+			// Finalize loading state
 			setLoading(false);
 		};
 		// Run the fetch

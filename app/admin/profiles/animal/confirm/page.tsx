@@ -5,10 +5,13 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { createAnimalProfile } from "@/actions/profiles/admin";
 
+// Confirmation Page Component
 function ConfirmationContent() {
+	// Get URL search params and router
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
+	// State variables
 	const [submitting, setSubmitting] = useState(false);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -23,11 +26,19 @@ function ConfirmationContent() {
 
 	// Restore photo File from sessionStorage on mount
 	useEffect(() => {
+		// Attempt to restore photo file from sessionStorage
 		const savedData = sessionStorage.getItem('animalProfileFormData');
+
+		// If data exists, parse and reconstruct File object
 		if (savedData) {
+			// Attempt to parse saved data and reconstruct File object
 			try {
+				// Parse saved data
 				const data = JSON.parse(savedData);
+
+				// Reconstruct File object if photo data exists
 				if (data.photoBase64 && data.photoName && data.photoType) {
+					// Convert base64 back to File object
 					fetch(data.photoBase64)
 						.then(res => res.blob())
 						.then(blob => {
@@ -36,33 +47,45 @@ function ConfirmationContent() {
 						});
 				}
 			} catch (error) {
+				// Handle errors during photo restoration
 				console.error('Failed to restore photo:', error);
 			}
 		}
 	}, []);
 
+	// Handle confirm submission
 	async function handleConfirmSubmit() {
+		// Set submitting state and clear previous messages
 		setSubmitting(true);
 		setResultMsg(null);
+
+		// Try to create the animal profile
 		try {
 			// Upload photo if exists
 			let uploadedPhotoUrl = photoUrl;
 			if (photoFile) {
 				// Import supabase client for upload
 				const { supabase } = await import("@/utils/supabase/client");
+
+				// Make constants for bucket and path
 				const BUCKET = "Animal Profile Photos";
 				const ext = photoFile.name.split('.')?.pop() || 'jpg';
 				const path = `${crypto.randomUUID()}.${ext}`;
+
+				// Upload to Supabase Storage
 				const { error } = await supabase.storage.from(BUCKET).upload(path, photoFile, {
 					cacheControl: '3600',
 					upsert: false,
 				});
+
+				// If upload successful, get public URL
 				if (!error) {
 					const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
 					uploadedPhotoUrl = urlData.publicUrl;
 				}
 			}
 
+			// Call createAnimalProfile action
 			const res = await createAnimalProfile({
 				name,
 				species,
@@ -72,16 +95,21 @@ function ConfirmationContent() {
 				photoUrl: uploadedPhotoUrl || undefined,
 			});
 
+			// Handle response
 			if (!res.success) {
+				// Display error message
 				setResultMsg(res.error ?? "Failed to create profile");
 			} else {
+				// Success - show success message and redirect
 				setResultMsg("Animal profile created successfully!");
 				sessionStorage.removeItem('animalProfileFormData');
 				setTimeout(() => router.push("/admin/profiles"), 1500);
 			}
 		} catch (e: any) {
+			// Handle unexpected errors
 			setResultMsg(e.message);
 		} finally {
+			// Finalize submitting state
 			setSubmitting(false);
 		}
 	}

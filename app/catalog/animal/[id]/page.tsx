@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 
+// Animal type definition
 type Animal = {
 	animal_id: string;
 	animal_name: string | null;
@@ -16,6 +17,7 @@ type Animal = {
 	created_at: string | null;
 };
 
+// Function to get CSS classes for status badge
 function statusBadgeClasses(status?: string | null) {
 	const s = (status || "").toLowerCase();
 	if (s.includes("available")) return "bg-green-100 text-green-800 border-green-200";
@@ -27,34 +29,58 @@ function statusBadgeClasses(status?: string | null) {
 	return "bg-gray-100 text-gray-800 border-gray-200";
 }
 
+// Animal Detail Page Component
 export default function AnimalDetailPage() {
+	// Get route params
 	const params = useParams();
+
+	// Extract animal ID from params
 	const id = params?.id as string | undefined;
+
+	// State variables
 	const [animal, setAnimal] = useState<Animal | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
+	// Fetch animal data on component mount or ID change
 	useEffect(() => {
+		// Check for valid ID
 		if (!id) return;
+
+		// Let active flag to prevent state updates on unmounted component
 		let active = true;
+
+		// Fetch one animal by ID
 		const fetchOne = async () => {
+			// Set loading and error states
 			setLoading(true);
 			setError(null);
+			
+			// Fetch animal from Supabase
 			const { data, error } = await supabase
 				.from("animal")
 				.select("*")
 				.eq("animal_id", id)
 				.maybeSingle();
+
+			// Check if component is still mounted
 			if (!active) return;
+
+			// Handle fetch results
 			if (error) {
 				setError(error.message);
 				setAnimal(null);
 			} else {
 				setAnimal(data as Animal);
 			}
+
+			// Finalize loading state
 			setLoading(false);
 		};
+		// Start fetching animal data
 		fetchOne();
+
+		// Cleanup on unmount
 		return () => {
 			active = false;
 		};

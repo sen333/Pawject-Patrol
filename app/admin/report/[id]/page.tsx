@@ -46,6 +46,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
   // Fetch report data on component mount
   useEffect(() => {
+    // Mounting flag to prevent state updates after unmount
     let mounted = true;
 
     // Fetch data with authentication and authorization checks
@@ -54,6 +55,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
       const resolvedParams = await params;
       const reportId = resolvedParams.id;
       
+      // Set report ID in state
       if (!mounted) return;
       setId(reportId);
 
@@ -68,6 +70,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (!mounted) return;
       
+      // Handle authentication errors
       if (authError || !user) {
         setError('Not authenticated');
         setLoading(false);
@@ -81,8 +84,10 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         .eq("auth_id", user.id)
         .maybeSingle();
 
+      // Check if component is still mounted
       if (!mounted) return;
 
+      // Handle admin check errors
       if (adminError || !admin) {
         setError('Unauthorized');
         setLoading(false);
@@ -123,16 +128,24 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
   // Handle report status updates (Accept/Reject)
   const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected') => {
+    // Validate data presence
     if (!data) return;
     
+    // Update status in backend
     setUpdating(true);
+
+    // Call the updateReportStatus action
     const result = await updateReportStatus(data.report_id, newStatus);
+
+    // Handle result
     if (result.success) {
       setStatus(newStatus);
       router.refresh();
     } else {
+      // Show error alert on failure
       alert(`Failed to update status: ${result.error}`);
     }
+    // Finalize updating state
     setUpdating(false);
   };
 

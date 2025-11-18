@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import { deleteAnimalProfile } from "@/actions/profiles/admin";
 
+// Animal type definition
 type Animal = {
 	animal_id: string;
 	animal_name: string | null;
@@ -17,6 +18,7 @@ type Animal = {
 	created_at: string | null;
 };
 
+// Function to get CSS classes for status badge
 function statusBadgeClasses(status?: string | null) {
 	const s = (status || "").toLowerCase();
 	if (s.includes("available")) return "bg-green-100 text-green-800 border-green-200";
@@ -28,57 +30,95 @@ function statusBadgeClasses(status?: string | null) {
 	return "bg-gray-100 text-gray-800 border-gray-200";
 }
 
+// Admin Animal Detail Page Component
 export default function AdminAnimalDetailPage() {
+	// Get route params and router
 	const params = useParams();
 	const router = useRouter();
+
+	// Extract animal ID from params
 	const id = params?.id as string | undefined;
+
+	// State variables
 	const [animal, setAnimal] = useState<Animal | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 
+	// Fetch animal data on component mount or ID change
 	useEffect(() => {
+		// Check for valid ID
 		if (!id) return;
+
+		// Let active flag to prevent state updates on unmounted component
 		let active = true;
+
+		// Fetch one animal by ID
 		const fetchOne = async () => {
+			// Set loading and error states
 			setLoading(true);
 			setError(null);
+
+			// Query the animal by ID
 			const { data, error } = await supabase
 				.from("animal")
 				.select("*")
 				.eq("animal_id", id)
 				.maybeSingle();
+
+			// Handle response
 			if (!active) return;
+
+			// Handle errors or set animal data
 			if (error) {
 				setError(error.message);
 				setAnimal(null);
 			} else {
 				setAnimal(data as Animal);
 			}
+
+			// Finalize loading state
 			setLoading(false);
 		};
+		// Fetch the animal data
 		fetchOne();
+
+		// Cleanup function to set active to false on unmount
 		return () => {
 			active = false;
 		};
 	}, [id]);
 
+	// Handle animal deletion
 	const handleDelete = async () => {
+		// Check for valid ID
 		if (!id) return;
+
+		// Start deletion process
 		setDeleting(true);
+
+		// Attempt to delete the animal profile
 		try {
+			// Call the deleteAnimalProfile action
 			const res = await deleteAnimalProfile(id);
+
+			// Handle response
 			if (res.success) {
 				router.push("/admin/profiles");
-			} else {
+			} 
+			
+			// Handle failure
+			else {
 				setError(res.error || "Failed to delete animal");
 				setShowDeleteConfirm(false);
 			}
 		} catch (err: any) {
+			// Handle unexpected errors during deletion
 			setError(err?.message || "Unexpected error");
 			setShowDeleteConfirm(false);
 		} finally {
+			// Finalize deleting state
 			setDeleting(false);
 		}
 	};

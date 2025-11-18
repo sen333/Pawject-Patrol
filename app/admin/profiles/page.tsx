@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/utils/supabase/client";
 
+// Animal type definition
 type Animal = {
 	animal_id?: string;
 	created_at?: string | null;
@@ -18,6 +19,7 @@ type Animal = {
 // Actual bucket id from Supabase
 const BUCKET = "Animal Profile Photos" as const;
 
+// Function to get CSS classes for status badge
 function statusBadgeClasses(status?: string | null) {
 	const s = (status || "").toLowerCase();
 	if (s.includes("available")) return "bg-green-100 text-green-800 border-green-200";
@@ -27,33 +29,50 @@ function statusBadgeClasses(status?: string | null) {
 	return "bg-gray-100 text-gray-800 border-gray-200";
 }
 
+// Admin Profiles List Page Component
 export default function AdminProfilesListPage() {
 	const [animals, setAnimals] = useState<Animal[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-
-
+	// Fetch animals on mount
 	useEffect(() => {
+		// Handle component unmounting
 		let active = true;
+
+		// Load animals from Supabase
 		const load = async () => {
+			// Set loading and error states
 			setLoading(true);
 			setError(null);
+
+			// Fetch animal profiles
 			const { data, error } = await supabase
 				.from("animal")
 				.select("*")
 				.order("created_at", { ascending: false })
 				.limit(200);
+			
+			// Check if component is still mounted
 			if (!active) return;
+
+			// Handle errors or set animals
 			if (error) {
+				// Set error message and clear animals list
 				setError(error.message);
 				setAnimals([]);
 			} else {
+				// Set fetched animals
 				setAnimals((data || []) as Animal[]);
 			}
+
+			// Finalize loading state
 			setLoading(false);
 		};
+		// Start loading animals
 		load();
+
+		// Cleanup on unmount
 		return () => {
 			active = false;
 		};

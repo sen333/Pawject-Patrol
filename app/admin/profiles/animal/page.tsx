@@ -13,10 +13,10 @@ type Animal = {
 	animal_id: string;
 	created_at: string | null;
 	animal_name?: string | null;
-	animal_species?: string | null; // some schemas use animal_species
+	animal_species?: string | null;
 	animal_breed?: string | null;
-	animal_description?: string | null; // animal_description or
-	animal_descr?: string | null;       // animal_descr (shortened)
+	animal_description?: string | null; 
+	animal_descr?: string | null;       
 	animal_status?: string | null;
 	animal_photo?: string | null;
 };
@@ -33,6 +33,7 @@ function statusClasses(status?: string | null) {
 
 // Admin profiles list page - reads animals from the `animal` table
 export default function AdminProfilesPage() {
+	// Constants
 	const BUCKET = "Animal Profile Photos" as const;
 	const router = useRouter();
 
@@ -55,10 +56,16 @@ export default function AdminProfilesPage() {
 
 	// Restore form data from sessionStorage on mount
 	useEffect(() => {
+		// Attempt to restore form data from sessionStorage
 		const savedData = sessionStorage.getItem('animalProfileFormData');
+
+		// If data exists, parse and restore form fields
 		if (savedData) {
 			try {
+				// Parse saved data
 				const data = JSON.parse(savedData);
+
+				// Restore individual fields
 				if (data.name) setName(data.name);
 				if (data.species) setSpecies(data.species);
 				if (data.breed) setBreed(data.breed);
@@ -75,20 +82,24 @@ export default function AdminProfilesPage() {
 						});
 				}
 			} catch (error) {
+				// Handle errors during restoration
 				console.error('Failed to restore form data:', error);
 			}
 		}
 	}, []);
 
-	// Verify admin, then fetch animals
+	// Fetch animals on mount and verify admin auth
 	useEffect(() => {
+		// Handle component unmounting
 		let mounted = true;
 
+		// Async function to run on mount
 		const run = async () => {
 			// Check authentication
 			const { data: { user }, error: authError } = await supabase.auth.getUser();
 			if (!mounted) return;
 
+			// If not authenticated, redirect to login
 			if (authError || !user) {
 				router.replace("/admin/login");
 				return;
@@ -102,15 +113,18 @@ export default function AdminProfilesPage() {
 				.maybeSingle();
 			if (!mounted) return;
 
+			// If not an admin, sign out and redirect to login
 			if (adminError || !admin) {
 				await supabase.auth.signOut();
 				router.replace("/admin/login?error=unauthorized");
 				return;
 			}
 
+			// Fetch the list of animals
 			await fetchAnimals();
 		};
 
+		// Run the async function
 		run();
 		return () => { mounted = false; };
 	}, [router]);
@@ -142,20 +156,32 @@ export default function AdminProfilesPage() {
 
 	// Upload photo and return the public URL
 	const uploadPhoto = async (): Promise<string | undefined> => {
+		// If no photo file, return undefined
 		if (!photoFile) return undefined;
+
+		// Try uploading the photo
 		try {
+			// Make constants for bucket and path
+			const BUCKET = "Animal Profile Photos";
 			const ext = photoFile.name.split('.')?.pop() || 'jpg';
 			const path = `${crypto.randomUUID()}.${ext}`;
+
+			// Upload to Supabase Storage
 			const { error } = await supabase.storage.from(BUCKET).upload(path, photoFile, {
 				cacheControl: '3600', upsert: false,
 			});
+
+			// Handle upload error
 			if (error) {
 				console.warn('Photo upload error', error.message);
 				return undefined;
 			}
+
+			// Get public URL
 			const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
 			return urlData.publicUrl;
 		} catch (e) {
+			// Handle exceptions during photo upload
 			console.warn('Photo upload exception', e);
 			return undefined;
 		}
@@ -163,6 +189,7 @@ export default function AdminProfilesPage() {
 
 	// Navigate to confirmation page
 	const handleSubmit = async (e: React.FormEvent) => {
+		// Prevent default form submission
 		e.preventDefault();
 		
 		// Save all form data to sessionStorage
@@ -174,12 +201,14 @@ export default function AdminProfilesPage() {
 			status,
 		};
 		
+		// Include photo data if exists
 		if (photoFile && photoPreview) {
 			formData.photoBase64 = photoPreview;
 			formData.photoName = photoFile.name;
 			formData.photoType = photoFile.type;
 		}
 		
+		// Save to sessionStorage
 		sessionStorage.setItem('animalProfileFormData', JSON.stringify(formData));
 		
 		// Build query params
@@ -192,6 +221,7 @@ export default function AdminProfilesPage() {
 			photoUrl: photoPreview || '',
 		});
 		
+		// Redirect to confirmation page with params
 		router.push(`/admin/profiles/animal/confirm?${params.toString()}`);
 	};
 

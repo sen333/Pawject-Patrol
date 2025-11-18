@@ -1,5 +1,6 @@
 "use client";
 
+// Imports
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -7,6 +8,8 @@ import { supabase } from "@/utils/supabase/client";
 import { Upload } from "lucide-react";
 import { updateAnimalProfile } from "@/actions/profiles/admin";
 
+
+// Animal type definition
 type Animal = {
 	animal_id: string;
 	animal_name: string | null;
@@ -18,13 +21,19 @@ type Animal = {
 	created_at: string | null;
 };
 
+// Storage bucket name
 const BUCKET = "Animal Profile Photos" as const;
 
+// Edit Animal Profile Page Component
 export default function EditAnimalPage() {
+	// Get route params and router
 	const params = useParams();
 	const router = useRouter();
+
+	// Extract animal ID from params
 	const id = params?.id as string | undefined;
 
+	// Component state
 	const [animal, setAnimal] = useState<Animal | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -42,21 +51,34 @@ export default function EditAnimalPage() {
 
 	// Fetch animal data
 	useEffect(() => {
+		// Check for valid ID
 		if (!id) return;
 		let active = true;
+
+		// Fetch one animal by ID
 		const fetchOne = async () => {
+			// Start loading and clear previous errors
 			setLoading(true);
 			setError(null);
+
+			// Query Supabase for the animal profile
 			const { data, error } = await supabase
 				.from("animal")
 				.select("*")
 				.eq("animal_id", id)
 				.maybeSingle();
+
+			// Handle response
 			if (!active) return;
+
+			// Set data or error state
 			if (error) {
 				setError(error.message);
 				setAnimal(null);
-			} else if (data) {
+			} 
+			
+			// Set data state and pre-populate form
+			else if (data) {
 				const animalData = data as Animal;
 				setAnimal(animalData);
 				// Pre-populate form
@@ -67,45 +89,70 @@ export default function EditAnimalPage() {
 				setStatus(animalData.animal_status || "In Shelter");
 				setPhotoPreview(animalData.animal_photo || null);
 			}
+
+			// Finalize loading state
 			setLoading(false);
 		};
+
+		// Invoke the fetch function
 		fetchOne();
 		return () => {
 			active = false;
 		};
 	}, [id]);
-
+	
+	// Handle photo file selection
 	const handlePhotoChange = (file: File | null) => {
+		// Update photo file and preview
 		setPhotoFile(file);
 		setPhotoPreview(file ? URL.createObjectURL(file) : animal?.animal_photo || null);
 	};
 
+	// Handle form submission
 	const uploadPhoto = async (): Promise<string | undefined> => {
+		// Upload photo to storage and return public URL
 		if (!photoFile) return undefined;
 		try {
+			// Generate unique file path for the photo
 			const ext = photoFile.name.split('.')?.pop() || 'jpg';
 			const path = `${crypto.randomUUID()}.${ext}`;
+
+			// Upload to Supabase Storage
 			const { error } = await supabase.storage.from(BUCKET).upload(path, photoFile, {
 				cacheControl: '3600', upsert: false,
 			});
+
+			// Handle upload error
 			if (error) {
 				console.warn('Photo upload error', error.message);
 				return undefined;
 			}
+
+			// Get public URL
 			const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
 			return urlData.publicUrl;
 		} catch (e) {
+			// Handle unexpected errors during photo upload
 			console.warn('Photo upload exception', e);
 			return undefined;
 		}
 	};
 
+	// Handle form submission
 	const handleSubmit = async (e: React.FormEvent) => {
+		// Prevent default form submission
 		e.preventDefault();
+
+		// Ensure valid ID
 		if (!id) return;
+
+		// Start submitting
 		setSubmitting(true);
 		setSubmitMsg(null);
+
+		// Try to upload photo and update profile
 		try {
+			// Upload photo and update profile
 			const photoUrl = await uploadPhoto();
 			const res = await updateAnimalProfile({
 				id,
@@ -116,17 +163,24 @@ export default function EditAnimalPage() {
 				status,
 				photoUrl,
 			});
+
+			// Handle response
 			if (!res.success) {
 				setSubmitMsg(res.error || 'Failed to update profile');
-			} else {
+			} 
+			
+			// Success
+			else {
 				setSubmitMsg('Animal profile updated successfully');
 				setTimeout(() => {
 					router.push(`/admin/profiles/animal/${id}`);
 				}, 1000);
 			}
 		} catch (err: any) {
+			// Handle unexpected errors during submission
 			setSubmitMsg(err?.message || 'Unexpected error');
 		} finally {
+			// Finalize submitting state
 			setSubmitting(false);
 		}
 	};

@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/utils/supabase/client'
 
+// Animal type definition
 interface Animal {
   animal_id: string
   animal_name: string | null
@@ -18,39 +19,55 @@ interface Animal {
   created_at: string | null
 }
 
+// Catalog Page Component
 export default function CatalogPage() {
+  // State variables
   const [filter, setFilter] = useState<'all' | 'cat' | 'dog'>('all')
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Fetch animals on mount
   useEffect(() => {
+
+    // Make API call to fetch animals
     const fetchAnimals = async () => {
+      // Set loading and error states
       setLoading(true)
       setError(null)
+
+      // Fetch animals from Supabase
       const { data, error } = await supabase
         .from('animal')
         .select('*')
         .order('created_at', { ascending: false })
       
+      // Handle errors or set animals
       if (error) {
         setError(error.message)
         setAnimals([])
       } else {
+        // Set animals state with fetched data
         setAnimals((data || []) as Animal[])
       }
+
+      // Finalize loading state
       setLoading(false)
     }
+    // Start fetching animals
     fetchAnimals()
   }, [])
 
+  // Filter animals based on selected filter
   const filteredAnimals = animals.filter(animal => {
     if (filter === 'all') return true
     const species = (animal.animal_species || '').toLowerCase()
     return species === filter
   })
 
+  // Function to get status badge CSS classes
   const getStatusColor = (status: string | null) => {
+    // Determine CSS classes based on status text
     const s = (status || '').toLowerCase()
     if (s.includes('available')) return 'bg-green-100 text-green-800 border-green-200'
     if (s.includes('adopted')) return 'bg-gray-100 text-gray-800 border-gray-200'
