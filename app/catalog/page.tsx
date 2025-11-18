@@ -3,113 +3,62 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { supabase } from '@/utils/supabase/client'
 
-interface Pet {
-  id: number
-  name: string
-  species: string
-  breed: string
-  age: string
-  gender: string
-  color: string
-  imageUrl: string
-  status: 'available' | 'adopted' | 'pending'
+interface Animal {
+  animal_id: string
+  animal_name: string | null
+  animal_species: string | null
+  animal_breed: string | null
+  animal_description: string | null
+  animal_status: string | null
+  animal_photo: string | null
+  created_at: string | null
 }
-
-// Sample pet data
-const samplePets: Pet[] = [
-  {
-    id: 1,
-    name: 'Whiskers',
-    species: 'Cat',
-    breed: 'Tabby',
-    age: '2 years',
-    gender: 'Male',
-    color: 'Orange & White',
-    imageUrl: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=400&fit=crop',
-    status: 'available'
-  },
-  {
-    id: 2,
-    name: 'Buddy',
-    species: 'Dog',
-    breed: 'Golden Retriever',
-    age: '3 years',
-    gender: 'Male',
-    color: 'Golden',
-    imageUrl: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop',
-    status: 'available'
-  },
-  {
-    id: 3,
-    name: 'Luna',
-    species: 'Cat',
-    breed: 'Persian',
-    age: '1 year',
-    gender: 'Female',
-    color: 'Gray',
-    imageUrl: 'https://images.unsplash.com/photo-1573865526739-10c1dd7aa5f8?w=400&h=400&fit=crop',
-    status: 'available'
-  },
-  {
-    id: 4,
-    name: 'Max',
-    species: 'Dog',
-    breed: 'Beagle',
-    age: '4 years',
-    gender: 'Male',
-    color: 'Brown & White',
-    imageUrl: 'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=400&h=400&fit=crop',
-    status: 'adopted'
-  },
-  {
-    id: 5,
-    name: 'Mittens',
-    species: 'Cat',
-    breed: 'Siamese',
-    age: '6 months',
-    gender: 'Female',
-    color: 'Cream & Brown',
-    imageUrl: 'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&h=400&fit=crop',
-    status: 'pending'
-  },
-  {
-    id: 6,
-    name: 'Rocky',
-    species: 'Dog',
-    breed: 'German Shepherd',
-    age: '2 years',
-    gender: 'Male',
-    color: 'Black & Tan',
-    imageUrl: 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop',
-    status: 'available'
-  }
-]
 
 export default function CatalogPage() {
   const [filter, setFilter] = useState<'all' | 'cat' | 'dog'>('all')
+  const [animals, setAnimals] = useState<Animal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredPets = samplePets.filter(pet => {
+  useEffect(() => {
+    const fetchAnimals = async () => {
+      setLoading(true)
+      setError(null)
+      const { data, error } = await supabase
+        .from('animal')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        setError(error.message)
+        setAnimals([])
+      } else {
+        setAnimals((data || []) as Animal[])
+      }
+      setLoading(false)
+    }
+    fetchAnimals()
+  }, [])
+
+  const filteredAnimals = animals.filter(animal => {
     if (filter === 'all') return true
-    return pet.species.toLowerCase() === filter
+    const species = (animal.animal_species || '').toLowerCase()
+    return species === filter
   })
 
-  const getStatusColor = (status: Pet['status']) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'adopted':
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    }
-  }
-
-  const getStatusBadge = (status: Pet['status']) => {
-    return status.charAt(0).toUpperCase() + status.slice(1)
+  const getStatusColor = (status: string | null) => {
+    const s = (status || '').toLowerCase()
+    if (s.includes('available')) return 'bg-green-100 text-green-800 border-green-200'
+    if (s.includes('adopted')) return 'bg-gray-100 text-gray-800 border-gray-200'
+    if (s.includes('pending')) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    if (s.includes('shelter') || s.includes('rescue')) return 'bg-blue-100 text-blue-800 border-blue-200'
+    if (s.includes('treat') || s.includes('care')) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    if (s.includes('lost') || s.includes('missing')) return 'bg-red-100 text-red-800 border-red-200'
+    return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
   return (
@@ -160,67 +109,92 @@ export default function CatalogPage() {
           </button>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">Loading animals...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="py-4 mb-6 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-4">
+            Error loading animals: {error}
+          </div>
+        )}
+
         {/* Pet Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPets.map((pet) => (
-            <div
-              key={pet.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
-            >
-              {/* Pet Image */}
-              <div className="relative h-64 bg-gradient-to-br from-purple-100 to-pink-100">
-                <Image
-                  src={pet.imageUrl}
-                  alt={pet.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-                <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(pet.status)}`}>
-                  {getStatusBadge(pet.status)}
-                </div>
-              </div>
-
-              {/* Pet Info */}
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{pet.name}</h3>
-                <p className="text-sm text-gray-600 mb-4">{pet.breed} • {pet.species}</p>
-                
-                <div className="space-y-2 text-sm text-gray-700">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Age:</span>
-                    <span>{pet.age}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Gender:</span>
-                    <span>{pet.gender}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Color:</span>
-                    <span>{pet.color}</span>
+          {filteredAnimals.map((animal) => {
+            const name = animal.animal_name || 'Unnamed'
+            const species = animal.animal_species || 'Unknown'
+            const breed = animal.animal_breed || ''
+            const status = animal.animal_status || ''
+            const photo = animal.animal_photo || ''
+            const isAvailable = (status || '').toLowerCase().includes('available')
+            
+            return (
+              <Link
+                href={`/catalog/animal/${animal.animal_id}`}
+                key={animal.animal_id}
+                className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {/* Pet Image */}
+                <div className="relative h-64 bg-gradient-to-br from-purple-100 to-pink-100">
+                  {photo ? (
+                    <img
+                      src={photo}
+                      alt={name}
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = ''
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                      No photo
+                    </div>
+                  )}
+                  <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(status)}`}>
+                    {status || 'Unknown'}
                   </div>
                 </div>
 
-                {/* Action Button */}
-                <button
-                  disabled={pet.status !== 'available'}
-                  className={`w-full mt-6 py-3 rounded-lg font-semibold transition-all ${
-                    pet.status === 'available'
-                      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {pet.status === 'available' ? 'Adopt Me' : pet.status === 'adopted' ? 'Adopted' : 'Adoption Pending'}
-                </button>
-              </div>
-            </div>
-          ))}
+                {/* Pet Info */}
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">{name}</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {breed ? `${breed} • ${species}` : species}
+                  </p>
+                  
+                  {animal.animal_description && (
+                    <p className="text-sm text-gray-700 mb-4 line-clamp-3">
+                      {animal.animal_description}
+                    </p>
+                  )}
+
+                  {/* Action Button */}
+                  <button
+                    disabled={!isAvailable}
+                    onClick={(e)=>{ if(!isAvailable) e.preventDefault(); }}
+                    className={`w-full mt-6 py-3 rounded-lg font-semibold transition-all ${
+                      isAvailable
+                        ? 'bg-purple-600 text-white group-hover:bg-purple-700 shadow-md group-hover:shadow-lg'
+                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {isAvailable ? 'View & Adopt' : status || 'Not Available'}
+                  </button>
+                </div>
+              </Link>
+            )
+          })}
         </div>
 
         {/* Empty State */}
-        {filteredPets.length === 0 && (
+        {!loading && filteredAnimals.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-gray-500 text-lg">No pets found in this category.</p>
+            <p className="text-gray-500 text-lg">No animals found in this category.</p>
           </div>
         )}
       </div>
