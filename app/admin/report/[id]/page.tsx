@@ -164,7 +164,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
       <main className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-sm">{error || 'Report not found'}</p>
-          <Link href="/admin/form" className="text-xs text-purple-700 hover:underline mt-2 inline-block">
+          <Link href="/admin/report" className="text-xs text-purple-700 hover:underline mt-2 inline-block">
             ← Back to reports
           </Link>
         </div>
@@ -187,7 +187,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-4xl mx-auto p-6">
         {/* Back navigation link */}
-        <Link href="/admin/form" className="text-sm text-purple-700 hover:underline">← Back to reports</Link>
+        <Link href="/admin/report" className="text-sm text-purple-700 hover:underline">← Back to reports</Link>
         
         {/* Header with status badge and action buttons */}
         <div className="flex items-center justify-between mt-4">
