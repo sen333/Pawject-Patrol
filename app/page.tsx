@@ -12,8 +12,52 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/utils/supabase/client";
 
 export default function Home() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if the user is authenticated
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      setLoading(false);
+    };
+    
+    checkAuth();
+
+    // Listen for auth state changes (like logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Return loading state
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#E1E69D] flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </main>
+    );
+  }
+
+  // If authenticated, show user dashboard instead
+  if (isAuthenticated) {
+    // Dynamically import the UserDashboard component
+    const UserDashboard = require("./(user)/page").default;
+    return <UserDashboard />;
+  }
+
   return (
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center overflow-hidden">
       {/* --- Hero Container--- */}
@@ -32,7 +76,7 @@ export default function Home() {
             />
           </svg>
 
-      {/* Tablet SVG */}
+          {/* Tablet SVG */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 768 389"
@@ -40,7 +84,7 @@ export default function Home() {
           >
             <path
               d="M974.403 187C974.403 298.562 705.745 389 374.339 389C42.9326 389 -225.725 298.562 -225.725 187C-225.725 75.4385 42.9326 -15 374.339 -15C705.745 -15 974.403 75.4385 974.403 187Z"
-              fill="#C2C876" 
+              fill="#C2C876"
             />
           </svg>
 
@@ -88,7 +132,7 @@ export default function Home() {
             w-[90%] 
             max-w-3xl lg:max-w-6xl
             bg-[#E6E6E6] 
-            rounded-2xl 
+            rounded-3xl 
             mt-6 
             shadow-lg 
             flex 
@@ -124,17 +168,17 @@ export default function Home() {
             />
           </div>
 
-          {/* Login Button */}
+        {/* Login Button */}
           <Button
-            className=" flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
+            asChild
+            className="relative z-10 w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
           >
-            Login
+            <Link href="/login">Login</Link>
           </Button>
-
           {/* View Catalog Button */}
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
             <Button className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all">
-              View Catalog
+              <Link href="/catalog">View Catalog</Link>
             </Button>
           </div>
         </div>
@@ -219,7 +263,7 @@ export default function Home() {
               </div>
               ABOUT US
             </h2>
-            <p className="text-sm sm:text-base leading-relaxed mt-2">
+            <p className="text-sm sm:text-base leading-relaxed mt-2" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
               Foster kindness, compassion, and respect for all animal life.
               Raise awareness about the shared capacity to feel pain between
               humans and animals, highlighting the importance of treating
@@ -263,7 +307,7 @@ export default function Home() {
                 </div>
                 OUR MISSION
               </h2>
-              <p className="text-sm sm:text-base leading-relaxed mt-2">
+              <p className="text-sm sm:text-base leading-relaxed mt-2" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
                 Foster kindness, compassion, and respect for all animal life.
                 Raise awareness about the shared capacity to feel pain between
                 humans and animals, highlighting the importance of treating
@@ -307,10 +351,11 @@ export default function Home() {
                 </div>
                 OUR VISION
               </h2>
-              <p className="text-sm sm:text-base leading-relaxed mt-2">
+              <p className="text-sm sm:text-base leading-relaxed mt-2" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
                 A compassionate and informed community committed to fostering
                 kindness, empathy, and respect for all animals through
-                education, responsible pet ownership, and collaborative efforts.
+                education, responsible pet ownership, and collaborative
+                efforts.
               </p>
             </div>
           </div>
@@ -358,6 +403,7 @@ export default function Home() {
                   borderRadius: "16px",
                   opacity: "0.95",
                   background: "rgba(230, 230, 230, 0.10)",
+                  fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif'
                 }}
               >
                 YFA-UPMin will serve as the primary contact organization for the
@@ -371,6 +417,7 @@ export default function Home() {
                   borderRadius: "16px",
                   opacity: "0.95",
                   background: "rgba(230, 230, 230, 0.10)",
+                  fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif'
                 }}
               >
                 YFA-UPMin, in collaboration with the university, will actively
@@ -384,6 +431,7 @@ export default function Home() {
                   borderRadius: "16px",
                   opacity: "0.95",
                   background: "rgba(230, 230, 230, 0.10)",
+                  fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif'
                 }}
               >
                 YFA-UPMin will actively engage university students in these
@@ -436,7 +484,7 @@ export default function Home() {
                 height={120}
               />
             </div>
-            <p className="text-sm sm:text-base leading-relaxed mb-4 max-w-sm">
+            <p className="text-sm sm:text-base leading-relaxed mb-4 max-w-sm" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
               Youth for Animals - UP Mindanao is dedicated to fostering
               kindness, compassion, and respect for all forms of animal life.
             </p>
@@ -472,7 +520,7 @@ export default function Home() {
             <h3 className="font-bold text-lg mb-3 text-[#4E4E4E]">
               Quick Links
             </h3>
-            <ul className="space-y-1 text-sm">
+            <ul className="space-y-1 text-sm" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
               <li>
                 <a href="#" className="hover:underline">
                   About Us
@@ -483,7 +531,7 @@ export default function Home() {
                   Our Mission
                 </a>
               </li>
-              <li>
+<li>
                 <a href="#" className="hover:underline">
                   Programs
                 </a>
@@ -505,7 +553,7 @@ export default function Home() {
             <h3 className="font-bold text-lg mb-3 text-[#4E4E4E]">
               Contact Us
             </h3>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm" style={{ fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif' }}>
               <li className="flex items-center gap-2">
                 <Mail size={16} className="text-[#8D52A7]" />
                 yfaupmindanao@gmail.com
