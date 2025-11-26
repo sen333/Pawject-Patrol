@@ -1,12 +1,22 @@
-// NOTE: This is only a temporarily prompted catalog page to test backend, not yet the final version
-// NOTE: Not yet fully tested
-
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Menu, LogIn, MapPin, PawPrint, Unlink2, ArrowRight, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
+import { FaMars, FaVenus } from 'react-icons/fa';
+import { useRouter } from "next/navigation";
 
+// Panel colors
+const panelColors = ["#689668", "#DCB57E", "#5E9BBA", "#C575AD", "#8D52A7"]
+
+// Helper: get random color not equal to last color
+function getRandomColor(lastColor: string | null) {
+  const filtered = panelColors.filter(c => c !== lastColor)
+  return filtered[Math.floor(Math.random() * filtered.length)]
+}
+
+// Pet type
 interface Pet {
   id: number
   name: string
@@ -16,10 +26,11 @@ interface Pet {
   gender: string
   color: string
   imageUrl: string
-  status: 'available' | 'adopted' | 'pending'
+  status: 'domesticated' | 'wild' | 'feral'
+  affiliation?: string
 }
 
-// Sample pet data
+// Sample pets
 const samplePets: Pet[] = [
   {
     id: 1,
@@ -30,7 +41,7 @@ const samplePets: Pet[] = [
     gender: 'Male',
     color: 'Orange & White',
     imageUrl: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=400&fit=crop',
-    status: 'available'
+    status: 'domesticated'
   },
   {
     id: 2,
@@ -41,7 +52,7 @@ const samplePets: Pet[] = [
     gender: 'Male',
     color: 'Golden',
     imageUrl: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop',
-    status: 'available'
+    status: 'feral'
   },
   {
     id: 3,
@@ -52,7 +63,7 @@ const samplePets: Pet[] = [
     gender: 'Female',
     color: 'Gray',
     imageUrl: 'https://images.unsplash.com/photo-1573865526739-10c1dd7aa5f8?w=400&h=400&fit=crop',
-    status: 'available'
+    status: 'wild'
   },
   {
     id: 4,
@@ -63,7 +74,7 @@ const samplePets: Pet[] = [
     gender: 'Male',
     color: 'Brown & White',
     imageUrl: 'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=400&h=400&fit=crop',
-    status: 'adopted'
+    status: 'feral'
   },
   {
     id: 5,
@@ -74,7 +85,7 @@ const samplePets: Pet[] = [
     gender: 'Female',
     color: 'Cream & Brown',
     imageUrl: 'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&h=400&fit=crop',
-    status: 'pending'
+    status: 'domesticated'
   },
   {
     id: 6,
@@ -85,145 +96,371 @@ const samplePets: Pet[] = [
     gender: 'Male',
     color: 'Black & Tan',
     imageUrl: 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop',
-    status: 'available'
+    status: 'wild'
   }
 ]
 
 export default function CatalogPage() {
   const [filter, setFilter] = useState<'all' | 'cat' | 'dog'>('all')
+  const [panelColorsState, setPanelColorsState] = useState<string[]>([])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+   const router = useRouter();
 
   const filteredPets = samplePets.filter(pet => {
     if (filter === 'all') return true
     return pet.species.toLowerCase() === filter
   })
 
-  const getStatusColor = (status: Pet['status']) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'adopted':
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    }
+  // Generate panel colors only on client to avoid hydration mismatch
+  useEffect(() => {
+    let lastColor: string | null = null
+    const colors = samplePets.map(() => {
+      const c = getRandomColor(lastColor)
+      lastColor = c
+      return c
+    })
+    setPanelColorsState(colors)
+  }, [])
+
+  // Map of hover colors
+  const hoverColors: Record<string, string> = {
+    "#689668": "#5E875E",
+    "#DCB57E": "#C6A371",
+    "#5E9BBA": "#558CA7",
+    "#C575AD": "#B1699C",
+    "#8D52A7": "#7F4A96"
   }
 
-  const getStatusBadge = (status: Pet['status']) => {
-    return status.charAt(0).toUpperCase() + status.slice(1)
-  }
+    // Sidebar Component
+  const Sidebar = () => (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-30 transition-opacity ${
+          sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-4xl font-extrabold text-gray-900">Pet Catalog</h1>
-            <Link href="/" className="text-sm text-purple-700 hover:underline">
-              ← Back to Home
-            </Link>
-          </div>
-          <p className="text-gray-600">Browse our lovely pets looking for their forever homes</p>
-        </div>
+      {/* Sidebar */}
+      <div
+        className={`fixed left-0 top-0 h-screen w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } overflow-y-auto`}
+        style={{
+          display: "flex",
+          padding: "24px",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-lg transition"
+        >
+          <X className="w-6 h-6 text-gray-800" />
+        </button>
 
-        {/* Filter Buttons */}
-        <div className="flex gap-3 mb-8">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
-              filter === 'all'
-                ? 'bg-purple-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'
-            }`}
-          >
-            All Pets
-          </button>
-          <button
-            onClick={() => setFilter('cat')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
-              filter === 'cat'
-                ? 'bg-purple-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'
-            }`}
-          >
-            🐱 Cats
-          </button>
-          <button
-            onClick={() => setFilter('dog')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
-              filter === 'dog'
-                ? 'bg-purple-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'
-            }`}
-          >
-            🐶 Dogs
-          </button>
-        </div>
+        {/* Top Section */}
+        <div className="flex flex-col gap-6 items-center w-full">
+          {/* Logo */}
+          <Image
+            src="/YFALogo.png"
+            alt="Youth for Animals Logo"
+            width={92}
+            height={77}
+          />
 
-        {/* Pet Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPets.map((pet) => (
+          <div className="flex flex-col gap-6 items-center w-full">
+            {/* Account Information */}
             <div
-              key={pet.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className="w-full"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "5px",
+                alignSelf: "stretch",
+                borderRadius: "16px",
+                border: "1px solid #3C3333",
+                backgroundColor: "#E6E6E6",
+                padding: "12px",
+              }}
             >
-              {/* Pet Image */}
-              <div className="relative h-64 bg-gradient-to-br from-purple-100 to-pink-100">
-                <Image
-                  src={pet.imageUrl}
-                  alt={pet.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-                <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(pet.status)}`}>
-                  {getStatusBadge(pet.status)}
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">LR</span>
                 </div>
-              </div>
-
-              {/* Pet Info */}
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{pet.name}</h3>
-                <p className="text-sm text-gray-600 mb-4">{pet.breed} • {pet.species}</p>
-                
-                <div className="space-y-2 text-sm text-gray-700">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Age:</span>
-                    <span>{pet.age}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Gender:</span>
-                    <span>{pet.gender}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Color:</span>
-                    <span>{pet.color}</span>
-                  </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>Lance Andrei Recla</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>lrrecla@up.edu.ph</span>
                 </div>
-
-                {/* Action Button */}
-                <button
-                  disabled={pet.status !== 'available'}
-                  className={`w-full mt-6 py-3 rounded-lg font-semibold transition-all ${
-                    pet.status === 'available'
-                      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  {pet.status === 'available' ? 'Adopt Me' : pet.status === 'adopted' ? 'Adopted' : 'Adoption Pending'}
-                </button>
               </div>
             </div>
-          ))}
+
+            {/* Navigation */}
+            <nav
+              className="w-full"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "5px",
+                alignSelf: "stretch",
+                borderRadius: "16px",
+                border: "1px solid #3C3333",
+                backgroundColor: "#E6E6E6",
+                padding: "12px",
+              }}
+            >
+              {[
+                { label: "Home", icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 22V12H15V22" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )},
+                { label: "About Us", icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M20.42 4.57996C19.9183 4.07653 19.3222 3.67709 18.6658 3.40455C18.0094 3.132 17.3057 2.9917 16.595 2.9917C15.8843 2.9917 15.1806 3.132 14.5242 3.40455C13.8678 3.67709 13.2717 4.07653 12.77 4.57996L12 5.35996L11.23 4.57996C10.7283 4.07653 10.1322 3.67709 9.47582 3.40455C8.81944 3.132 8.11571 2.9917 7.40499 2.9917C6.69428 2.9917 5.99055 3.132 5.33417 3.40455C4.67779 3.67709 4.08167 4.07653 3.57999 4.57996C1.45999 6.69996 1.32999 10.28 3.99999 13L12 21L20 13C22.67 10.28 22.54 6.69996 20.42 4.57996Z" stroke="#8D52A7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )},
+                { label: "Mission", icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <g clipPath="url(#clip0)">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#C575AD" strokeWidth="3" />
+                      <path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="#C575AD" strokeWidth="3" />
+                      <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" stroke="#C575AD" strokeWidth="3" />
+                    </g>
+                  </svg>
+                )},
+                { label: "Vision", icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="#5E9BBA" strokeWidth="2" />
+                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#5E9BBA" strokeWidth="2" />
+                  </svg>
+                )},
+                { label: "Goals", icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 11.0799V11.9999C21.9988 14.1563 21.3005 16.2545 20.0093 17.9817C18.7182 19.7088 16.9033 20.9723 14.8354 21.5838C12.7674 22.1952 10.5573 22.1218 8.53447 21.3744C6.51168 20.6271 4.78465 19.246 3.61096 17.4369C2.43727 15.6279 1.87979 13.4879 2.02168 11.3362C2.16356 9.18443 2.99721 7.13619 4.39828 5.49694C5.79935 3.85768 7.69279 2.71525 9.79619 2.24001C11.8996 1.76477 14.1003 1.9822 16.07 2.85986" stroke="#689668" strokeWidth="2"/>
+                    <path d="M22 4L12 14.01L9 11.01" stroke="#689668" strokeWidth="2"/>
+                  </svg>
+                )}
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => {
+                  setSidebarOpen(false);
+                  router.push("/"); // Redirect to landing page
+                }}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                  <span className="font-semibold text-gray-800 text-sm">
+                    {item.label}
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
 
-        {/* Empty State */}
-        {filteredPets.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-gray-500 text-lg">No pets found in this category.</p>
-          </div>
-        )}
+        {/* Animal Actions Section */}
+        <div
+          className="w-full"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "5px",
+            alignSelf: "stretch",
+            borderRadius: "16px",
+            border: "1px solid #000",
+            backgroundColor: "#E6E6E6",
+            padding: "12px",
+            marginTop: "24px",
+          }}
+        >
+          <Link
+            href="/catalog"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="w-6 h-6 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                <path d="M3 9L12 2L21 9V20C21 20.53 20.79 21.04 20.41 21.41C20.04 21.79 19.53 22 19 22H5C4.47 22 3.96 21.79 3.59 21.41C3.21 21.04 3 20.53 3 20V9Z" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 22V12H15V22" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-800 text-sm">Animal Catalogue</span>
+          </Link>
+
+          <Link
+            href="/form"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="w-6 h-6 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                <path d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z" stroke="#8D52A7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-800 text-sm">Report Animal</span>
+          </Link>
+
+          <button
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="w-6 h-6 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                <g clipPath="url(#clip0)">
+                  <path d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z" stroke="#C575AD" strokeWidth="3" />
+                  <path d="M12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18Z" stroke="#C575AD" strokeWidth="3" />
+                  <path d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z" stroke="#C575AD" strokeWidth="3" />
+                </g>
+              </svg>
+            </div>
+            <span className="font-semibold text-gray-800 text-sm">Task Volunteer</span>
+          </button>
+        </div>
+
+        {/* Bottom Section – Social Links */}
+        <div className="flex items-center gap-3 mt-auto">
+          <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
+            <Facebook size={18} />
+          </a>
+          <a href="#" className="bg-[#8D52A7] p-2 rounded-full text-white hover:opacity-80">
+            <Instagram size={18} />
+          </a>
+          <a href="#" className="bg-[#5E9BBA] p-2 rounded-full text-white hover:opacity-80">
+            <Twitter size={18} />
+          </a>
+          <a href="#" className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80">
+            <Mail size={18} />
+          </a>
+        </div>
       </div>
-    </main>
+    </>
+  );
+
+
+  return (
+    <>
+      {/* Floating Add Animal Button */}
+      <Link
+        href="/add-animal"
+        aria-label="Add Animal"
+        className="fixed bottom-4 right-6 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 bg-[#E1E69D] text-[#3C3333] hover:text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:bg-[#C2C876] transition-colors z-20"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 animate-pulse">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </Link>
+
+       <main className="min-h-screen bg-[#E6E6E6]">
+        {/* Sidebar */}
+        <Sidebar />
+        <div className="max-w-7xl mx-auto px-4 py-0">
+
+          {/* Header */}
+          <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+            <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition"><Menu className="w-6 h-6 text-gray-800" /></button>
+              <div className="flex-1 flex justify-center items-center h-full">
+                <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+              </div>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition"><LogIn className="w-6 h-6 text-gray-800" /></button>
+            </div>
+          </header>
+
+          {/* Filter Buttons */}
+          <div className="flex gap-2 mb-6 mt-2 flex-wrap">
+            <button onClick={() => setFilter('all')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'all' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>All Animals</button>
+            <button onClick={() => setFilter('cat')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'cat' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐱 Cats</button>
+            <button onClick={() => setFilter('dog')} className={`px-4 py-2 rounded-full font-medium transition-all ${filter === 'dog' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐶 Dogs</button>
+          </div>
+
+          {/* Pet Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPets.map((pet, idx) => {
+              const color = panelColorsState[idx] || '#689668'
+              const pillHover = hoverColors[color] || '#000'
+
+              return (
+                <div key={pet.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition">
+
+                  {/* Image Section */}
+                  <div className="relative h-64 w-full">
+                    <Image src={pet.imageUrl} alt={pet.name} fill className="object-cover" />
+                    <button className="absolute top-3 right-3 bg-[#3C3333]/50 p-1.5 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    <div className="absolute bottom-3 left-3 text-white">
+                      <h3 className="text-xl font-extrabold drop-shadow">{pet.name}</h3>
+                      <p className="text-sm font-medium drop-shadow">{pet.breed}</p>
+                    </div>
+                  </div>
+
+                  {/* Colored Panel */}
+                  <div
+                    className="p-5 rounded-b-2xl"
+                    style={{
+                      backgroundColor: color,
+                      color: '#E6E6E6',
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontSize: '15px',
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      lineHeight: '20px'
+                    }}
+                  >
+                    <p className="mb-3 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" /> {pet.affiliation || "CSM"}
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-3 mb-4 text-center">
+                      {[
+                        { icon: <PawPrint className="w-5 h-5 mx-auto" />, label: pet.species },
+                        { icon: pet.gender === "Male" ? <FaMars className="w-5 h-5 mx-auto" /> : <FaVenus className="w-5 h-5 mx-auto" />, label: pet.gender },
+                        { icon: <Unlink2 className="w-5 h-5 mx-auto" />, label: "Has Collar" },
+                      ].map((pill, i) => (
+                        <div
+                          key={i}
+                          className="bg-white/20 backdrop-blur-md rounded-xl py-2 flex flex-col items-center gap-1 transition-colors duration-300"
+                          style={{ color: '#E6E6E6' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = pillHover)}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                        >
+                          {pill.icon}
+                          <span className="text-xs">{pill.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Link href={`/pets/${pet.id}`} className="flex items-center gap-2 font-semibold">
+                      View Details <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {filteredPets.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-gray-500 text-lg">No pets found in this category.</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </>
   )
 }

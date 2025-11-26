@@ -1,4 +1,4 @@
-// NOTE: This is only a prompted user landing page used to test backend, not yet the final version
+
 
 "use client";
 
