@@ -11,7 +11,7 @@ import { supabase } from "@/utils/supabase/client";
 export default function HeaderAndBackground() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // State management for paw decorations, dog image, and dashboard stats
   const [paws, setPaws] = useState<
     { src: string; top: string; left: string; rotate: number }[]
@@ -21,6 +21,15 @@ export default function HeaderAndBackground() {
   const [animalReports, setAnimalReports] = useState(0);
   const [volunteerRequests, setVolunteerRequests] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Recent items (for dashboard previews)
+  const [recentAnimals, setRecentAnimals] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [recentVolunteers, setRecentVolunteers] = useState<any[]>([]);
+
+  // State for user info
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
 
   // Handle responsive layout changes for paw decorations and dog image
   useEffect(() => {
@@ -86,6 +95,12 @@ export default function HeaderAndBackground() {
         return;
       }
 
+      // Set user info from Supabase user object
+      setUserEmail(user.email || "");
+      // Try to get name from user metadata, fallback to email username
+      const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+
       // Verify user has admin privileges
       const { data: adminData, error: adminError } = await supabase
         .from("admin")
@@ -94,12 +109,6 @@ export default function HeaderAndBackground() {
         .single();
 
       if (!mounted) return;
-
-      if (adminError || !adminData) {
-        await supabase.auth.signOut();
-        router.replace("/admin/login?error=unauthorized");
-        return;
-      }
 
       // Fetch dashboard statistics from database tables
       const { count: animalsCount } = await supabase
@@ -114,11 +123,33 @@ export default function HeaderAndBackground() {
         .from("volunteer_call")
         .select("*", { count: "exact", head: true });
 
-      // Update state with fetched counts if component still mounted
+      // Fetch recent entries for quick preview (latest 3)
+      const { data: recentAnimalsData } = await supabase
+        .from("animal")
+        .select("animal_id, animal_name, animal_breed, animal_photo, animal_status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      const { data: recentReportsData } = await supabase
+        .from("animal_report")
+        .select("id, title, summary, created_at")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      const { data: recentVolunteersData } = await supabase
+        .from("volunteer_call")
+        .select("id, title, summary, created_at")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      // Update state with fetched counts and recent items if component still mounted
       if (mounted) {
         setTotalAnimals(animalsCount || 0);
         setAnimalReports(reportsCount || 0);
         setVolunteerRequests(callCount || 0);
+        setRecentAnimals(recentAnimalsData || []);
+        setRecentReports(recentReportsData || []);
+        setRecentVolunteers(recentVolunteersData || []);
         setLoading(false);
       }
     };
@@ -197,11 +228,13 @@ export default function HeaderAndBackground() {
             >
               <div className="flex items-center gap-3 w-full">
                 <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white">LR</span>
+                  <span className="text-sm font-bold text-white">
+                    {userName ? userName[0].toUpperCase() : "?"}
+                  </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>Lance Andrei Recla</span>
-                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>lrrecla@up.edu.ph</span>
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
                 </div>
               </div>
             </div>
@@ -470,50 +503,92 @@ export default function HeaderAndBackground() {
                 {/* Card 1: Animal Profiles - View and manage animal database */}
 
                 <Link href="/admin/profiles" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#C575AD] bg-[#fcfcfc]">
-                  <div className="flex-1 px-4 py-5">
-                    <h2
-                      className="text-md lg:text-xl font-medium mb-0.5"
-                      style={{
-                        color: "#C575AD",
-                        fontFamily: '"Genty Sans", sans-serif',
-                      }}
-                    >
-                      Animal Profiles
-                    </h2>
-                    <p
-                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
-                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                    >
-                      View and Manage Animal Database
-                    </p>
-                  </div>
-                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#C575AD]">
-                    <img
-                      src="/paws/paws1.png"
-                      alt="Animal Profiles"
-                      className="w-10 h-10 lg:w-12 lg-h-12"
-                    />
-                  </div>
+                  <div className="flex-1 px-4 py-5 flex flex-col">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h2
+                            className="text-md lg:text-xl font-medium mb-0.5"
+                            style={{
+                              color: "#C575AD",
+                              fontFamily: '"Genty Sans", sans-serif',
+                            }}
+                          >
+                            Animal Profiles
+                          </h2>
+                          <p
+                            className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                            style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                          >
+                            {loading ? "..." : `${totalAnimals} total animals`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex-1 flex flex-col gap-3">
+                        {recentAnimals.length === 0 ? (
+                          <div className="text-sm text-gray-500">No recent animals</div>
+                        ) : (
+                          recentAnimals.map((it) => (
+                            <div key={it.animal_id || it.created_at} className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm">
+                              <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                                {it.animal_photo ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={it.animal_photo} alt={it.animal_name} className="w-full h-full object-cover"/>
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No photo</div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-sm font-semibold text-gray-800">{it.animal_name || 'Unnamed'}</div>
+                                <div className="text-xs text-gray-500">{it.animal_breed || it.animal_species || 'Unknown'}</div>
+                              </div>
+                              <div className="text-xs text-green-500 font-semibold">{it.animal_status || ''}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="mt-4">
+                        <Link href="/admin/profiles" className="block w-full text-center bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-md shadow">View All Animals →</Link>
+                      </div>
+                    </div>
+                    <div className="w-24 lg:w-32 flex items-center justify-center bg-[#C575AD]">
+                      <img
+                        src="/paws/paws1.png"
+                        alt="Animal Profiles"
+                        className="w-10 h-10 lg:w-12 lg-h-12"
+                      />
+                    </div>
                 </Link>
 
                 {/* Card 2: Volunteer Requests - Manage volunteer tasks and requests */}
                 <Link href="/admin/volunteers" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
-                  <div className="flex-1 px-4 py-5">
-                    <h2
-                      className="text-md lg:text-xl font-medium mb-0.5"
-                      style={{
-                        color: "#5E9BBA",
-                        fontFamily: '"Genty Sans", sans-serif',
-                      }}
-                    >
-                      Volunteer Requests
-                    </h2>
-                    <p
-                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
-                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                    >
-                      View and Manage Volunteer Tasks and Requests
-                    </p>
+                  <div className="flex-1 px-4 py-5 flex flex-col">
+                    <div>
+                      <h2 className="text-md lg:text-xl font-medium mb-0.5" style={{ color: "#5E9BBA", fontFamily: '"Genty Sans", sans-serif' }}>Volunteer Requests</h2>
+                      <p className="text-[10px] md:text-xs lg:text-base text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>{loading ? '...' : `${volunteerRequests} total requests`}</p>
+                    </div>
+
+                    <div className="mt-3 flex-1 flex flex-col gap-3">
+                      {recentVolunteers.length === 0 ? (
+                        <div className="text-sm text-gray-500">No recent requests</div>
+                      ) : (
+                        recentVolunteers.map((it) => (
+                          <div key={it.id || it.created_at} className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm">
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-500">V</div>
+                            <div className="flex-1">
+                              <div className="text-sm font-semibold text-gray-800">{it.title || 'Volunteer Request'}</div>
+                              <div className="text-xs text-gray-500">{it.summary || ''}</div>
+                            </div>
+                            <div className="text-xs text-blue-500 font-semibold">{/* placeholder */}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-4">
+                      <Link href="/admin/volunteers" className="block w-full text-center bg-gradient-to-r from-blue-400 to-teal-500 text-white px-4 py-2 rounded-md shadow">View All Requests →</Link>
+                    </div>
                   </div>
                   <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA]">
                     <img
@@ -526,23 +601,33 @@ export default function HeaderAndBackground() {
               </div>
 
               {/* Card 3: Animal Reports - Track stray findings and reports */}
-              <Link href="/admin/form" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
-                <div className="flex-1 px-4 py-5">
-                  <h2
-                    className="text-md lg:text-xl font-medium mb-0.5"
-                    style={{
-                      color: "#DCB57E",
-                      fontFamily: '"Genty Sans", sans-serif',
-                    }}
-                  >
-                    Animal Reports
-                  </h2>
-                  <p
-                    className="text-[10px] md:text-xs lg:text-base text-gray-600"
-                    style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                  >
-                    Track Stray Findings and Reports
-                  </p>
+              <Link href="/admin/report" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
+                <div className="flex-1 px-4 py-5 flex flex-col">
+                  <div>
+                    <h2 className="text-md lg:text-xl font-medium mb-0.5" style={{ color: "#DCB57E", fontFamily: '"Genty Sans", sans-serif' }}>Animal Reports</h2>
+                    <p className="text-[10px] md:text-xs lg:text-base text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>{loading ? '...' : `${animalReports} active reports`}</p>
+                  </div>
+
+                  <div className="mt-3 flex-1 flex flex-col gap-3">
+                    {recentReports.length === 0 ? (
+                      <div className="text-sm text-gray-500">No recent reports</div>
+                    ) : (
+                      recentReports.map((it) => (
+                        <div key={it.id || it.created_at} className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm">
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-500">R</div>
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-gray-800">{it.title || 'Report'}</div>
+                            <div className="text-xs text-gray-500">{it.summary || ''}</div>
+                          </div>
+                          <div className="text-xs text-yellow-500 font-semibold">{/* placeholder */}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="mt-4">
+                    <Link href="/admin/report" className="block w-full text-center bg-gradient-to-r from-orange-400 to-yellow-500 text-white px-4 py-2 rounded-md shadow">View All Reports →</Link>
+                  </div>
                 </div>
                 <div className="w-24 lg:w-32 flex items-center justify-center bg-[#DCB57E]">
                   <img
