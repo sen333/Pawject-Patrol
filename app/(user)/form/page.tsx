@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 import React, { useState, useEffect, memo } from "react";
+import { supabase } from '@/utils/supabase/client'
 import { useRouter } from "next/navigation";
 import type { ReportTheme } from "@/actions/form/user";
 import Image from "next/image";
@@ -296,6 +297,7 @@ export default function ReportFormSample() {
 	const [recorderName, setRecorderName] = useState("");
 	const [userName, setUserName] = useState<string | null>(null);
 	const [userEmail, setUserEmail] = useState<string | null>(null);
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [animalName, setAnimalName] = useState("");
 	const [animalType, setAnimalType] = useState("");
 	const [gender, setGender] = useState("Unknown");
@@ -311,6 +313,40 @@ export default function ReportFormSample() {
 	const [hasCollar, setHasCollar] = useState<boolean>(false);
 	const [collarDetails, setCollarDetails] = useState<string>("");
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	// Supabase auth: populate user info and subscribe to auth changes
+	useEffect(() => {
+		const checkAuth = async () => {
+			const { data: { user } } = await supabase.auth.getUser();
+			setIsAuthenticated(!!user);
+			if (user) {
+				setUserEmail(user.email || null);
+				const nameFromMeta = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || "";
+				setUserName(nameFromMeta || user.email?.split("@")[0] || null);
+			} else {
+				setUserName(null);
+				setUserEmail(null);
+			}
+		};
+
+		checkAuth();
+
+		const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+			setIsAuthenticated(!!session?.user);
+			if (session?.user) {
+				setUserEmail(session.user.email || null);
+				const nameFromMeta = (session.user.user_metadata as any)?.full_name || (session.user.user_metadata as any)?.name || "";
+				setUserName(nameFromMeta || session.user.email?.split("@")[0] || null);
+			} else {
+				setUserName(null);
+				setUserEmail(null);
+			}
+		});
+
+		return () => {
+			subscription.unsubscribe();
+		};
+	}, []);
 
 	// Restore form state from sessionStorage on mount
 	useEffect(() => {
@@ -410,7 +446,18 @@ export default function ReportFormSample() {
 	
 			// Persist form to sessionStorage so users don't lose progress
 			try {
-				const photoBase64 = preview || null;
+				let photoBase64: string | null = null;
+				if (photoFile) {
+					// Convert File -> DataURL so it can be serialized and fetched later
+					photoBase64 = await new Promise<string>((resolve, reject) => {
+						const reader = new FileReader();
+						reader.onload = () => {
+							resolve(reader.result as string);
+						};
+						reader.onerror = () => reject(new Error('Failed to read file'));
+						reader.readAsDataURL(photoFile);
+					});
+				}
 				sessionStorage.setItem(
 					'animalReportFormData',
 					JSON.stringify({
@@ -424,8 +471,30 @@ export default function ReportFormSample() {
 				console.error('Failed to save form data:', err);
 			}
 	
-			// ...rest of handleConfirm logic (e.g. submit to server) can go here...
-	
+			// Build query params for confirm page so we can show a quick review
+			const params = new URLSearchParams({
+				recorderName: recorderName || "",
+				animalName: animalName || "",
+				animalType: animalType || "",
+				gender: gender || "",
+				dateSeen: dateSeen || "",
+				physicalDescription: physicalDescription || "",
+				otherInfo: otherInfo || "",
+				area: area || "",
+				landmark: landmark || "",
+				road: road || "",
+				theme: theme || 'blue',
+				hasHealthIssues: hasHealthIssues ? '1' : '0',
+				healthDetails: healthDetails || "",
+				hasCollar: hasCollar ? '1' : '0',
+				collarDetails: collarDetails || "",
+				lat: lat != null ? String(lat) : "",
+				lng: lng != null ? String(lng) : "",
+				photoUrl: preview || ""
+			});
+
+			// Navigate to confirm page with compact params; full snapshot available in sessionStorage
+			router.push(`/form/confirm?${params.toString()}`);
 			return;
 		}
 	

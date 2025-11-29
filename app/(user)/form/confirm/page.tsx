@@ -228,7 +228,7 @@ function ConfirmationContent() {
 					{/* Action buttons */}
 					<div className="pt-4 flex gap-3">
 						<button
-							onClick={() => router.back()}
+							onClick={() => router.push('/form')}
 							className="flex-1 rounded-md border-2 border-gray-400 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
 						>
 							Edit Report
