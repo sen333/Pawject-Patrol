@@ -132,7 +132,7 @@ export default function HeaderAndBackground() {
 
       const { data: recentReportsData } = await supabase
         .from("animal_report")
-        .select("id, title, summary, created_at")
+        .select("report_id, animal_name, animal_description, photo_url, report_status, created_at")
         .order("created_at", { ascending: false })
         .limit(3);
 
@@ -502,7 +502,7 @@ export default function HeaderAndBackground() {
                 
                 {/* Card 1: Animal Profiles - View and manage animal database */}
 
-                <Link href="/admin/profiles" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#C575AD] bg-[#fcfcfc]">
+                <div role="button" tabIndex={0} onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/profiles'); }} onClick={() => router.push('/admin/profiles')} className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#C575AD] bg-[#fcfcfc]">
                   <div className="flex-1 px-4 py-5 flex flex-col">
                       <div className="flex items-start justify-between">
                         <div>
@@ -559,10 +559,10 @@ export default function HeaderAndBackground() {
                         className="w-10 h-10 lg:w-12 lg-h-12"
                       />
                     </div>
-                </Link>
+                </div>
 
                 {/* Card 2: Volunteer Requests - Manage volunteer tasks and requests */}
-                <Link href="/admin/volunteers" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
+                <div role="button" tabIndex={0} onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/volunteers'); }} onClick={() => router.push('/admin/volunteers')} className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
                   <div className="flex-1 px-4 py-5 flex flex-col">
                     <div>
                       <h2 className="text-md lg:text-xl font-medium mb-0.5" style={{ color: "#5E9BBA", fontFamily: '"Genty Sans", sans-serif' }}>Volunteer Requests</h2>
@@ -597,11 +597,11 @@ export default function HeaderAndBackground() {
                       className="w-10 h-10 lg:w-12 lg-h-12"
                     />
                   </div>
-                </Link>
+                </div>
               </div>
 
               {/* Card 3: Animal Reports - Track stray findings and reports */}
-              <Link href="/admin/report" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/report'); }} onClick={() => router.push('/admin/report')} className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
                 <div className="flex-1 px-4 py-5 flex flex-col">
                   <div>
                     <h2 className="text-md lg:text-xl font-medium mb-0.5" style={{ color: "#DCB57E", fontFamily: '"Genty Sans", sans-serif' }}>Animal Reports</h2>
@@ -613,13 +613,28 @@ export default function HeaderAndBackground() {
                       <div className="text-sm text-gray-500">No recent reports</div>
                     ) : (
                       recentReports.map((it) => (
-                        <div key={it.id || it.created_at} className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm">
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-500">R</div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-gray-800">{it.title || 'Report'}</div>
-                            <div className="text-xs text-gray-500">{it.summary || ''}</div>
+                        <div
+                          key={it.report_id || it.created_at}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => router.push(`/admin/report/${it.report_id}`)}
+                          onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push(`/admin/report/${it.report_id}`); }}
+                          className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm hover:bg-gray-50 transition cursor-pointer"
+                          aria-label={`View report ${it.animal_name || 'report'}`}
+                        >
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                            {it.photo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={it.photo_url} alt={it.animal_name || 'Report photo'} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No photo</div>
+                            )}
                           </div>
-                          <div className="text-xs text-yellow-500 font-semibold">{/* placeholder */}</div>
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-gray-800">{it.animal_name || 'Report'}</div>
+                            <div className="text-xs text-gray-500">{(it.animal_description || '').slice(0, 80)}</div>
+                          </div>
+                          <div className="text-xs font-semibold" style={{ color: it.report_status === 'Accepted' ? '#16a34a' : it.report_status === 'Rejected' ? '#dc2626' : '#d97706' }}>{it.report_status || ''}</div>
                         </div>
                       ))
                     )}
@@ -636,7 +651,7 @@ export default function HeaderAndBackground() {
                     className="w-10 h-10 lg:w-12 lg-h-12"
                   />
                 </div>
-              </Link>
+                </div>
             </div>
           </section>
         </div>
