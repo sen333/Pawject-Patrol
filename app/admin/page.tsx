@@ -562,7 +562,7 @@ export default function HeaderAndBackground() {
                 </div>
 
                 {/* Card 2: Volunteer Requests - Manage volunteer tasks and requests */}
-                <div role="button" tabIndex={0} onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/volunteers'); }} onClick={() => router.push('/admin/volunteers')} className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
+                <div role="button" tabIndex={0} onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/volunteer'); }} onClick={() => router.push('/admin/volunteer')} className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
                   <div className="flex-1 px-4 py-5 flex flex-col">
                     <div>
                       <h2 className="text-md lg:text-xl font-medium mb-0.5" style={{ color: "#5E9BBA", fontFamily: '"Genty Sans", sans-serif' }}>Volunteer Requests</h2>
@@ -587,7 +587,7 @@ export default function HeaderAndBackground() {
                     </div>
 
                     <div className="mt-4">
-                      <Link href="/admin/volunteers" className="block w-full text-center bg-gradient-to-r from-blue-400 to-teal-500 text-white px-4 py-2 rounded-md shadow">View All Requests →</Link>
+                      <Link href="/admin/volunteer" className="block w-full text-center bg-gradient-to-r from-blue-400 to-teal-500 text-white px-4 py-2 rounded-md shadow">View All Requests →</Link>
                     </div>
                   </div>
                   <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA]">

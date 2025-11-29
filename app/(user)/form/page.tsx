@@ -703,6 +703,4 @@ export default function ReportFormSample() {
 				   </section>
 			   </main>
 		   );
-
-
 }
