@@ -138,7 +138,8 @@ export default function HeaderAndBackground() {
 
       const { data: recentVolunteersData } = await supabase
         .from("volunteer_call")
-        .select("id, title, summary, created_at")
+        // select all columns to avoid missing fields if schema differs
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(3);
 
@@ -574,13 +575,25 @@ export default function HeaderAndBackground() {
                         <div className="text-sm text-gray-500">No recent requests</div>
                       ) : (
                         recentVolunteers.map((it) => (
-                          <div key={it.id || it.created_at} className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm">
-                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-sm text-gray-500">V</div>
-                            <div className="flex-1">
-                              <div className="text-sm font-semibold text-gray-800">{it.title || 'Volunteer Request'}</div>
-                              <div className="text-xs text-gray-500">{it.summary || ''}</div>
+                          <div
+                            key={it.id || it.created_at}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => router.push('/admin/volunteer')}
+                            onKeyDown={(e) => { if ((e as any).key === 'Enter') router.push('/admin/volunteer'); }}
+                            className="flex items-center gap-3 bg-white rounded-md p-3 shadow-sm hover:bg-gray-50 transition cursor-pointer"
+                            aria-label={it.call_title || 'Volunteer request'}
+                          >
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center text-sm text-gray-500">
+                              <span className="font-semibold">{it.call_title && it.call_title.length > 0 ? it.call_title[0].toUpperCase() : 'V'}</span>
                             </div>
-                            <div className="text-xs text-blue-500 font-semibold">{/* placeholder */}</div>
+
+                            <div className="flex-1">
+                              <div className="text-sm font-semibold text-gray-800">{it.call_title || 'Volunteer Request'}</div>
+                              <div className="text-xs text-gray-500">{it.call_details ? it.call_details : <span className="italic text-gray-400">No details</span>}</div>
+                            </div>
+
+                            <div className="text-xs font-semibold" style={{ color: it.call_status === 'Accepted' ? '#16a34a' : it.call_status === 'Rejected' ? '#dc2626' : '#d97706' }}>{it.call_status || ''}</div>
                           </div>
                         ))
                       )}

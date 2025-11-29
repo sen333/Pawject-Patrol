@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient, getUser } from "@/utils/supabase/server";
+import { redirect } from 'next/navigation';
 
 type ListOpts = {
   status?: string;
@@ -21,7 +22,10 @@ export async function listVolunteerCalls(opts: ListOpts = {}) {
     .range(offset, offset + limit - 1);
 
   if (status) q = q.eq("call_status", status);
-  if (search) q = q.ilike("call_title", `%${search}%`);
+  if (search) {
+    // Search across title, details, and location for better admin UX
+    q = q.or(`call_title.ilike.%${search}%,call_details.ilike.%${search}%,call_location.ilike.%${search}%`);
+  }
   if (from) q = q.gte("call_starttime", from);
 
   const { data, error } = await q;
@@ -52,6 +56,15 @@ export async function createVolunteerCall(payload: any, userId?: string) {
   // We'll resolve the correct `admin_id` PK from the `admin` table. The authenticated
   // user id (auth uid) may be stored in `auth_id`, while `admin_id` is the table PK.
   const row: any = { ...payload };
+
+  // Normalize and sanitize location if present
+  if (typeof row.call_location === "string") {
+    row.call_location = row.call_location.trim();
+    if (row.call_location === "") row.call_location = null;
+    if (row.call_location && row.call_location.length > 255) {
+      row.call_location = row.call_location.slice(0, 255);
+    }
+  }
 
   // If RLS is enabled and there's no authenticated admin, inserts will fail due to policies.
   // Throw a helpful error so callers can handle auth/login first.
@@ -165,4 +178,48 @@ export async function signUpForCall(callId: string, payload: { user_id?: string;
   }
 
   return { response, assignmentStatus };
+}
+
+// Server action wrapper for form submissions from the app UI.
+// This delegates to `createVolunteerCall` and performs the same validation
+// previously implemented in app/admin/volunteer/request/actions.ts.
+export async function createAction(formData: FormData) {
+  'use server';
+  const title = String(formData.get('title') || '');
+  const call_details = String(formData.get('call_details') || '');
+  const call_location = String(formData.get('call_location') || '');
+  const start_time = String(formData.get('call_starttime') || '');
+  const end_time = String(formData.get('call_endtime') || '');
+  const capacity = parseInt(String(formData.get('capacity') || '0'), 10) || 0;
+  const status = String(formData.get('status') || 'Pending');
+
+  if (start_time) {
+    const startDate = new Date(start_time);
+    if (isNaN(startDate.getTime())) throw new Error('Invalid start time');
+    if (startDate.getTime() < Date.now()) throw new Error('Start time must not be before the current date and time');
+    if (end_time) {
+      const endDate = new Date(end_time);
+      if (isNaN(endDate.getTime())) throw new Error('Invalid end time');
+      if (endDate.getTime() < startDate.getTime()) throw new Error('End time must not be before start time');
+    }
+  }
+
+  // resolve user on the server (getUser is available in this module)
+  const user = await getUser();
+  const adminId = user?.id;
+  if (!adminId) throw new Error('You must be signed in as an admin to create volunteer calls.');
+
+  try {
+    await createVolunteerCall({ call_title: title, call_details, call_location, call_starttime: start_time, call_endtime: end_time, capacity, call_status: status }, adminId);
+    // redirect back to list on success
+    redirect('/admin/volunteer');
+    return { ok: true };
+  } catch (err: any) {
+    const msg = String(err?.message || err);
+    if (/violates foreign key constraint .*volunteer_call_admin_id_fkey/i.test(msg) || err?.code == '23503') {
+      const hintSql = `-- If you intend this auth user to be an admin, insert into public.admin:\nINSERT INTO public.admin (auth_id, added_at) VALUES ('${adminId}', now());`;
+      throw new Error(`Insert failed: admin auth id ${adminId} is not present in table public.admin. Quick fix (run in Supabase SQL editor):\n${hintSql}`);
+    }
+    throw err;
+  }
 }
