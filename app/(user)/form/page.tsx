@@ -383,8 +383,7 @@ export default function ReportFormSample() {
 							});
 					}
 				}
-				// Clear sessionStorage after restoring
-				sessionStorage.removeItem('animalReportFormData');
+				// Keep sessionStorage so user can return to edit; it will be cleared after final submit
 			} catch (error) {
 				console.error('Failed to restore form data:', error);
 			}

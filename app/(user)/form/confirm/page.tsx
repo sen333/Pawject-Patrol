@@ -109,6 +109,8 @@ function ConfirmationContent() {
 				setResultMsg(res.error ?? "Failed to submit");
 			} else {
 				setResultMsg("Report submitted successfully!");
+					// Clear the saved snapshot now that submission succeeded
+					sessionStorage.removeItem('animalReportFormData');
 				// Redirect to home after 2 seconds
 				setTimeout(() => router.push("/"), 2000);
 			}
