@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAction } from "@/actions/volunteer/admin";
 
+// Decode base64-encoded JSON data from query parameter for pre-filling the confirmation page
 function decodeData(s?: string) {
   if (!s) return null;
   try {
@@ -11,16 +12,24 @@ function decodeData(s?: string) {
   }
 }
 
+// Main component for confirming volunteer request creation
 export default function ConfirmPage(props: any) {
+  // Extract and decode data from search parameters
   const searchParams = props.searchParams;
   const encoded = searchParams?.data;
-  // Try to decode a single `data` param (base64 JSON). If not present,
-  // fall back to reading individual query params produced by the GET form.
+
+  // Load data from encoded parameter or directly from searchParams
   let data: any = decodeData(encoded);
 
+  // Check for individual fields in searchParams if no encoded data
   if (!data && searchParams) {
+    // Look for any known keys to determine if data is present
     const anyKeys = ['call_title', 'call_details', 'call_location', 'call_starttime', 'call_endtime', 'capacity', 'call_status', 'status', 'title'];
+    
+    // Check if any known keys are present in searchParams
     const hasAny = anyKeys.some((k) => typeof searchParams[k] !== 'undefined');
+
+    // If any known keys are found, construct the data object
     if (hasAny) {
       data = {
         call_title: searchParams.call_title || searchParams.title || '',
@@ -34,7 +43,9 @@ export default function ConfirmPage(props: any) {
     }
   }
 
+  // If no data is available, show a message
   if (!data) {
+    // Render message for missing data
     return (
       <main className="min-h-screen bg-yellow-50">
         <div className="max-w-3xl mx-auto p-6">
@@ -44,6 +55,7 @@ export default function ConfirmPage(props: any) {
     );
   }
 
+  // Render the confirmation page
   return (
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-3xl mx-auto p-6">

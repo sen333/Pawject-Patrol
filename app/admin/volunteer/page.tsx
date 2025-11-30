@@ -1,6 +1,8 @@
+// Import necessary modules and types
 import Link from "next/link";
 import { listVolunteerCalls, deleteAction } from "@/actions/volunteer/admin";
 
+// Define Volunteer type
 type Volunteer = {
   call_id?: string;
   call_title?: string | null;
@@ -13,6 +15,7 @@ type Volunteer = {
   call_status?: string | null;
 };
 
+// Function to determine badge classes based on status
 function statusBadgeClasses(status?: string | null) {
   const s = (status || "").toLowerCase();
   if (s.includes("active")) return "bg-blue-100 text-blue-800 border-blue-200";
@@ -21,29 +24,39 @@ function statusBadgeClasses(status?: string | null) {
   return "bg-amber-100 text-amber-800 border-amber-200";
 }
 
+// Function to format date and time for display
 function formatDateTime(value?: string | null) {
+  // Handle empty values
   if (!value) return "";
+
+  // Attempt to format the date
   try {
     const d = new Date(value);
     if (isNaN(d.getTime())) return value;
     return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   } catch {
+    // Fallback to returning the original value
     return String(value);
   }
 }
 
+// Main component for Admin Volunteer Page
 export default async function AdminVolunteerPage(props: any) {
-  // `searchParams` may be a thenable in Next.js; await it before accessing properties.
+  // Constants for search and sorting
   const resolvedParams: any = await (props.searchParams as any);
   const search = String(resolvedParams?.search || '');
   const sortBy = String(resolvedParams?.sortBy || '');
 
   // Map empty -> default 'created_at'
   const column = sortBy || 'created_at';
+
+  // Determine default sort order
   const defaultAsc = column === 'call_title' || column === 'call_starttime';
 
+  // Fetch volunteer calls with search and sorting
   const items = (await listVolunteerCalls({ search: search || undefined, limit: 200 })) as Volunteer[];
 
+  // Render the admin volunteer page
   return (
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-5xl mx-auto p-6">

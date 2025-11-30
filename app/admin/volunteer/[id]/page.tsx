@@ -1,6 +1,8 @@
+// Import necessary modules and actions
 import { getVolunteerCall, deleteAction } from "@/actions/volunteer/admin";
 import Link from "next/link";
 
+// Define Volunteer type
 type Volunteer = {
   call_id: string;
   call_title: string | null;
@@ -13,6 +15,7 @@ type Volunteer = {
   created_at?: string | null;
 };
 
+// Function to determine badge classes based on status
 function statusBadgeClasses(status?: string | null) {
   const s = (status || "").toLowerCase();
   if (s.includes("accepted")) return "bg-green-100 text-green-800 border-green-200";
@@ -21,21 +24,34 @@ function statusBadgeClasses(status?: string | null) {
   return "bg-gray-100 text-gray-800 border-gray-200";
 }
 
+// Function to format date and time for display
 function formatDateTime(value?: string | null) {
+  // Handle empty values
   if (!value) return "—";
+
+  // Attempt to format the date
   try {
+    // Create date object
     const d = new Date(value);
+
+    // Check for invalid date
     if (isNaN(d.getTime())) return value;
+
+    // Format to locale string
     return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
   } catch (err) {
+    // Fallback to returning the original value
     return value;
   }
 }
 
+// Main component for Admin Volunteer Detail Page
 export default async function AdminVolunteerDetailPage(props: any) {
-  // Next.js may provide `params` as a thenable — await it before accessing properties.
+  // Extract volunteer ID from route parameters
   const resolvedParams: any = await props.params;
   const id = resolvedParams?.id;
+
+  // Handle missing ID
   if (!id) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
@@ -46,8 +62,10 @@ export default async function AdminVolunteerDetailPage(props: any) {
     );
   }
 
+  // Fetch volunteer call details
   const volunteer: any = await getVolunteerCall(id);
 
+  // Handle not found volunteer call
   if (!volunteer) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
@@ -58,8 +76,7 @@ export default async function AdminVolunteerDetailPage(props: any) {
     );
   }
 
-  // Server-rendered page: use a server-action form to delete and redirect.
-
+  // Render the volunteer detail page
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
       <div className="max-w-5xl mx-auto px-4 py-8">

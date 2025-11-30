@@ -1,23 +1,26 @@
+// app/admin/volunteer/request/page.tsx
 import React from "react";
 import { getUser, createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-// Server page with server action and client form for creating volunteer requests
+// Page component for creating a volunteer request
 export default async function RequestPage(props: any) {
+  // Constants for search parameters
   const searchParams = await props.searchParams;
   // Require admin user (redirect if not authenticated/authorized)
   const user = await getUser();
   if (!user) redirect('/admin/login');
 
+  // Check if user is an admin
   const supabase = await createClient();
   const { data: adminRow } = await supabase.from('admin').select('auth_id').eq('auth_id', user.id).maybeSingle();
   if (!adminRow) redirect('/admin/login?error=unauthorized');
 
+  // Current time in ISO format for setting min attribute on datetime-local inputs
   const nowMin = new Date().toISOString().slice(0, 16);
 
-  // If the page is navigated to with query params (from the confirm -> Edit link),
-  // prefill the inputs with those values.
+  // Prefill form fields from search parameters if available
   const prefill = {
     call_title: searchParams?.call_title || '',
     call_details: searchParams?.call_details || '',
@@ -28,6 +31,7 @@ export default async function RequestPage(props: any) {
     call_status: searchParams?.call_status || 'Pending',
   };
 
+  // Render the request page
   return (
     <main className="min-h-screen bg-yellow-50">
       <div className="max-w-3xl mx-auto p-6">
@@ -92,5 +96,3 @@ export default async function RequestPage(props: any) {
     </main>
   );
 }
-
-// create action moved to API route; form UI is now a client component
