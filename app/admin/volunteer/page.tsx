@@ -109,7 +109,7 @@ export default async function AdminVolunteerPage(props: any) {
                 </div>
                 <div className="mt-4 flex items-center justify-end gap-3">
                   <Link href={`/admin/volunteer/${it.call_id}`} className="text-xs text-purple-700 hover:underline">View</Link>
-                  <form action={deleteAction} method="post" className="inline">
+                  <form action={deleteAction} className="inline">
                     <input type="hidden" name="id" value={it.call_id} />
                     <button type="submit" className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
                   </form>
