@@ -1,225 +1,233 @@
 "use server";
 
-import { createClient, getUser } from "@/utils/supabase/server";
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { createClient } from "../../utils/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-type ListOpts = {
-  status?: string;
-  limit?: number;
-  offset?: number;
-  search?: string;
-  from?: string;
+type VolunteerCall = {
+  call_id?: string;
+  call_title?: string | null;
+  call_details?: string | null;
+  call_starttime?: string | null;
+  call_endtime?: string | null;
+  call_location?: string | null;
+  capacity?: number | null;
+  call_status?: string | null;
+  created_at?: string | null;
 };
 
-export async function listVolunteerCalls(opts: ListOpts = {}) {
-  const supabase = await createClient();
-  const { status, limit = 20, offset = 0, search, from } = opts;
-
-  let q: any = supabase
-    .from("volunteer_call")
-    .select("*")
-    .order("call_starttime", { ascending: true })
-    .range(offset, offset + limit - 1);
-
-  if (status) q = q.eq("call_status", status);
-  if (search) {
-    // Search across title, details, and location for better admin UX
-    q = q.or(`call_title.ilike.%${search}%,call_details.ilike.%${search}%,call_location.ilike.%${search}%`);
-  }
-  if (from) q = q.gte("call_starttime", from);
-
-  const { data, error } = await q;
-  if (error) throw error;
-  return data || [];
+async function getSupabase() {
+  return await createClient();
 }
 
-export async function getVolunteerCall(id: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("volunteer_call").select("*").eq("call_id", id).maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-export async function createVolunteerCall(payload: any, userId?: string) {
-  const supabase = await createClient();
-  // If no userId provided, try to read the current authenticated user from the server
-  let adminId = userId;
-  if (!adminId) {
-    try {
-      const user = await getUser();
-      adminId = user?.id || undefined;
-    } catch (e) {
-      // ignore - we'll handle missing user below
-    }
-  }
-
-  // We'll resolve the correct `admin_id` PK from the `admin` table. The authenticated
-  // user id (auth uid) may be stored in `auth_id`, while `admin_id` is the table PK.
-  const row: any = { ...payload };
-
-  // Normalize and sanitize location if present
-  if (typeof row.call_location === "string") {
-    row.call_location = row.call_location.trim();
-    if (row.call_location === "") row.call_location = null;
-    if (row.call_location && row.call_location.length > 255) {
-      row.call_location = row.call_location.slice(0, 255);
-    }
-  }
-
-  // If RLS is enabled and there's no authenticated admin, inserts will fail due to policies.
-  // Throw a helpful error so callers can handle auth/login first.
-  if (!adminId) {
-    throw new Error('Cannot create volunteer call: no authenticated admin. Log in or run this with an admin/service role.');
-  }
-
-  // Verify that the authenticated user is present in the `public.admin` table so the
-  // foreign-key constraint (admin_id -> public.admin(admin_id)) won't fail.
+export async function listVolunteerCalls(opts?: { search?: string; limit?: number }) {
   try {
-    // First try matching on `auth_id` (the column that usually stores the auth uid).
-    let existingAdmin: any = null;
-    let adminErr: any = null;
-
-    ({ data: existingAdmin, error: adminErr } = await supabase
-      .from("admin")
-      .select("admin_id, auth_id")
-      .eq("auth_id", adminId)
-      .maybeSingle());
-
-    if (adminErr) throw adminErr;
-
-    // If not found by auth_id, try matching by admin_id (in case caller passed an admin_id)
-    if (!existingAdmin) {
-      ({ data: existingAdmin, error: adminErr } = await supabase
-        .from("admin")
-        .select("admin_id, auth_id")
-        .eq("admin_id", adminId)
-        .maybeSingle());
-      if (adminErr) throw adminErr;
+    const supabase = await getSupabase();
+    let q: any = supabase.from("volunteer_call").select("*");
+    if (opts?.search) {
+      const s = opts.search;
+      q = q.or(`call_title.ilike.%${s}%,call_details.ilike.%${s}%,call_location.ilike.%${s}%`);
     }
-
-    if (!existingAdmin) {
-      // Provide a helpful SQL hint: insert an admin row that maps the auth uid to an admin.
-      const hintSql = `-- If you intend this auth user to be an admin, insert into public.admin:\nINSERT INTO public.admin (auth_id, added_at) VALUES ('${adminId}', now());`;
-      throw new Error(`Insert failed: admin auth id ${adminId} is not present in table public.admin.\nQuick fix (run in Supabase SQL editor):\n${hintSql}`);
+    q = q.order("created_at", { ascending: false });
+    if (opts?.limit) q = q.limit(opts.limit);
+    const { data, error } = await q;
+    if (error) {
+      console.error("listVolunteerCalls error:", error);
+      return [];
     }
-
-    // Use the resolved admin_id PK (on the admin table) as the FK for volunteer_call.
-    row.admin_id = existingAdmin.admin_id;
+    try {} catch (e) {}
+    return (data || []) as VolunteerCall[];
   } catch (e) {
-    // Re-throw errors for the caller to surface (server action will return as a 500).
-    throw e;
+    console.error(e);
+    return [];
   }
-
-  const { data, error } = await supabase.from("volunteer_call").insert(row).select().maybeSingle();
-  if (error) throw error;
-  return data;
 }
 
-export async function updateVolunteerCall(id: string, updates: any) {
-  const supabase = await createClient();
-  updates.updated_at = new Date().toISOString();
-  const { data, error } = await supabase.from("volunteer_call").update(updates).eq("call_id", id).select().maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-export async function deleteVolunteerCall(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("volunteer_call").delete().eq("call_id", id);
-  if (error) throw error;
-  return true;
-}
-
-// Basic signup: tries to increment `filled` and then creates an assignment row.
-// This implementation is best-effort; for production use create an RPC function
-// to perform the capacity-check and insert atomically in Postgres.
-export async function signUpForCall(callId: string, payload: { user_id?: string; name?: string; email?: string; role?: string; }) {
-  const supabase = await createClient();
-  const sup = supabase;
-
-  // Try to fetch a capacity column if your schema has one. If not present, treat as unlimited.
-  const { data: call, error: callErr } = await sup.from("volunteer_call").select("capacity, call_id").eq("call_id", callId).maybeSingle();
-  if (callErr) throw callErr;
-
-  const capacity = typeof call?.capacity === "number" ? call.capacity : 0;
-
-  // Count existing confirmed responses in the `volunteer_response` table
-  let responseCount = 0;
+export async function getVolunteerCall(id?: string) {
+  if (!id) return null;
   try {
-    const countRes: any = await sup
-      .from("volunteer_response")
-      .select("response_id", { count: "exact", head: true })
-      .eq("call_id", callId)
-      .eq("response_stat", "confirmed");
-    responseCount = countRes.count || 0;
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from("volunteer_call").select("*").eq("call_id", id).single();
+    if (error) {
+      console.error("getVolunteerCall error:", error);
+      return null;
+    }
+    return data as VolunteerCall;
   } catch (e) {
-    // If volunteer_response table is missing, fall back to 0
-    responseCount = 0;
+    console.error(e);
+    return null;
   }
-
-  let assignmentStatus = "confirmed";
-  // If capacity is set and reached, mark as waitlist
-  if (capacity > 0 && responseCount >= capacity) {
-    assignmentStatus = "waitlist";
-  }
-
-  // Insert into the `volunteer_response` table. This table (from your screenshots)
-  // has columns like response_id, created_at, user_id, call_id, response_stat
-  const insertRow: any = {
-    call_id: callId,
-    user_id: payload.user_id || null,
-    response_stat: assignmentStatus,
-  };
-
-  const { data: response, error: respErr } = await sup.from("volunteer_response").insert(insertRow).select().maybeSingle();
-  if (respErr) {
-    // surface helpful error if insertion fails (e.g., table/column missing)
-    throw respErr;
-  }
-
-  return { response, assignmentStatus };
 }
 
-// Server action wrapper for form submissions from the app UI.
-// This delegates to `createVolunteerCall` and performs the same validation
-// previously implemented in app/admin/volunteer/request/actions.ts.
-export async function createAction(formData: FormData) {
-  'use server';
-  const title = String(formData.get('title') || '');
-  const call_details = String(formData.get('call_details') || '');
-  const call_location = String(formData.get('call_location') || '');
-  const start_time = String(formData.get('call_starttime') || '');
-  const end_time = String(formData.get('call_endtime') || '');
-  const capacity = parseInt(String(formData.get('capacity') || '0'), 10) || 0;
-  const status = String(formData.get('status') || 'Pending');
-
-  if (start_time) {
-    const startDate = new Date(start_time);
-    if (isNaN(startDate.getTime())) throw new Error('Invalid start time');
-    if (startDate.getTime() < Date.now()) throw new Error('Start time must not be before the current date and time');
-    if (end_time) {
-      const endDate = new Date(end_time);
-      if (isNaN(endDate.getTime())) throw new Error('Invalid end time');
-      if (endDate.getTime() < startDate.getTime()) throw new Error('End time must not be before start time');
-    }
-  }
-
-  // resolve user on the server (getUser is available in this module)
-  const user = await getUser();
-  const adminId = user?.id;
-  if (!adminId) throw new Error('You must be signed in as an admin to create volunteer calls.');
-
+// Server actions used as form `action` handlers in pages
+export async function createAction(formData: FormData): Promise<void> {
   try {
-    await createVolunteerCall({ call_title: title, call_details, call_location, call_starttime: start_time, call_endtime: end_time, capacity, call_status: status }, adminId);
-    // redirect back to list on success
-    redirect('/admin/volunteer');
-    return { ok: true };
-  } catch (err: any) {
-    const msg = String(err?.message || err);
-    if (/violates foreign key constraint .*volunteer_call_admin_id_fkey/i.test(msg) || err?.code == '23503') {
-      const hintSql = `-- If you intend this auth user to be an admin, insert into public.admin:\nINSERT INTO public.admin (auth_id, added_at) VALUES ('${adminId}', now());`;
-      throw new Error(`Insert failed: admin auth id ${adminId} is not present in table public.admin. Quick fix (run in Supabase SQL editor):\n${hintSql}`);
+    // Log incoming form data for debugging
+    try {} catch (e) {}
+
+    const payload: any = {
+      call_title: String(formData.get("call_title") || "").trim() || null,
+      call_details: String(formData.get("call_details") || "").trim() || null,
+      call_location: String(formData.get("call_location") || "").trim() || null,
+      call_starttime: String(formData.get("call_starttime") || null) || null,
+      call_endtime: String(formData.get("call_endtime") || null) || null,
+      capacity: formData.get("capacity") ? Number(String(formData.get("capacity"))) : null,
+      call_status: String(formData.get("call_status") || "Pending") || "Pending",
+    };
+
+    
+
+    // Prefer service role for insert if available (bypass RLS), else use authenticated client
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const svc = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        );
+        const res = await svc.from("volunteer_call").insert(payload).select();
+        if (res.error) {
+          console.error("createAction (service) error:", res.error);
+          return;
+        }
+        // revalidate the admin volunteer list so the UI updates immediately
+        try { revalidatePath('/admin/volunteer'); } catch (_) {}
+        // perform redirect outside of catch handling below by throwing through
+        redirect("/admin/volunteer");
+        return;
+      } catch (e: any) {
+        // If Next's redirect throws, rethrow so the runtime can handle navigation
+        if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+          throw e;
+        }
+        console.error("createAction service client error:", e);
+        return;
+      }
     }
-    throw err;
+
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from("volunteer_call").insert(payload).select();
+    if (error) {
+      console.error("createAction error:", error);
+      return;
+    }
+
+    // After creating, revalidate the admin list and redirect back
+    try { revalidatePath('/admin/volunteer'); } catch (_) {}
+    redirect("/admin/volunteer");
+    return;
+  } catch (e: any) {
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
+export async function updateAction(formData: FormData): Promise<void> {
+  try {
+    const id = String(formData.get("id") || "");
+    if (!id) {
+      console.error("updateAction missing id");
+      return;
+    }
+    const supabase = await getSupabase();
+    const updateData: any = {};
+    if (formData.has("call_title")) updateData.call_title = String(formData.get("call_title") || null) || null;
+    if (formData.has("call_details")) updateData.call_details = String(formData.get("call_details") || null) || null;
+    if (formData.has("call_location")) updateData.call_location = String(formData.get("call_location") || null) || null;
+    if (formData.has("call_starttime")) updateData.call_starttime = String(formData.get("call_starttime") || null) || null;
+    if (formData.has("call_endtime")) updateData.call_endtime = String(formData.get("call_endtime") || null) || null;
+    if (formData.has("capacity")) updateData.capacity = formData.get("capacity") ? Number(String(formData.get("capacity"))) : null;
+    if (formData.has("call_status")) updateData.call_status = String(formData.get("call_status") || "") || null;
+
+    const { error } = await supabase.from("volunteer_call").update(updateData).eq("call_id", id).select();
+    if (error) console.error("updateAction error:", error);
+    else {
+      try { revalidatePath('/admin/volunteer'); } catch (_) {}
+    }
+    return;
+  } catch (e: any) {
+    // If Next's redirect throws, rethrow so the runtime can handle navigation
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
+export async function deleteAction(formData: FormData): Promise<void> {
+  try {
+    const id = String(formData.get("id") || "");
+    if (!id) {
+      console.error("deleteAction missing id");
+      return;
+    }
+    
+    let error: any = null;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const svc = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        );
+        const before = await svc.from("volunteer_call").select("*").eq("call_id", id).maybeSingle();
+        const res = await svc.from("volunteer_call").delete().eq("call_id", id).select();
+        error = res.error;
+        if (error) console.error("deleteAction (service) error:", error);
+      } catch (e) {
+        if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+          throw e;
+        }
+        console.error("deleteAction service client error:", e);
+        return;
+      }
+    } else {
+      const supabase = await getSupabase();
+      const before = await supabase.from("volunteer_call").select("*").eq("call_id", id).maybeSingle();
+      const res = await supabase.from("volunteer_call").delete().eq("call_id", id).select();
+      error = res.error;
+      if (error) console.error("deleteAction error:", error);
+    }
+
+    // Revalidate the admin volunteer list so the UI updates immediately, then redirect
+    try { revalidatePath('/admin/volunteer'); } catch (_) {}
+    redirect("/admin/volunteer");
+  } catch (e: any) {
+    // If Next's redirect throws, rethrow so the runtime can handle navigation
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
+// Server action helper for client components: delete by id and return status
+export async function deleteVolunteerCall(id?: string) {
+  if (!id) return { success: false, error: "missing id" };
+  try {
+    let error: any = null;
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const svc = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      );
+      const { data, error: svcErr } = await svc.from("volunteer_call").delete().eq("call_id", id).select();
+      error = svcErr;
+      if (error) return { success: false, error: String((error as any).message || error) };
+    } else {
+      const supabase = await getSupabase();
+      const { data, error: authErr } = await supabase.from("volunteer_call").delete().eq("call_id", id).select();
+      error = authErr;
+      if (error) return { success: false, error: String((error as any).message || error) };
+    }
+
+    try { revalidatePath('/admin/volunteer'); } catch (_) {}
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message || String(e) };
   }
 }

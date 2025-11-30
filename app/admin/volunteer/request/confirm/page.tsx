@@ -1,61 +1,36 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createAction } from "@/actions/volunteer/admin";
 
-type Snapshot = {
-  title?: string;
-  call_details?: string;
-  call_location?: string;
-  call_starttime?: string;
-  call_endtime?: string;
-  capacity?: number;
-  status?: string;
-};
-
-export default function ConfirmPage() {
-  const router = useRouter();
-  const [data, setData] = useState<Snapshot | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('volunteerCallFormData');
-      if (!raw) return;
-      setData(JSON.parse(raw));
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
-  function onEdit() {
-    // go back to form for editing (form will rehydrate from sessionStorage)
-    router.back();
+function decodeData(s?: string) {
+  if (!s) return null;
+  try {
+    const json = Buffer.from(decodeURIComponent(s), 'base64').toString('utf8');
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
   }
+}
 
-  async function onConfirm() {
-    if (!data) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/volunteer/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json?.error || 'Failed to create volunteer call');
-        setLoading(false);
-        return;
-      }
-      sessionStorage.removeItem('volunteerCallFormData');
-      // navigate to list
-      router.push('/admin/volunteer');
-    } catch (err: any) {
-      setError(String(err?.message || err));
-      setLoading(false);
+export default function ConfirmPage(props: any) {
+  const searchParams = props.searchParams;
+  const encoded = searchParams?.data;
+  // Try to decode a single `data` param (base64 JSON). If not present,
+  // fall back to reading individual query params produced by the GET form.
+  let data: any = decodeData(encoded);
+
+  if (!data && searchParams) {
+    const anyKeys = ['call_title', 'call_details', 'call_location', 'call_starttime', 'call_endtime', 'capacity', 'call_status', 'status', 'title'];
+    const hasAny = anyKeys.some((k) => typeof searchParams[k] !== 'undefined');
+    if (hasAny) {
+      data = {
+        call_title: searchParams.call_title || searchParams.title || '',
+        call_details: searchParams.call_details || '',
+        call_location: searchParams.call_location || '',
+        call_starttime: searchParams.call_starttime || '',
+        call_endtime: searchParams.call_endtime || '',
+        capacity: typeof searchParams.capacity !== 'undefined' ? (searchParams.capacity as string) : undefined,
+        call_status: searchParams.call_status || searchParams.status || 'Pending',
+      };
     }
   }
 
@@ -83,10 +58,10 @@ export default function ConfirmPage() {
         </header>
 
         <section className="bg-white p-4 rounded shadow space-y-3">
-          <div>
-            <h2 className="font-semibold">Title</h2>
-            <p className="text-gray-700">{data.title}</p>
-          </div>
+                  <div>
+                    <h2 className="font-semibold">Title</h2>
+                    <p className="text-gray-700">{data.call_title || data.title || '-'}</p>
+                  </div>
           <div>
             <h2 className="font-semibold">Details</h2>
             <p className="text-gray-700">{data.call_details || '-'}</p>
@@ -111,15 +86,35 @@ export default function ConfirmPage() {
           </div>
           <div>
             <h2 className="font-semibold">Status</h2>
-            <p className="text-gray-700">{data.status}</p>
+            <p className="text-gray-700">{data.call_status || data.status || 'Pending'}</p>
           </div>
 
-          {error && <div className="text-red-600">{error}</div>}
-
-          <div className="flex gap-3 justify-end">
-            <button onClick={onEdit} type="button" className="px-4 py-2 rounded border">Edit</button>
-            <button onClick={onConfirm} type="button" className="px-4 py-2 rounded bg-blue-600 text-white" disabled={loading}>{loading ? 'Creating…' : 'Confirm & Create'}</button>
-          </div>
+          <form action={createAction} method="post" className="flex gap-3 justify-end">
+            <input type="hidden" name="call_title" value={data.call_title || data.title || ''} />
+            <input type="hidden" name="call_details" value={data.call_details || ''} />
+            <input type="hidden" name="call_location" value={data.call_location || ''} />
+            <input type="hidden" name="call_starttime" value={data.call_starttime || ''} />
+            <input type="hidden" name="call_endtime" value={data.call_endtime || ''} />
+            <input type="hidden" name="capacity" value={String(data.capacity ?? '')} />
+            <input type="hidden" name="call_status" value={data.call_status || data.status || 'Pending'} />
+            {
+              // Build an Edit URL that preserves the entered values so the request
+              // form can be prefilled when navigating back from Confirm.
+            }
+            {(() => {
+              const params = new URLSearchParams();
+              params.set('call_title', String(data.call_title || data.title || ''));
+              if (data.call_details) params.set('call_details', String(data.call_details));
+              if (data.call_location) params.set('call_location', String(data.call_location));
+              if (data.call_starttime) params.set('call_starttime', String(data.call_starttime));
+              if (data.call_endtime) params.set('call_endtime', String(data.call_endtime));
+              if (typeof data.capacity !== 'undefined' && data.capacity !== null) params.set('capacity', String(data.capacity));
+              params.set('call_status', String(data.call_status || data.status || 'Pending'));
+              const href = '/admin/volunteer/request?' + params.toString();
+              return <Link href={href} className="px-4 py-2 rounded border">Edit</Link>;
+            })()}
+            <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">Confirm & Create</button>
+          </form>
         </section>
       </div>
     </main>
