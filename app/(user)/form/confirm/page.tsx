@@ -8,7 +8,6 @@ import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createAnimalReport } from "@/actions/form/user";
-import type { ReportTheme } from "@/actions/form/user";
 
 // Dynamically import AdminMapView with no SSR
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
@@ -36,7 +35,7 @@ function ConfirmationContent() {
 	const healthIssues = searchParams.get("healthIssues") || "";
 	const animalCollar = searchParams.get("animalCollar") || "";
 	const otherInfo = searchParams.get("otherInfo") || "";
-	const theme = (searchParams.get("theme") || "blue") as ReportTheme;
+	// report_theme removed from user forms; no theme handling here
 	const lat = parseFloat(searchParams.get("lat") || "0");
 	const lng = parseFloat(searchParams.get("lng") || "0");
 	const photoUrl = searchParams.get("photoUrl") || "";
@@ -63,12 +62,6 @@ function ConfirmationContent() {
 		}
 	}, []);
 
-	const themeColors = {
-		blue: 'bg-[#5E9BBA]',
-		green: 'bg-[#689668]',
-		orange: 'bg-[#DCB57E]',
-		purple: 'bg-[#C575AD]'
-	};
 
 	async function handleConfirmSubmit() {
 		// Submit the report
@@ -98,7 +91,7 @@ function ConfirmationContent() {
 			health_issues: healthIssues || undefined,
 			animal_collar: animalCollar || undefined,
 			other_information: otherInfo || undefined,
-			report_theme: theme || undefined,
+			// report_theme removed
 			latitude: lat,
 			longitude: lng,
 			photo: photoFile || undefined,
@@ -218,14 +211,7 @@ function ConfirmationContent() {
 					{/* Other Info */}
 					<DisplayTextArea label="Any Other Information" value={otherInfo || "None"} />
 
-					{/* Theme display */}
-					<div className="rounded-xl bg-[#CFC9C9] p-4">
-						<label className="block text-sm font-medium mb-3 text-gray-800">Selected Theme</label>
-						<div className="flex items-center gap-3">
-							<div className={`w-12 h-12 rounded-md ${themeColors[theme]}`}></div>
-							<span className="text-sm font-medium capitalize">{theme}</span>
-						</div>
-					</div>
+					{/* Theme removed from confirmation display */}
 
 					{/* Action buttons */}
 					<div className="pt-4 flex gap-3">

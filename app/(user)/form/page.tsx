@@ -6,7 +6,6 @@ const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 import React, { useState, useEffect, memo } from "react";
 import { supabase } from '@/utils/supabase/client'
 import { useRouter } from "next/navigation";
-import type { ReportTheme } from "@/actions/form/user";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
@@ -307,7 +306,7 @@ export default function ReportFormSample() {
 	const [area, setArea] = useState("");
 	const [landmark, setLandmark] = useState("");
 	const [road, setRoad] = useState("");
-	const [theme, setTheme] = useState<ReportTheme>('blue');
+	// theme removed per request: report_theme is no longer collected from user forms
 	const [hasHealthIssues, setHasHealthIssues] = useState<boolean>(false);
 	const [healthDetails, setHealthDetails] = useState<string>("");
 	const [hasCollar, setHasCollar] = useState<boolean>(false);
@@ -364,7 +363,7 @@ export default function ReportFormSample() {
 				setArea(data.area || "");
 				setLandmark(data.landmark || "");
 				setRoad(data.road || "");
-				setTheme(data.theme || 'blue');
+				// theme removed: do not restore theme from session
 				setHasHealthIssues(data.hasHealthIssues || false);
 				setHealthDetails(data.healthDetails || "");
 				setHasCollar(data.hasCollar || false);
@@ -433,7 +432,6 @@ export default function ReportFormSample() {
 				area,
 				landmark,
 				road,
-				theme,
 				hasHealthIssues,
 				healthDetails,
 				hasCollar,
@@ -482,7 +480,7 @@ export default function ReportFormSample() {
 				area: area || "",
 				landmark: landmark || "",
 				road: road || "",
-				theme: theme || 'blue',
+				// report_theme removed from form data
 				hasHealthIssues: hasHealthIssues ? '1' : '0',
 				healthDetails: healthDetails || "",
 				hasCollar: hasCollar ? '1' : '0',
@@ -566,7 +564,7 @@ export default function ReportFormSample() {
 							   {/* Fields panel */}
 							   <div className="flex-1 min-w-[327px] space-y-3">
 								   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									   <Field label="Recorder Name" placeholder="Your name" value={recorderName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRecorderName(e.target.value)} />
+									   <Field label="Reporter Name" placeholder="Your name" value={recorderName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRecorderName(e.target.value)} />
 									   <Field label="Animal Name (Optional)" placeholder="Animal's name" value={animalName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnimalName(e.target.value)} />
 								   </div>
 								   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -669,27 +667,6 @@ export default function ReportFormSample() {
 	
 						   <div className="w-full">
 							   <TextArea label="Any Other Information" placeholder="Any additional details..." value={otherInfo} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOtherInfo(e.target.value)} />
-						   </div>
-	
-						   {/* Theme */}
-						   <div className="w-full rounded-xl bg-[#E1E69D] p-4">
-							   <label className="block text-sm font-medium mb-3 text-gray-800">Theme</label>
-							   <div className="grid grid-cols-4 gap-3">
-								   {[
-									   { key: 'blue' as ReportTheme, color: 'bg-[#5E9BBA]' },
-									   { key: 'green' as ReportTheme, color: 'bg-[#689668]' },
-									   { key: 'orange' as ReportTheme, color: 'bg-[#DCB57E]' },
-									   { key: 'purple' as ReportTheme, color: 'bg-[#C575AD]' }
-								   ].map(t => (
-									   <button
-										   key={t.key}
-										   type="button"
-										   onClick={() => setTheme(t.key)}
-										   aria-label={`${t.key} theme`}
-										   className={`h-10 rounded-md ${t.color} transition outline outline-2 ${theme === t.key ? 'outline-black' : 'outline-transparent'} hover:brightness-110`}
-									   />
-								   ))}
-							   </div>
 						   </div>
 	
 						   {/* Submit */}
