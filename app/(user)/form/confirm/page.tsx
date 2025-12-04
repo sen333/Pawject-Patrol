@@ -8,6 +8,7 @@ import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createAnimalReport } from "@/actions/form/user";
+import { getGlobalPhotoFile } from "@/app/(user)/form/page";
 
 // Dynamically import AdminMapView with no SSR
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
@@ -23,8 +24,7 @@ function ConfirmationContent() {
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
 
 	// Extract all data from URL params
-	const recorderName = searchParams.get("recorderName") || "";
-	const animalName = searchParams.get("animalName") || "";
+	const reporterName = searchParams.get("reporterName") || "";
 	const animalType = searchParams.get("animalType") || "";
 	const gender = searchParams.get("gender") || "Unknown";
 	const dateSeen = searchParams.get("dateSeen") || "";
@@ -40,25 +40,11 @@ function ConfirmationContent() {
 	const lng = parseFloat(searchParams.get("lng") || "0");
 	const photoUrl = searchParams.get("photoUrl") || "";
 
-	// Restore photo File from sessionStorage on mount
+	// Restore photo File from global storage on mount
 	useEffect(() => {
-		const savedData = sessionStorage.getItem('animalReportFormData');
-
-		// If saved data exists, try to reconstruct the File object
-		if (savedData) {
-			try {
-				const data = JSON.parse(savedData);
-				if (data.photoBase64 && data.photoName && data.photoType) {
-					fetch(data.photoBase64)
-						.then(res => res.blob())
-						.then(blob => {
-							const file = new File([blob], data.photoName, { type: data.photoType });
-							setPhotoFile(file);
-						});
-				}
-			} catch (error) {
-				console.error('Failed to restore photo:', error);
-			}
+		const file = getGlobalPhotoFile();
+		if (file) {
+			setPhotoFile(file);
 		}
 	}, []);
 
@@ -79,8 +65,7 @@ function ConfirmationContent() {
 
 		// Submit the report
 		const res = await createAnimalReport({
-			recorder_name: recorderName || undefined,
-			animal_name: animalName || undefined,
+			reporter_name: reporterName || undefined,
 			animal_type: animalType || "other",
 			animal_gender: gender as string,
 			date_seen: dateSeenWithTime,
@@ -170,18 +155,19 @@ function ConfirmationContent() {
 
 						{/* Fields panel - Read-only display */}
 						<div className="space-y-3">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+							<DisplayField label="Reporter Name" value={reporterName.trim() ? reporterName : "—"} />
+							<DisplayField label="Type of animal" value={animalType || "—"} />
+						</div>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<DisplayField label="Recorder Name" value={recorderName || "—"} />
-								<DisplayField label="Animal Name" value={animalName || "—"} />
+
+								<DisplayField label="Gender" value={gender} />
+								<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
 							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<DisplayField label="Type of animal" value={animalType || "—"} />
-								<div className="grid grid-cols-2 gap-3">
-									<DisplayField label="Gender" value={gender} />
-									<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
-								</div>
+							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
+								<label className="block text-sm font-medium text-[#3C3333] mb-2">Physical Description</label>
+								<p className="text-sm text-[#3C3333] whitespace-pre-wrap min-h-[120px]">{physicalDescription || "—"}</p>
 							</div>
-							<DisplayTextArea label="Physical Description" value={physicalDescription || "—"} />
 						</div>
 					</div>
 

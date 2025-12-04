@@ -9,19 +9,18 @@ import { supabase } from "@/utils/supabase/client";
 
 // Define the Report type
 type Report = {
-  report_id: string; // UUID
-  animal_name: string | null;
-  animal_type: string | null;
-  animal_gender: string | null;
-  date_seen: string | null;
-  area: string | null;
-  landmark: string | null;
-  created_at: string | null;
-  photo_url: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  report_status: string | null;
-	report_theme?: string | null;
+	report_id: string; // UUID
+	animal_name: string | null;
+	animal_type: string | null;
+	animal_gender: string | null;
+	date_seen: string | null;
+	area: string | null;
+	landmark: string | null;
+	created_at: string | null;
+	photo_url: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	report_status: string | null;
 	health_issues?: string | null;
 	animal_collar?: string | null;
 	other_information?: string | null;
@@ -33,6 +32,7 @@ export default function AdminReportsPage() {
 	const router = useRouter();
 	const [reports, setReports] = useState<Report[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [fetchError, setFetchError] = useState<string | null>(null);
 
 	// Fetch reports on mount
 	useEffect(() => {
@@ -74,13 +74,16 @@ export default function AdminReportsPage() {
 			const { data, error } = await supabase
 				.from("animal_report")
 				.select(
-					"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, report_theme, health_issues, animal_collar, other_information"
+					"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
 				)
 				.order("created_at", { ascending: false })
 				.limit(50);
 			
 			// Check if still mounted
 			if (!mounted) return;
+
+			// Debug logging
+			console.log("AdminReports fetch", { user, admin, data, error });
 
 			// Handle fetch results
 			if (!error && data) {
@@ -93,6 +96,8 @@ export default function AdminReportsPage() {
 				});
 				// Set the sorted reports
 				setReports(sorted);
+			} else if (error) {
+				setFetchError(error.message ?? String(error));
 			}
 			// Finalize loading state
 			setLoading(false);
@@ -149,14 +154,6 @@ export default function AdminReportsPage() {
 									}`}>
 										{r.report_status || 'Pending'}
 									</span>
-									{r.report_theme && (
-										<span className={`inline-block w-4 h-4 rounded border border-gray-300 ${
-										  r.report_theme === 'blue' ? 'bg-[#1F4E79]' :
-										  r.report_theme === 'green' ? 'bg-[#2F5E4E]' :
-										  r.report_theme === 'orange' ? 'bg-[#C26437]' :
-										  r.report_theme === 'purple' ? 'bg-[#5C2F74]' : 'bg-gray-200'
-										}`} title={`Theme: ${r.report_theme}`}></span>
-									)}
 								</div>
 							</div>
 							{r.report_id ? (

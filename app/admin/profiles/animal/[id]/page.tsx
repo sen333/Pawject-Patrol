@@ -19,6 +19,15 @@ type Animal = {
 	created_at: string | null;
 	animal_location?: string | null;
 	vaccination_status?: string | null;
+	recorder_name?: string | null;
+ 	animal_theme?: string | null;
+ 	date_seen?: string | null;
+ 	area?: string | null;
+ 	landmark?: string | null;
+ 	road?: string | null;
+ 	health_issues?: string | null;
+ 	animal_collar?: string | null;
+ 	other_information?: string | null;
 };
 
 // Function to get CSS classes for status badge
@@ -206,6 +215,58 @@ export default function AdminAnimalDetailPage() {
 									<dt className="font-medium text-gray-600">Created</dt>
 									<dd className="text-gray-800">{animal.created_at ? new Date(animal.created_at).toLocaleString() : "—"}</dd>
 								</div>
+								{animal.recorder_name && (
+									<div>
+										<dt className="font-medium text-gray-600">Recorder</dt>
+										<dd className="text-gray-800">{animal.recorder_name || (animal as any).recorderName}</dd>
+									</div>
+								)}
+								{animal.animal_theme && (
+									<div>
+										<dt className="font-medium text-gray-600">Theme</dt>
+										<dd className="text-gray-800">{animal.animal_theme || (animal as any).animalTheme}</dd>
+									</div>
+								)}
+								{(animal.date_seen || animal.area || animal.landmark || animal.road) && (
+									<>
+										<div>
+											<dt className="font-medium text-gray-600">Date Seen</dt>
+											<dd className="text-gray-800">{animal.date_seen ? new Date(animal.date_seen).toLocaleString() : "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Area</dt>
+											<dd className="text-gray-800">{animal.area || "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Landmark</dt>
+											<dd className="text-gray-800">{animal.landmark || "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Road</dt>
+											<dd className="text-gray-800">{animal.road || "—"}</dd>
+										</div>
+									</>
+								)}
+								{(animal.health_issues || animal.animal_collar || animal.other_information) && (
+									<>
+										<div>
+											<dt className="font-medium text-gray-600">Health Issues</dt>
+											<dd className="text-gray-800">{animal.health_issues || "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Collar</dt>
+											<dd className="text-gray-800">{animal.animal_collar || "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Other Information</dt>
+											<dd className="text-gray-800">{animal.other_information || "—"}</dd>
+										</div>
+										<div>
+											<dt className="font-medium text-gray-600">Animal Status</dt>
+											<dd className="text-gray-800">{animal.animal_status || "—"}</dd>
+										</div>
+									</>
+								)}
 							</dl>
 							<div className="mt-8 flex gap-3">
 								<Link

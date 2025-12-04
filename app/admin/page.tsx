@@ -311,7 +311,7 @@ export default function HeaderAndBackground() {
 
         {/* Animal Actions Section */}
         <div
-          className="w-full"
+          className="w-full mt-6"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -370,7 +370,7 @@ export default function HeaderAndBackground() {
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>

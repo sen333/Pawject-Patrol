@@ -15,6 +15,18 @@ function getRandomColor(lastColor: string | null) {
   const filtered = panelColors.filter(c => c !== lastColor)
   return filtered[Math.floor(Math.random() * filtered.length)]
 }
+
+// Helper: convert animal_theme name to hex color
+function getThemeColor(theme: string | null): string {
+  if (!theme) return '#689668' // default green
+  const themeMap: Record<string, string> = {
+    'blue': '#5E9BBA',
+    'green': '#689668',
+    'orange': '#DCB57E',
+    'pink': '#C575AD'
+  }
+  return themeMap[theme.toLowerCase()] || '#689668'
+}
 import { supabase } from '@/utils/supabase/client'
 
 // Animal type definition
@@ -29,8 +41,9 @@ interface Animal {
   animal_status: string | null
   animal_photo: string | null
   animal_affiliation: string | null
+  animal_collar: string | null // <-- Add collar for status display
+  animal_theme: string | null // <-- Add theme for panel color
   created_at: string | null
-  report_theme?: string | null // <-- Add theme from animal_report
 }
 
 // Catalog Page Component
@@ -383,9 +396,8 @@ export default function CatalogPage() {
         {/* Sidebar */}
         <Sidebar />
         <div className="max-w-7xl mx-auto px-4 py-0">
-
-          {/* Header */}
-          <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+          {/* Navigation header */}
+          <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
             <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
               <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition"><Menu className="w-6 h-6 text-gray-800" /></button>
               <div className="flex-1 flex justify-center items-center h-full">
@@ -393,31 +405,55 @@ export default function CatalogPage() {
               </div>
               <button className="p-2 hover:bg-gray-100 rounded-lg transition"><LogIn className="w-6 h-6 text-gray-800" /></button>
             </div>
+          </div>
+          {/* Page header below navigation, styled like animal profile form */}
+          <header className="flex flex-col items-start justify-center py-6 mb-6">
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              style={{
+                color: "#C2C876",
+                WebkitTextStrokeWidth: ".5px",
+                WebkitTextStrokeColor: "#3C3333",
+                fontFamily: '"Kawaii RT", sans-serif',
+                fontStyle: "normal",
+                fontWeight: 400,
+                lineHeight: "normal",
+                outlineColor: "#3C3333",
+              }}
+            >
+              Animal Catalog
+            </h1>
+            <p
+              className="text-xs sm:text-sm md:text-md"
+              style={{ color: "#3C3333", fontFamily: '"Genty Sans", sans-serif' }}
+            >
+              Browse all animals available for adoption and care
+            </p>
           </header>
 
-          {/* Filter Buttons */}
-          <div className="flex gap-2 mb-6 mt-2 flex-wrap">
-            <button onClick={() => setFilter('all')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'all' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>All Animals</button>
-            <button onClick={() => setFilter('cat')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'cat' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐱 Cats</button>
-            <button onClick={() => setFilter('dog')} className={`px-4 py-2 rounded-full font-medium transition-all ${filter === 'dog' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐶 Dogs</button>
-          </div>
-
-          {/* Search input */}
-          <div className="mb-6 flex justify-end">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name, breed, or species..."
-              className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-            />
+          {/* Filter Buttons and Search input in one row */}
+          <div className="flex flex-wrap gap-2 mb-6 mt-2 items-center justify-between">
+            <div className="flex gap-2">
+              <button onClick={() => setFilter('all')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'all' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>All Animals</button>
+              <button onClick={() => setFilter('cat')} className={`px-6 py-2 rounded-full font-medium transition-all ${filter === 'cat' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐱 Cats</button>
+              <button onClick={() => setFilter('dog')} className={`px-4 py-2 rounded-full font-medium transition-all ${filter === 'dog' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-purple-50 border border-gray-200'}`}>🐶 Dogs</button>
+            </div>
+            <div className="flex-1 flex justify-end min-w-[300px]">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search by name, breed, or species..."
+                className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+            </div>
           </div>
 
           {/* Pet Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAnimals.map((pet: Animal) => {
-              // Use the saved theme color from report_theme, fallback to '#689668'
-              const color = pet.report_theme || '#689668'
+              // Convert animal_theme name to hex color
+              const color = getThemeColor(pet.animal_theme)
               const pillHover = hoverColors[color] || '#000'
               return (
                   <div key={pet.animal_id} className="shadow-lg hover:shadow-xl transition rounded-2xl overflow-hidden flex flex-col h-full bg-transparent">
@@ -453,14 +489,12 @@ export default function CatalogPage() {
                         {[
                           { icon: <PawPrint className="w-5 h-5 mx-auto" />, label: pet.animal_species },
                           { icon: pet.animal_gender === "Male" ? <FaMars className="w-5 h-5 mx-auto" /> : <FaVenus className="w-5 h-5 mx-auto" />, label: pet.animal_gender },
-                          { icon: <Unlink2 className="w-5 h-5 mx-auto" />, label: pet.animal_status || "Unknown" },
+                          { icon: <Unlink2 className="w-5 h-5 mx-auto" />, label: pet.animal_collar || "None" },
                         ].map((pill, i) => (
                           <div
                             key={i}
-                            className="bg-white/20 backdrop-blur-md rounded-xl py-2 flex flex-col items-center gap-1 transition-colors duration-300"
-                            style={{ color: '#E6E6E6' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = pillHover)}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                            className="backdrop-blur-md rounded-xl py-2 flex flex-col items-center gap-1 border border-white"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.15)', color: '#E6E6E6' }}
                           >
                             {pill.icon}
                             <span className="text-xs">{pill.label}</span>
