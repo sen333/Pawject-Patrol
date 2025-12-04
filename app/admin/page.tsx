@@ -180,7 +180,7 @@ export default function HeaderAndBackground() {
         .from("animal")
         .select("animal_id, animal_name, animal_breed, animal_photo, animal_status, created_at")
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(4);
 
       const { data: recentReportsData } = await supabase
         .from("animal_report")
@@ -193,7 +193,7 @@ export default function HeaderAndBackground() {
         // select all columns to avoid missing fields if schema differs
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(4);
 
       // Update state with fetched counts and recent items if component still mounted
       if (mounted) {
@@ -422,7 +422,7 @@ export default function HeaderAndBackground() {
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
@@ -615,7 +615,7 @@ export default function HeaderAndBackground() {
             <div className=" md:pr-10 md:pl-10 flex flex-col lg:flex-row flex-wrap gap-6 justify-center">
               
               {/* Animal Profiles Card */}
-              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#DCB57E]">
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#DCB57E] flex flex-col">
                 {/* Header */}
                 <a
                   href="/admin/profiles"
@@ -655,15 +655,16 @@ export default function HeaderAndBackground() {
                 {/* Preview and Button Container */}
                 <div
                   className="
-    flex flex-col items-start gap-[10px] self-stretch
-    px-[10px] pb-[20px] pt-[20px]
+    flex flex-col items-start self-stretch
+    px-[10px] pb-[20px] pt-[20px] h-full
   "
                 >
                   {/* Preview Items */}
+                  <div className="flex flex-col gap-[10px] flex-1 w-full">
                   {recentAnimals.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent animals</div>
                   ) : (
-                    recentAnimals.slice(0, 3).map((animal, idx) => (
+                    recentAnimals.slice(0, 4).map((animal, idx) => (
                       <div
                         key={animal.animal_id || idx}
                         className="
@@ -725,13 +726,14 @@ export default function HeaderAndBackground() {
                       </div>
                     ))
                   )}
+                  </div>
 
                   {/* View All Button */}
                   <button
                     onClick={() => router.push('/admin/profiles')}
                     className="
     flex h-[33px] px-[16px] py-[8px]
-    items-start gap-[10px] self-stretch
+    items-center gap-[10px] self-stretch
     rounded-lg bg-[#DCB57E]
     text-xs font-medium
     hover:bg-[#d4a86b] transition-colors mt-[10px]
@@ -748,7 +750,7 @@ export default function HeaderAndBackground() {
               </div>
 
            {/* Animal Reports Card */}
-<div className="w-full lg:w-[calc(33.333%-16px)] bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-[#5E9BBA]">
+<div className="w-full lg:w-[calc(33.333%-16px)] bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-[#5E9BBA] flex flex-col">
   {/* Header */}
   <a
     href="/admin/report"
@@ -778,7 +780,8 @@ export default function HeaderAndBackground() {
   </a>
 
   {/* Preview and Button Container */}
-  <div className="flex flex-col items-start gap-2 px-2 py-5">
+  <div className="flex flex-col items-start px-2 py-5 h-full">
+    <div className="flex flex-col gap-2 flex-1 w-full">
     {recentReports.length === 0 ? (
       <div className="text-sm text-gray-500">No recent reports</div>
     ) : (
@@ -934,11 +937,12 @@ export default function HeaderAndBackground() {
         );
       })
     )}
+    </div>
 
     {/* View All Button */}
     <button
       onClick={() => router.push('/admin/report')}
-      className="flex h-[33px] px-4 py-2 items-center justify-center w-full rounded-lg bg-[#5E9BBA] text-xs font-medium text-white hover:bg-[#4f8aa8] transition-colors mt-2"
+      className="flex h-[33px] px-4 py-2 items-center justify-center w-full rounded-lg bg-[#5E9BBA] text-xs font-medium text-white hover:bg-[#4f8aa8] transition-colors mt-[10px]"
       style={{ fontFamily: '"Genty Sans", sans-serif' }}
     >
       View All Reports
@@ -947,7 +951,7 @@ export default function HeaderAndBackground() {
 </div>
 
               {/* Volunteer Requests Card */}
-              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#C575AD]">
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#C575AD] flex flex-col">
                 {/* Header */}
                 <a
                   href="/admin/volunteer"
@@ -987,14 +991,15 @@ export default function HeaderAndBackground() {
                 {/* Preview and Button Container */}
                 <div
                   className="
-    flex flex-col items-start gap-[10px] self-stretch
-    px-[10px] pb-[20px] pt-[20px]
+    flex flex-col items-start self-stretch
+    px-[10px] pb-[20px] pt-[20px] h-full
   "
                 >
+                  <div className="flex flex-col gap-[10px] flex-1 w-full">
                   {recentVolunteers.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent requests</div>
                   ) : (
-                    recentVolunteers.slice(0, 3).map((volunteer, idx) => (
+                    recentVolunteers.slice(0, 4).map((volunteer, idx) => (
                       <div
                         key={volunteer.id || idx}
                         onClick={() => router.push('/admin/volunteer')}
@@ -1026,13 +1031,14 @@ export default function HeaderAndBackground() {
                       </div>
                     ))
                   )}
+                  </div>
 
                   {/* View All Button */}
                   <button
                     onClick={() => router.push('/admin/volunteer')}
                     className="
     flex h-[33px] px-[16px] py-[8px]
-    items-start gap-[10px] self-stretch
+    items-center gap-[10px] self-stretch
     rounded-lg bg-[#C575AD]
     text-xs font-medium
     hover:bg-[#b05a9a] transition-colors mt-[10px]
