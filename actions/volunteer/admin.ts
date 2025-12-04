@@ -26,7 +26,7 @@ async function getSupabase() {
 }
 
 // Function to list volunteer calls with optional search and limit
-export async function listVolunteerCalls(opts?: { search?: string; limit?: number }) {
+export async function listVolunteerCalls(opts?: { search?: string; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
 
   // Log incoming options for debugging
   try {
@@ -41,8 +41,11 @@ export async function listVolunteerCalls(opts?: { search?: string; limit?: numbe
       // Search in title, details, or location
       q = q.or(`call_title.ilike.%${s}%,call_details.ilike.%${s}%,call_location.ilike.%${s}%`);
     }
-    // Default ordering by created_at descending
-    q = q.order("created_at", { ascending: false });
+    
+    // Apply sorting
+    const sortColumn = opts?.sortBy || "created_at";
+    const sortAsc = opts?.sortOrder === 'asc';
+    q = q.order(sortColumn, { ascending: sortAsc });
     
     // Apply limit if specified
     if (opts?.limit) q = q.limit(opts.limit);
@@ -222,13 +225,16 @@ export async function updateAction(formData: FormData): Promise<void> {
     // Handle any errors
     if (error) console.error("updateAction error:", error);
     
-    // Revalidate the admin volunteer list so the UI updates immediately
+    // Revalidate the admin volunteer list and detail page so the UI updates immediately
     else {
-      try { revalidatePath('/admin/volunteer'); } catch (_) {}
+      try { 
+        revalidatePath('/admin/volunteer'); 
+        revalidatePath(`/admin/volunteer/${id}`);
+      } catch (_) {}
     }
 
-    // Successful completion: redirect back to the admin volunteer list
-    return;
+    // Successful completion: redirect back to the volunteer detail page
+    redirect(`/admin/volunteer/${id}`);
   } 
   // Catch unexpected errors
   catch (e: any) {

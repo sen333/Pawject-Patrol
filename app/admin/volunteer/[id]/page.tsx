@@ -1,6 +1,8 @@
 // Import necessary modules and actions
 import { getVolunteerCall, deleteAction } from "@/actions/volunteer/admin";
 import Link from "next/link";
+import Image from "next/image";
+import { Menu, LogIn } from "lucide-react";
 
 // Define Volunteer type
 type Volunteer = {
@@ -54,9 +56,9 @@ export default async function AdminVolunteerDetailPage(props: any) {
   // Handle missing ID
   if (!id) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
+      <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="py-24 text-center text-gray-500">Missing volunteer id.</div>
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Missing volunteer id.</div>
         </div>
       </main>
     );
@@ -68,9 +70,9 @@ export default async function AdminVolunteerDetailPage(props: any) {
   // Handle not found volunteer call
   if (!volunteer) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
+      <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
         <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="py-24 text-center text-gray-500">Volunteer request not found.</div>
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Volunteer request not found.</div>
         </div>
       </main>
     );
@@ -78,20 +80,55 @@ export default async function AdminVolunteerDetailPage(props: any) {
 
   // Render the volunteer detail page
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50 to-pink-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-extrabold text-gray-900">Volunteer Request (Admin)</h1>
-          <Link href="/admin/volunteer" className="text-sm text-purple-700 hover:underline">← Back to Volunteer Requests</Link>
+    <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
+      {/* Navigation header */}
+      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <Menu className="w-6 h-6 text-gray-800" />
+          </Link>
+          <div className="flex-1 flex justify-center items-center h-full">
+            <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+          </div>
+          <Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <LogIn className="w-6 h-6 text-gray-800" />
+          </Link>
         </div>
+      </div>
+
+      {/* Page Header */}
+      <div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+            style={{
+              color: '#C2C876',
+              WebkitTextStrokeWidth: '.5px',
+              WebkitTextStrokeColor: '#3C3333',
+              fontFamily: '"Kawaii RT", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              lineHeight: 'normal',
+              outlineColor: '#3C3333',
+            }}
+          >
+            Volunteer Request Details
+          </h2>
+          <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+            View and manage volunteer request information
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 pb-8">
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="relative h-28 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center px-6">
+          <div className="relative h-28 flex items-center px-6" style={{ backgroundColor: '#C2C876' }}>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-purple-600 text-white flex items-center justify-center text-xl font-bold">{(volunteer.call_title && volunteer.call_title[0]) ? volunteer.call_title[0].toUpperCase() : 'V'}</div>
+              <div className="h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: '#3C3333', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}>{(volunteer.call_title && volunteer.call_title[0]) ? volunteer.call_title[0].toUpperCase() : 'V'}</div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{volunteer.call_title || "Untitled"}</h2>
-                <div className={`mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`}>
+                <h2 className="text-2xl font-bold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{volunteer.call_title || "Untitled"}</h2>
+                <div className={`mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
                   {volunteer.call_status || 'Unknown'}
                 </div>
               </div>
@@ -100,40 +137,58 @@ export default async function AdminVolunteerDetailPage(props: any) {
 
           <div className="p-6 md:p-8">
             {volunteer.call_details && (
-              <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">{volunteer.call_details}</p>
+              <p className="leading-relaxed mb-6 whitespace-pre-line" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{volunteer.call_details}</p>
             )}
 
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <dt className="font-medium text-gray-600">Start • End</dt>
-                <dd className="text-gray-800">{formatDateTime(volunteer.call_starttime)} &nbsp;•&nbsp; {formatDateTime(volunteer.call_endtime)}</dd>
+                <dt className="font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Start • End</dt>
+                <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{formatDateTime(volunteer.call_starttime)} &nbsp;•&nbsp; {formatDateTime(volunteer.call_endtime)}</dd>
               </div>
 
               <div>
-                <dt className="font-medium text-gray-600">Location</dt>
-                <dd className="text-gray-800">{volunteer.call_location || 'Unknown'}</dd>
+                <dt className="font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Location</dt>
+                <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{volunteer.call_location || 'Unknown'}</dd>
               </div>
 
               <div>
-                <dt className="font-medium text-gray-600">Capacity</dt>
-                <dd className="text-gray-800">{typeof volunteer.capacity === 'number' ? volunteer.capacity : '—'}</dd>
+                <dt className="font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Capacity</dt>
+                <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{typeof volunteer.capacity === 'number' ? volunteer.capacity : '—'}</dd>
               </div>
 
               {/* Removed 'Signed Up' / `filled` count — this app tracks capacity and responses separately */}
 
               <div>
-                <dt className="font-medium text-gray-600">Created</dt>
-                <dd className="text-gray-800">{volunteer.created_at ? formatDateTime(volunteer.created_at) : '—'}</dd>
+                <dt className="font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Created</dt>
+                <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{volunteer.created_at ? formatDateTime(volunteer.created_at) : '—'}</dd>
               </div>
             </dl>
 
             <div className="mt-8 flex gap-3">
-              <Link href="/admin/volunteer" className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300">Back</Link>
-              <Link href={`/admin/volunteer/${volunteer.call_id}/edit`} className="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700">Edit Request</Link>
+              <Link 
+                href="/admin/volunteer" 
+                className="px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#E6E6E6', color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Back
+              </Link>
+              <Link 
+                href={`/admin/volunteer/${volunteer.call_id}/edit`} 
+                className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Edit Request
+              </Link>
 
               <form action={deleteAction}>
                 <input type="hidden" name="id" value={volunteer.call_id} />
-                <button type="submit" className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-semibold hover:bg-red-700">Delete Request</button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#DC2626', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                >
+                  Delete Request
+                </button>
               </form>
             </div>
           </div>
