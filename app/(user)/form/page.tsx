@@ -68,6 +68,7 @@ export default function ReportFormSample() {
   const [submitting, setSubmitting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
 
+  const [reportTitle, setReportTitle] = useState("");
   const [reporterName, setReporterName] = useState("");
   const [animalType, setAnimalType] = useState("");
   const [gender, setGender] = useState("Unknown");
@@ -96,6 +97,7 @@ export default function ReportFormSample() {
     if (savedData) {
       try {
         const data = JSON.parse(savedData);
+        setReportTitle(data.reportTitle || "");
         setReporterName(data.reporterName || "");
         setAnimalType(data.animalType || "");
         setGender(data.gender || "Unknown");
@@ -186,6 +188,12 @@ export default function ReportFormSample() {
   async function handleConfirm() {
     setResultMsg(null);
 
+    if (!reportTitle.trim()) {
+      setResultMsg("Please enter a report title before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
+
     if (!reporterName.trim()) {
       setResultMsg("Please enter your name before proceeding.");
       setActiveTab("basic");
@@ -198,6 +206,7 @@ export default function ReportFormSample() {
     }
 
     const formData: any = {
+      reportTitle,
       reporterName,
       animalType,
       gender,
@@ -222,6 +231,7 @@ export default function ReportFormSample() {
     setGlobalPhotoFile(photoFile);
 
     const params = new URLSearchParams({
+      reportTitle: reportTitle || "",
       reporterName: reporterName || "",
       animalType: animalType || "",
       gender: gender || "Unknown",
@@ -825,17 +835,25 @@ export default function ReportFormSample() {
             {activeTab === "basic" && (
               <div className="space-y-4">
                 <Field
-                  label="Reporter Name"
-                  placeholder="Your name"
-                  value={reporterName}
-                  onChange={(e: InputChange) => setReporterName(e.target.value)}
+                  label="Report Title"
+                  placeholder="Brief title for this report"
+                  value={reportTitle}
+                  onChange={(e: InputChange) => setReportTitle(e.target.value)}
                 />
-                <Field
-                  label="Type of animal"
-                  placeholder="Dog, Cat, etc."
-                  value={animalType}
-                  onChange={(e: InputChange) => setAnimalType(e.target.value)}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Reporter Name"
+                    placeholder="Your name"
+                    value={reporterName}
+                    onChange={(e: InputChange) => setReporterName(e.target.value)}
+                  />
+                  <Field
+                    label="Type of animal"
+                    placeholder="Dog, Cat, etc."
+                    value={animalType}
+                    onChange={(e: InputChange) => setAnimalType(e.target.value)}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
                     label="Gender"

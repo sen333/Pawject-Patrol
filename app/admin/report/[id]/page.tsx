@@ -16,6 +16,7 @@ const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: f
 // Define the ReportData type to match the database schema
 type ReportData = {
   report_id: string;
+  report_title: string | null;
   animal_name: string | null;
   animal_type: string | null;
   animal_gender: string | null;
@@ -288,6 +289,10 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
             {/* Animal details */}
             <div className="md:col-span-2 space-y-3">
+              <div>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Report Title</label>
+                <p className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.report_title ?? 'Untitled Report'}</p>
+              </div>
               <div>
                 <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Animal Name</label>
                 <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_name ?? 'Unnamed'}</p>

@@ -195,7 +195,7 @@ export default function HeaderAndBackground() {
 
       const { data: recentReportsData } = await supabase
         .from("animal_report")
-        .select("report_id, animal_name, animal_description, photo_url, report_status, created_at")
+        .select("report_id, report_title, animal_description, photo_url, report_status, created_at")
         .order("created_at", { ascending: false })
         .limit(3);
 
@@ -1024,7 +1024,7 @@ export default function HeaderAndBackground() {
                 className="text-xs"
                 style={{ color: "#213641", fontFamily: '"Genty Sans", sans-serif' }}
               >
-                {report.animal_name || 'Report'}
+                {report.report_title || 'Untitled Report'}
               </p>
             </div>
 

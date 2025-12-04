@@ -5,6 +5,8 @@ import { createClient } from "@/utils/supabase/server";
 // Define the structure of an admin animal report summary
 export interface AdminAnimalReportSummary {
 	report_id: string; // UUID
+	report_title: string | null;
+	reporter_name: string | null;
 	animal_name: string | null;
 	animal_type: string | null;
 	animal_gender: string | null;
@@ -32,7 +34,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 	const { data, error } = await supabase
 		.from("animal_report")
 		.select(
-			"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
+			"report_id, report_title, reporter_name, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
 		)
 		.order("created_at", { ascending: false })
 		.limit(limit * 3); // Fetch more to sort by status
