@@ -339,7 +339,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                     <p><span className="font-medium" style={{ color: '#6B7280' }}>Health Issues:</span> {data.health_issues}</p>
                   )}
                   {data.animal_collar && (
-                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Collar:</span> {data.animal_collar}</p>
+                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Collar:</span> {data.animal_collar === 'Yes' ? 'Has Collar' : 'Has No Collar'}</p>
                   )}
                   {data.other_information && (
                     <p><span className="font-medium" style={{ color: '#6B7280' }}>Other Info:</span> {data.other_information}</p>

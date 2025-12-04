@@ -380,18 +380,6 @@ export default function CatalogPage() {
 
   return (
     <>
-      {/* Floating Add Animal Button */}
-      <Link
-        href="/add-animal"
-        aria-label="Add Animal"
-        className="fixed bottom-4 right-6 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 bg-[#E1E69D] text-[#3C3333] hover:text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:bg-[#C2C876] transition-colors z-20"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 animate-pulse">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </Link>
-
        <main className="min-h-screen bg-[#E6E6E6]">
         {/* Sidebar */}
         <Sidebar />
@@ -489,7 +477,7 @@ export default function CatalogPage() {
                         {[
                           { icon: <PawPrint className="w-5 h-5 mx-auto" />, label: pet.animal_species },
                           { icon: pet.animal_gender === "Male" ? <FaMars className="w-5 h-5 mx-auto" /> : <FaVenus className="w-5 h-5 mx-auto" />, label: pet.animal_gender },
-                          { icon: <Unlink2 className="w-5 h-5 mx-auto" />, label: pet.animal_collar || "None" },
+                          { icon: <Unlink2 className="w-5 h-5 mx-auto" />, label: pet.animal_collar && pet.animal_collar.toLowerCase() !== 'none' ? 'Has Collar' : 'Has No Collar' },
                         ].map((pill, i) => (
                           <div
                             key={i}
@@ -502,7 +490,7 @@ export default function CatalogPage() {
                         ))}
                       </div>
 
-                      <Link href={`/catalog/animal/${pet.animal_id}`} className="flex items-center gap-2 font-semibold">
+                      <Link href={`/catalog/${pet.animal_id}`} className="flex items-center gap-2 font-semibold">
                         View Details <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>

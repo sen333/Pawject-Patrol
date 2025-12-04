@@ -255,7 +255,7 @@ export default function AdminProfilesListPage() {
 												},
 												{
 													icon: <Unlink2 className="w-5 h-5 mx-auto" />,
-													label: pet.animal_collar || "None",
+													label: pet.animal_collar && pet.animal_collar.toLowerCase() !== 'none' ? 'Has Collar' : 'Has No Collar',
 												},
 											].map((pill, i) => (
 												<div
