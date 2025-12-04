@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { Menu, LogIn } from "lucide-react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/utils/supabase/client";
 import { updateReportStatus } from "@/actions/form/admin";
@@ -152,8 +154,8 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   // Show loading state while fetching data
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-sm">Loading...</p>
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E6E6E6' }}>
+        <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Loading...</p>
       </main>
     );
   }
@@ -161,10 +163,14 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   // Show error state if data fetch failed
   if (error || !data) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E6E6E6' }}>
         <div className="text-center">
-          <p className="text-sm">{error || 'Report not found'}</p>
-          <Link href="/admin/report" className="text-xs text-purple-700 hover:underline mt-2 inline-block">
+          <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{error || 'Report not found'}</p>
+          <Link 
+            href="/admin/report" 
+            className="text-xs mt-2 inline-block hover:opacity-90"
+            style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
+          >
             ← Back to reports
           </Link>
         </div>
@@ -184,20 +190,62 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
           : 'border-gray-200';
 
   return (
-    <main className="min-h-screen bg-yellow-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Back navigation link */}
-        <Link href="/admin/report" className="text-sm text-purple-700 hover:underline">← Back to reports</Link>
-        
+    <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <Menu className="w-6 h-6 text-gray-800" />
+          </Link>
+          <div className="flex-1 flex justify-center items-center h-full">
+            <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+          </div>
+          <Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <LogIn className="w-6 h-6 text-gray-800" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Page Header */}
+      <div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+            style={{
+              color: '#C2C876',
+              WebkitTextStrokeWidth: '.5px',
+              WebkitTextStrokeColor: '#3C3333',
+              fontFamily: '"Kawaii RT", sans-serif',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              lineHeight: 'normal',
+              outlineColor: '#3C3333',
+            }}
+          >
+            Report Details
+          </h2>
+          <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+            View and manage report information
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 pb-8">
         {/* Header with status badge and action buttons */}
-        <div className="flex items-center justify-between mt-4">
-          <h1 className="text-2xl font-semibold">Report Details</h1>
+        <div className="flex items-center justify-between mb-4">
+          <Link 
+            href="/admin/report" 
+            className="text-sm hover:opacity-90"
+            style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
+          >
+            ← Back to reports
+          </Link>
           <div className="flex items-center gap-3">
             <span className={`text-sm px-3 py-1 rounded-full font-medium ${
               status === 'Accepted' ? 'bg-green-100 text-green-700' :
               status === 'Rejected' ? 'bg-red-100 text-red-700' :
               'bg-yellow-100 text-yellow-700'
-            }`}>
+            }`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
               {status}
             </span>
             {status === 'Pending' && (
@@ -205,14 +253,16 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                 <button
                   onClick={() => handleStatusUpdate('Accepted')}
                   disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  className="px-3 py-1 text-sm rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  style={{ backgroundColor: '#689668', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
                 >
                   {updating ? 'Updating...' : 'Accept'}
                 </button>
                 <button
                   onClick={() => handleStatusUpdate('Rejected')}
                   disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                  className="px-3 py-1 text-sm rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  style={{ backgroundColor: '#DC2626', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
                 >
                   {updating ? 'Updating...' : 'Reject'}
                 </button>
@@ -222,7 +272,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Main report card with theme-based border */}
-        <div className={`mt-6 bg-white rounded-xl p-6 border-2 transition-colors ${themeAccent}`}>
+        <div className={`bg-white rounded-2xl p-6 md:p-8 border-2 shadow-lg transition-colors ${themeAccent}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Animal photo */}
             <div className="md:col-span-1">
@@ -231,7 +281,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={data.photo_url} alt={data.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs text-gray-400">No photo</span>
+                  <span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
                 )}
               </div>
             </div>
@@ -239,60 +289,60 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
             {/* Animal details */}
             <div className="md:col-span-2 space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-500">Animal Name</label>
-                <p className="text-sm">{data.animal_name ?? 'Unnamed'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Animal Name</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_name ?? 'Unnamed'}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Type</label>
-                  <p className="text-sm">{data.animal_type ?? '—'}</p>
+                  <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Type</label>
+                  <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_type ?? '—'}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Gender</label>
-                  <p className="text-sm">{data.animal_gender ?? 'unknown'}</p>
+                  <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Gender</label>
+                  <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_gender ?? 'unknown'}</p>
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Date Seen</label>
-                <p className="text-sm">{data.date_seen ? new Date(data.date_seen).toLocaleString() : '—'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Date Seen</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.date_seen ? new Date(data.date_seen).toLocaleString() : '—'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Physical Description</label>
-                <p className="text-sm">{data.animal_description ?? '—'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Physical Description</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_description ?? '—'}</p>
               </div>
             </div>
           </div>
 
           {/* Location Section */}
           <div className="mt-6 pt-6 border-t">
-            <h2 className="text-lg font-semibold mb-4">Location Information</h2>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Location Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-500">Area</label>
-                <p className="text-sm">{data.area ?? '—'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Area</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.area ?? '—'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Landmark</label>
-                <p className="text-sm">{data.landmark ?? '—'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Landmark</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.landmark ?? '—'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Road</label>
-                <p className="text-sm">{data.road ?? '—'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Road</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.road ?? '—'}</p>
               </div>
             </div>
             {/* Optional additional information (health, collar, other) */}
             {(data.health_issues || data.animal_collar || data.other_information) && (
               <div className="mt-6">
-                <h3 className="text-sm font-semibold mb-2">Additional Details</h3>
-                <div className="space-y-2 text-sm">
+                <h3 className="text-sm font-semibold mb-2" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Additional Details</h3>
+                <div className="space-y-2 text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
                   {data.health_issues && (
-                    <p><span className="font-medium text-gray-600">Health Issues:</span> {data.health_issues}</p>
+                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Health Issues:</span> {data.health_issues}</p>
                   )}
                   {data.animal_collar && (
-                    <p><span className="font-medium text-gray-600">Collar:</span> {data.animal_collar}</p>
+                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Collar:</span> {data.animal_collar}</p>
                   )}
                   {data.other_information && (
-                    <p><span className="font-medium text-gray-600">Other Info:</span> {data.other_information}</p>
+                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Other Info:</span> {data.other_information}</p>
                   )}
                 </div>
               </div>
@@ -300,13 +350,14 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
             {/* Interactive map view if coordinates are available */}
             {data.latitude && data.longitude && (
               <div className="mt-4" id="map-section">
-                <label className="text-xs font-medium text-gray-500 block mb-2">Map View</label>
+                <label className="text-xs font-medium block mb-2" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Map View</label>
                 <AdminMapView latitude={data.latitude} longitude={data.longitude} />
                 <a
                   href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-purple-700 hover:underline mt-2 inline-block"
+                  className="text-xs mt-2 inline-block hover:opacity-90"
+                  style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
                 >
                   View on OpenStreetMap →
                 </a>

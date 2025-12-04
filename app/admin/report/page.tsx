@@ -4,6 +4,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { Menu, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 
@@ -110,22 +112,70 @@ export default function AdminReportsPage() {
 	}, [router]);
 
 	return (
-		<main className="min-h-screen bg-yellow-50">
-			<div className="max-w-5xl mx-auto p-6">
-				<header className="flex items-center justify-between mb-4">
-					<h1 className="text-2xl font-semibold text-gray-900">Animal Reports</h1>
-					<nav className="space-x-3 text-sm">
-						<Link href="/admin" className="text-gray-600 hover:underline">Admin Home</Link>
-						<Link href="/form" className="text-gray-600 hover:underline">Open Report Form</Link>
-					</nav>
-				</header>
+		<main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
+			{/* Navigation Header */}
+			<div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+				<Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+					<Menu className="w-6 h-6 text-gray-800" />
+				</Link>
+				<div className="flex-1 flex justify-center items-center h-full">
+					<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+				</div>
+				<Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+					<LogIn className="w-6 h-6 text-gray-800" />
+				</Link>
+				</div>
+			</div>
+
+			{/* Page Header */}
+			<div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
+				<div className="max-w-5xl mx-auto px-6">
+					<h2 
+						className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+						style={{
+							color: '#C2C876',
+							WebkitTextStrokeWidth: '.5px',
+							WebkitTextStrokeColor: '#3C3333',
+							fontFamily: '"Kawaii RT", sans-serif',
+							fontStyle: 'normal',
+							fontWeight: 400,
+							lineHeight: 'normal',
+							outlineColor: '#3C3333',
+						}}
+					>
+						Animal Reports
+					</h2>
+					<p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+						View and manage animal reports
+					</p>
+				</div>
+			</div>
+
+			<div className="max-w-5xl mx-auto px-6 pb-6">
+				<div className="mb-4 flex gap-3">
+					<Link 
+						href="/admin" 
+						className="px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+						style={{ backgroundColor: '#E6E6E6', color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', border: '1px solid #C2C876' }}
+					>
+						Admin Home
+					</Link>
+					<Link 
+						href="/form" 
+						className="px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
+						style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+					>
+						Open Report Form
+					</Link>
+				</div>
 
 				{loading ? (
-					<p className="text-sm text-gray-600">Loading reports…</p>
+					<p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Loading reports…</p>
 				) : reports.length === 0 ? (
-					<p className="text-sm text-gray-600">No reports yet.</p>
+					<p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>No reports yet.</p>
 				) : (
-					<ul className="divide-y divide-gray-200 bg-white/70 rounded-xl border">
+					<ul className="divide-y divide-gray-200 bg-white rounded-2xl border shadow-lg">
 						{reports.map((r) => (
 							<li key={r.report_id} className="p-4 flex items-center gap-4">
 								<div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
@@ -133,17 +183,17 @@ export default function AdminReportsPage() {
 										// eslint-disable-next-line @next/next/no-img-element
 										<img src={r.photo_url} alt={r.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
 									) : (
-										<span className="text-xs text-gray-400">No photo</span>
+										<span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
 									)}
 								</div>
 							<div className="flex-1 min-w-0">
-								<p className="text-sm font-medium text-gray-900 truncate">
+								<p className="text-sm font-medium truncate" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
 									{r.animal_name || 'Unnamed'} - {r.animal_type || 'animal'} ({r.animal_gender || 'unknown'})
 								</p>
-								<p className="text-xs text-gray-600 truncate">
+								<p className="text-xs truncate" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
 									{r.area || '—'} {r.landmark ? `• near ${r.landmark}` : ''}
 								</p>
-								<p className="text-xs text-gray-500">
+								<p className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
 									{r.date_seen ? new Date(r.date_seen).toLocaleString() : r.created_at ? new Date(r.created_at).toLocaleString() : ''}
 								</p>
 								<div className="flex items-center gap-2 mt-1">
@@ -151,15 +201,21 @@ export default function AdminReportsPage() {
 										r.report_status === 'Accepted' ? 'bg-green-100 text-green-700' :
 										r.report_status === 'Rejected' ? 'bg-red-100 text-red-700' :
 										'bg-yellow-100 text-yellow-700'
-									}`}>
+									}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
 										{r.report_status || 'Pending'}
 									</span>
 								</div>
 							</div>
 							{r.report_id ? (
-								<Link href={`/admin/report/${r.report_id}`} className="text-xs text-purple-700 hover:underline whitespace-nowrap">View</Link>
+								<Link 
+									href={`/admin/report/${r.report_id}`} 
+									className="px-3 py-1 rounded text-xs font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+									style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+								>
+									View
+								</Link>
 							) : (
-								<span className="text-xs text-gray-400">No ID</span>
+								<span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No ID</span>
 							)}
 							</li>
 						))}
