@@ -68,8 +68,8 @@ export default function ReportFormSample() {
   const [submitting, setSubmitting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
 
-  const [reportTitle, setReportTitle] = useState("");
-  const [reporterName, setReporterName] = useState("");
+  const [recorderName, setRecorderName] = useState("");
+  const [animalName, setAnimalName] = useState("");
   const [animalType, setAnimalType] = useState("");
   const [gender, setGender] = useState("Unknown");
   const [dateSeen, setDateSeen] = useState("");
@@ -97,8 +97,8 @@ export default function ReportFormSample() {
     if (savedData) {
       try {
         const data = JSON.parse(savedData);
-        setReportTitle(data.reportTitle || "");
-        setReporterName(data.reporterName || "");
+        setRecorderName(data.recorderName || "");
+        setAnimalName(data.animalName || "");
         setAnimalType(data.animalType || "");
         setGender(data.gender || "Unknown");
         setDateSeen(data.dateSeen || "");
@@ -188,26 +188,14 @@ export default function ReportFormSample() {
   async function handleConfirm() {
     setResultMsg(null);
 
-    if (!reportTitle.trim()) {
-      setResultMsg("Please enter a report title before proceeding.");
-      setActiveTab("basic");
-      return;
-    }
-
-    if (!reporterName.trim()) {
-      setResultMsg("Please enter your name before proceeding.");
-      setActiveTab("basic");
-      return;
-    }
-
     if (lat == null || lng == null) {
       setResultMsg("Please capture location before proceeding.");
       return;
     }
 
     const formData: any = {
-      reportTitle,
-      reporterName,
+      recorderName,
+      animalName,
       animalType,
       gender,
       dateSeen,
@@ -231,11 +219,8 @@ export default function ReportFormSample() {
     setGlobalPhotoFile(photoFile);
 
     const params = new URLSearchParams({
-<<<<<<< HEAD
-      reportTitle: reportTitle || "",
-=======
->>>>>>> origin/staging
-      reporterName: reporterName || "",
+      recorderName: recorderName || "",
+      animalName: animalName || "",
       animalType: animalType || "",
       gender: gender || "Unknown",
       dateSeen: dateSeen || "",
@@ -838,23 +823,17 @@ export default function ReportFormSample() {
             {activeTab === "basic" && (
               <div className="space-y-4">
                 <Field
-                  label="Report Title"
-                  placeholder="Brief title for this report"
-                  value={reportTitle}
-                  onChange={(e: InputChange) => setReportTitle(e.target.value)}
+                  label="Reporter Name"
+                  placeholder="Your name"
+                  value={recorderName}
+                  onChange={(e) => setRecorderName(e.target.value)}
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <Field
-                    label="Reporter Name"
-                    placeholder="Your name"
-                    value={reporterName}
-                    onChange={(e: InputChange) => setReporterName(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Field
                     label="Type of animal"
                     placeholder="Dog, Cat, etc."
                     value={animalType}
-                    onChange={(e: InputChange) => setAnimalType(e.target.value)}
+                    onChange={(e) => setAnimalType(e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

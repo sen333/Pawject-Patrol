@@ -34,11 +34,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 	const { data, error } = await supabase
 		.from("animal_report")
 		.select(
-<<<<<<< HEAD
 			"report_id, report_title, reporter_name, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
-=======
-			"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
->>>>>>> origin/staging
 		)
 		.order("created_at", { ascending: false })
 		.limit(limit * 3); // Fetch more to sort by status

@@ -290,8 +290,8 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
             {/* Animal details */}
             <div className="md:col-span-2 space-y-3">
               <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Report Title</label>
-                <p className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.report_title ?? 'Untitled Report'}</p>
+                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Animal Name</label>
+                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_name ?? 'Unnamed'}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
