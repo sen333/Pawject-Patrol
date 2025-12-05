@@ -658,12 +658,10 @@ export default function HeaderAndBackground() {
           </div>
         </header>
 
-
         <div className="max-w-6xl mx-auto px-4 py-6 w-full">
           {/* Wrapper Container */}
-          <div className="bg-[#E1E69D] rounded-2xl p-2 md:p-5 lg:p-8">
+          <div className="bg-[#E1E69D] rounded-2xl p-2 md:p-5 lg:p-8 pl-[24px] pr-[24px]">
             <div className="flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-between">
-              
               {/* Welcome Message */}
               <div className="flex-1 flex flex-col gap-4">
                 <p
@@ -699,8 +697,9 @@ export default function HeaderAndBackground() {
                     fontFamily: '"Genty Sans", sans-serif',
                   }}
                 >
-                  Manage your animal patrol operations, track reports, coordinate
-                  volunteers, and monitor all activities in real-time.
+                  Manage your animal patrol operations, track reports,
+                  coordinate volunteers, and monitor all activities in
+                  real-time.
                 </p>
 
                 {/* --- Dashboard Statistics --- */}
@@ -769,7 +768,6 @@ export default function HeaderAndBackground() {
                   className="w-full md:h-[290px] lg:w-[520px] lg:h-[340px] rounded-[12px] object-cover"
                 />
               </div>
-
             </div>
           </div>
         </div>
@@ -778,7 +776,6 @@ export default function HeaderAndBackground() {
         <div className="w-full flex-1 bg-[#E6E6E6]">
           <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
             <div className=" md:pr-10 md:pl-10 flex flex-col lg:flex-row flex-wrap gap-6 justify-center">
-              
               {/* Animal Profiles Card */}
               <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#DCB57E] flex flex-col">
                 {/* Header */}
@@ -914,206 +911,206 @@ export default function HeaderAndBackground() {
                 </div>
               </div>
 
-           {/* Animal Reports Card */}
-<div className="w-full lg:w-[calc(33.333%-16px)] bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-[#5E9BBA] flex flex-col">
-  {/* Header */}
-  <a
-    href="/admin/report"
-    className="flex h-[86px] min-w-[270px] pl-2 justify-between items-center rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]"
-  >
-    <div className="flex-1 px-1">
-      <h2
-        className="text-lg lg:text-lg font-medium mb-0.5"
-        style={{ color: "#5E9BBA", fontFamily: '"Genty Sans", sans-serif' }}
-      >
-        Animal Reports
-      </h2>
-      <p
-        className="text-[10px] md:text-xs lg:text-xs text-[#3C3333]"
-        style={{ fontFamily: '"Genty Sans", sans-serif' }}
-      >
-        Track Stray Findings and Reports
-      </p>
-    </div>
-    <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA] h-full rounded-tr-[12px]">
-      <img
-        src="/nav/report.png"
-        alt="Animal Reports"
-        className="w-10 h-10 lg:w-12 lg:h-12"
-      />
-    </div>
-  </a>
-
-  {/* Preview and Button Container */}
-  <div className="flex flex-col items-start px-2 py-5 h-full">
-    <div className="flex flex-col gap-2 flex-1 w-full">
-    {recentReports.length === 0 ? (
-      <div className="text-sm text-gray-500">No recent reports</div>
-    ) : (
-      recentReports.slice(0, 3).map((report, idx) => {
-        const isResolved = report.report_status === 'Resolved' || report.report_status === 'Accepted';
-        return (
-          <div
-            key={report.report_id || idx}
-            onClick={() => router.push(`/admin/report/${report.report_id}`)}
-            className={`flex flex-col p-4 rounded-lg border cursor-pointer w-full ${
-              isResolved ? "border-[#689668] bg-[#CDE0EA]" : "border-[#DC2626] bg-[#CDE0EA]"
-            }`}
-          >
-            {/* Title with icon */}
-            <div className="flex items-center gap-3 mb-1">
-              {isResolved ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
+              {/* Animal Reports Card */}
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-[#5E9BBA]">
+                {/* Header */}
+                <a
+                  href="/admin/form"
+                  className="flex h-[86px] min-w-[270px] pl-2 justify-between items-center rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]"
                 >
-                  <g clipPath="url(#clip0_723_2224)">
-                    <path
-                      d="M12.8334 6.46309V6.99976C12.8327 8.25767 12.4254 9.48165 11.6722 10.4892C10.919 11.4967 9.86033 12.2337 8.65404 12.5904C7.44775 12.947 6.15848 12.9042 4.97852 12.4683C3.79856 12.0323 2.79113 11.2266 2.10647 10.1714C1.42182 9.11611 1.09663 7.8678 1.17939 6.61261C1.26216 5.35742 1.74845 4.16262 2.56574 3.20638C3.38304 2.25015 4.48754 1.58373 5.71452 1.30651C6.94151 1.02929 8.22524 1.15612 9.37425 1.66809"
-                      stroke="#689668"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  <div className="flex-1 px-1">
+                    <h2
+                      className="text-lg lg:text- font-medium mb-0.5"
+                      style={{
+                        color: "#5E9BBA",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Animal Reports
+                    </h2>
+                    <p
+                      className="text-[10px] md:text-xs lg:text-xs text-[#3C3333]"
+                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      Track Stray Findings and Reports
+                    </p>
+                  </div>
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA] h-full rounded-tr-[12px]">
+                    <img
+                      src="/nav/report.png"
+                      alt="Animal Reports"
+                      className="w-10 h-10 lg:w-12 lg:h-12"
                     />
-                    <path
-                      d="M12.8333 2.3335L7 8.17266L5.25 6.42266"
-                      stroke="#689668"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </g>
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                >
-                  <g clipPath="url(#clip0_722_2774)">
-                    <path
-                      d="M7.00008 12.8332C10.2217 12.8332 12.8334 10.2215 12.8334 6.99984C12.8334 3.77818 10.2217 1.1665 7.00008 1.1665C3.77842 1.1665 1.16675 3.77818 1.16675 6.99984C1.16675 10.2215 3.77842 12.8332 7.00008 12.8332Z"
-                      stroke="#DC2626"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M7 4.6665V6.99984"
-                      stroke="#DC2626"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M7 9.3335H7.00583"
-                      stroke="#DC2626"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </g>
-                </svg>
-              )}
-              <p
-                className="text-xs"
-                style={{ color: "#213641", fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                {report.report_title || 'Untitled Report'}
-              </p>
-            </div>
+                  </div>
+                </a>
 
-            {/* Description */}
-            <p className="text-[10px]" style={{ color: "#385D70" }}>
-              {(report.animal_description || '').slice(0, 50)}...
-            </p>
+                {/* Preview and Button Container */}
+                <div className="flex flex-col items-start gap-2 px-2 py-5">
+                  {animalReportsData.map((report, idx) => {
+                    const isResolved = idx === 2; // Example condition
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex flex-col p-4 rounded-lg border cursor-pointer w-full ${
+                          isResolved
+                            ? "border-[#689668] bg-[#CDE0EA]"
+                            : "border-[#DC2626] bg-[#CDE0EA]"
+                        }`}
+                      >
+                        {/* Title with icon */}
+                        <div className="flex items-center gap-3 mb-1">
+                          {isResolved ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                            >
+                              <g clipPath="url(#clip0_723_2224)">
+                                <path
+                                  d="M12.8334 6.46309V6.99976C12.8327 8.25767 12.4254 9.48165 11.6722 10.4892C10.919 11.4967 9.86033 12.2337 8.65404 12.5904C7.44775 12.947 6.15848 12.9042 4.97852 12.4683C3.79856 12.0323 2.79113 11.2266 2.10647 10.1714C1.42182 9.11611 1.09663 7.8678 1.17939 6.61261C1.26216 5.35742 1.74845 4.16262 2.56574 3.20638C3.38304 2.25015 4.48754 1.58373 5.71452 1.30651C6.94151 1.02929 8.22524 1.15612 9.37425 1.66809"
+                                  stroke="#689668"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M12.8333 2.3335L7 8.17266L5.25 6.42266"
+                                  stroke="#689668"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </g>
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                            >
+                              <g clipPath="url(#clip0_722_2774)">
+                                <path
+                                  d="M7.00008 12.8332C10.2217 12.8332 12.8334 10.2215 12.8334 6.99984C12.8334 3.77818 10.2217 1.1665 7.00008 1.1665C3.77842 1.1665 1.16675 3.77818 1.16675 6.99984C1.16675 10.2215 3.77842 12.8332 7.00008 12.8332Z"
+                                  stroke="#DC2626"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M7 4.6665V6.99984"
+                                  stroke="#DC2626"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M7 9.3335H7.00583"
+                                  stroke="#DC2626"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </g>
+                            </svg>
+                          )}
+                          <p
+                            className="text-xs"
+                            style={{
+                              color: "#213641",
+                              fontFamily: '"Genty Sans", sans-serif',
+                            }}
+                          >
+                            {report.title}
+                          </p>
+                        </div>
 
-            {/* Location and Time Info */}
-            <div className="flex gap-3">
-              <div className="flex items-center gap-1">
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: "#3C3333" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="10"
-                    height="10"
-                    viewBox="0 0 10 10"
-                    fill="none"
+                        {/* Description */}
+                        <p className="text-[10px]" style={{ color: "#385D70" }}>
+                          {report.location}
+                        </p>
+
+                        {/* Location and Time Info */}
+                        <div className="flex gap-3">
+                          <div className="flex items-center gap-1">
+                            <span
+                              className="text-[10px] font-medium"
+                              style={{ color: "#3C3333" }}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 10 10"
+                                fill="none"
+                              >
+                                <path
+                                  d="M5.00008 5.00016C5.22925 5.00016 5.42543 4.91857 5.58862 4.75537C5.75182 4.59218 5.83341 4.396 5.83341 4.16683C5.83341 3.93766 5.75182 3.74148 5.58862 3.57829C5.42543 3.41509 5.22925 3.3335 5.00008 3.3335C4.77091 3.3335 4.57473 3.41509 4.41154 3.57829C4.24835 3.74148 4.16675 3.93766 4.16675 4.16683C4.16675 4.396 4.24835 4.59218 4.41154 4.75537C4.57473 4.91857 4.77091 5.00016 5.00008 5.00016ZM5.00008 8.06266C5.8473 7.28488 6.47578 6.57829 6.8855 5.94287C7.29522 5.30745 7.50008 4.74322 7.50008 4.25016C7.50008 3.49322 7.25876 2.87343 6.77612 2.39079C6.29348 1.90815 5.70147 1.66683 5.00008 1.66683C4.29869 1.66683 3.70668 1.90815 3.22404 2.39079C2.7414 2.87343 2.50008 3.49322 2.50008 4.25016C2.50008 4.74322 2.70494 5.30745 3.11466 5.94287C3.52439 6.57829 4.15286 7.28488 5.00008 8.06266ZM5.00008 9.16683C3.88203 8.21544 3.04696 7.33176 2.49487 6.51579C1.94279 5.69982 1.66675 4.94461 1.66675 4.25016C1.66675 3.2085 2.00182 2.37864 2.67196 1.76058C3.3421 1.14252 4.11814 0.833496 5.00008 0.833496C5.88203 0.833496 6.65807 1.14252 7.32821 1.76058C7.99835 2.37864 8.33341 3.2085 8.33341 4.25016C8.33341 4.94461 8.05737 5.69982 7.50529 6.51579C6.95321 7.33176 6.11814 8.21544 5.00008 9.16683Z"
+                                  fill="#47748C"
+                                />
+                              </svg>
+                            </span>
+                            <span
+                              className="text-[10px] font-medium"
+                              style={{ color: "#385D70" }}
+                            >
+                              {report.location.split(",")[0]}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="9"
+                                height="9"
+                                viewBox="0 0 9 9"
+                                fill="none"
+                              >
+                                <g clipPath="url(#clip0_723_2172)">
+                                  <path
+                                    d="M4.5 8.25C6.57107 8.25 8.25 6.57107 8.25 4.5C8.25 2.42893 6.57107 0.75 4.5 0.75C2.42893 0.75 0.75 2.42893 0.75 4.5C0.75 6.57107 2.42893 8.25 4.5 8.25Z"
+                                    stroke="#47748C"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M4.5 2.25V4.5H6.1875"
+                                    stroke="#47748C"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                                <defs>
+                                  <clipPath id="clip0_723_2172">
+                                    <rect width="9" height="9" fill="white" />
+                                  </clipPath>
+                                </defs>
+                              </svg>
+                            </span>
+                            <span
+                              className="text-[10px] font-medium"
+                              style={{ color: "#385D70" }}
+                            >
+                              {report.time}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* View All Button */}
+                  <button
+                    className="flex h-[33px] px-4 py-2 items-center justify-center w-full rounded-lg bg-[#5E9BBA] text-xs font-medium text-white hover:bg-[#4f8aa8] transition-colors mt-2"
+                    style={{ fontFamily: '"Genty Sans", sans-serif' }}
                   >
-                    <path
-                      d="M5.00008 5.00016C5.22925 5.00016 5.42543 4.91857 5.58862 4.75537C5.75182 4.59218 5.83341 4.396 5.83341 4.16683C5.83341 3.93766 5.75182 3.74148 5.58862 3.57829C5.42543 3.41509 5.22925 3.3335 5.00008 3.3335C4.77091 3.3335 4.57473 3.41509 4.41154 3.57829C4.24835 3.74148 4.16675 3.93766 4.16675 4.16683C4.16675 4.396 4.24835 4.59218 4.41154 4.75537C4.57473 4.91857 4.77091 5.00016 5.00008 5.00016ZM5.00008 8.06266C5.8473 7.28488 6.47578 6.57829 6.8855 5.94287C7.29522 5.30745 7.50008 4.74322 7.50008 4.25016C7.50008 3.49322 7.25876 2.87343 6.77612 2.39079C6.29348 1.90815 5.70147 1.66683 5.00008 1.66683C4.29869 1.66683 3.70668 1.90815 3.22404 2.39079C2.7414 2.87343 2.50008 3.49322 2.50008 4.25016C2.50008 4.74322 2.70494 5.30745 3.11466 5.94287C3.52439 6.57829 4.15286 7.28488 5.00008 8.06266ZM5.00008 9.16683C3.88203 8.21544 3.04696 7.33176 2.49487 6.51579C1.94279 5.69982 1.66675 4.94461 1.66675 4.25016C1.66675 3.2085 2.00182 2.37864 2.67196 1.76058C3.3421 1.14252 4.11814 0.833496 5.00008 0.833496C5.88203 0.833496 6.65807 1.14252 7.32821 1.76058C7.99835 2.37864 8.33341 3.2085 8.33341 4.25016C8.33341 4.94461 8.05737 5.69982 7.50529 6.51579C6.95321 7.33176 6.11814 8.21544 5.00008 9.16683Z"
-                      fill="#47748C"
-                    />
-                  </svg>
-                </span>
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: "#385D70" }}
-                >
-                  {report.report_status || 'Pending'}
-                </span>
+                    View All Reports
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="9"
-                    height="9"
-                    viewBox="0 0 9 9"
-                    fill="none"
-                  >
-                    <g clipPath="url(#clip0_723_2172)">
-                      <path
-                        d="M4.5 8.25C6.57107 8.25 8.25 6.57107 8.25 4.5C8.25 2.42893 6.57107 0.75 4.5 0.75C2.42893 0.75 0.75 2.42893 0.75 4.5C0.75 6.57107 2.42893 8.25 4.5 8.25Z"
-                        stroke="#47748C"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M4.5 2.25V4.5H6.1875"
-                        stroke="#47748C"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_723_2172">
-                        <rect width="9" height="9" fill="white" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </span>
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: "#385D70" }}
-                >
-                  {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-      })
-    )}
-    </div>
-
-    {/* View All Button */}
-    <button
-      onClick={() => router.push('/admin/report')}
-      className="flex h-[33px] px-4 py-2 items-center justify-center w-full rounded-lg bg-[#5E9BBA] text-xs font-medium text-white hover:bg-[#4f8aa8] transition-colors mt-[10px]"
-      style={{ fontFamily: '"Genty Sans", sans-serif' }}
-    >
-      View All Reports
-    </button>
-  </div>
-</div>
 
               {/* Volunteer Requests Card */}
               <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#C575AD] flex flex-col">

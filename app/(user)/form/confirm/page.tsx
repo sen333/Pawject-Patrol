@@ -25,7 +25,10 @@ function ConfirmationContent() {
 	const [showImageModal, setShowImageModal] = useState(false);
 
 	// Extract all data from URL params
+<<<<<<< HEAD
 	const reportTitle = searchParams.get("reportTitle") || "";
+=======
+>>>>>>> origin/staging
 	const reporterName = searchParams.get("reporterName") || "";
 	const animalType = searchParams.get("animalType") || "";
 	const gender = searchParams.get("gender") || "Unknown";
@@ -67,7 +70,10 @@ function ConfirmationContent() {
 
 		// Submit the report
 		const res = await createAnimalReport({
+<<<<<<< HEAD
 			report_title: reportTitle || undefined,
+=======
+>>>>>>> origin/staging
 			reporter_name: reporterName || undefined,
 			animal_type: animalType || "other",
 			animal_gender: gender as string,
@@ -225,6 +231,7 @@ function ConfirmationContent() {
 							<p className="mt-3 text-xs" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Photo Preview {photoUrl && "(Click to enlarge)"}</p>
 						</div>
 
+<<<<<<< HEAD
 					{/* Fields panel - Read-only display */}
 					<div className="space-y-3">
 						<DisplayField label="Report Title" value={reportTitle.trim() ? reportTitle : "—"} />
@@ -232,11 +239,20 @@ function ConfirmationContent() {
 						<DisplayField label="Reporter Name" value={reporterName.trim() ? reporterName : "—"} />
 						<DisplayField label="Type of animal" value={animalType || "—"} />
 					</div>
+=======
+						{/* Fields panel - Read-only display */}
+						<div className="space-y-3">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+							<DisplayField label="Reporter Name" value={reporterName.trim() ? reporterName : "—"} />
+							<DisplayField label="Type of animal" value={animalType || "—"} />
+						</div>
+>>>>>>> origin/staging
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
 								<DisplayField label="Gender" value={gender} />
 								<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
 							</div>
+<<<<<<< HEAD
 						<div className="rounded-xl bg-[#E1E69D] p-4">
 							<label 
 								className="block mb-2" 
@@ -253,6 +269,12 @@ function ConfirmationContent() {
 							</label>
 							<p className="text-base whitespace-pre-wrap min-h-[120px]" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', fontWeight: 400 }}>{physicalDescription || "—"}</p>
 						</div>
+=======
+							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
+								<label className="block text-sm font-medium text-[#3C3333] mb-2">Physical Description</label>
+								<p className="text-sm text-[#3C3333] whitespace-pre-wrap min-h-[120px]">{physicalDescription || "—"}</p>
+							</div>
+>>>>>>> origin/staging
 						</div>
 					</div>
 
@@ -300,6 +322,7 @@ function ConfirmationContent() {
 					<div className="pt-4 flex gap-3">
 						<button
 							onClick={() => router.push('/form')}
+<<<<<<< HEAD
 							className="flex-1 rounded-lg py-3 text-sm font-semibold transition"
 							style={{ 
 								backgroundColor: '#E6E6E6', 
@@ -307,6 +330,9 @@ function ConfirmationContent() {
 								fontFamily: '"Genty Sans", sans-serif',
 								border: '1px solid #3C3333'
 							}}
+=======
+							className="flex-1 rounded-md border-2 border-gray-400 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
+>>>>>>> origin/staging
 						>
 							Edit Report
 						</button>

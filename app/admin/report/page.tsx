@@ -181,7 +181,7 @@ export default function AdminReportsPage() {
 								<div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
 									{r.photo_url ? (
 										// eslint-disable-next-line @next/next/no-img-element
-										<img src={r.photo_url} alt="Animal" className="w-full h-full object-cover" />
+										<img src={r.photo_url} alt={r.animal_type ?? "Animal"} className="w-full h-full object-cover" />
 											) : (
 												<span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
 											)

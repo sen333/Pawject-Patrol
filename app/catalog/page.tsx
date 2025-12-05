@@ -383,7 +383,7 @@ export default function CatalogPage() {
        <main className="min-h-screen bg-[#E6E6E6]">
         {/* Sidebar */}
         <Sidebar />
-        <div className="max-w-7xl mx-auto px-4 py-0">
+        <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
           {/* Navigation header */}
           <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
             <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
