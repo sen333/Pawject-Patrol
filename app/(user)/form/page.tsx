@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { ReportTheme } from "@/actions/form/user";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -17,6 +16,45 @@ import {
 } from "lucide-react";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+import { supabase } from "@/utils/supabase/client";
+
+// Global storage for photo file during form navigation
+let globalPhotoFile: File | null = null;
+
+export function setGlobalPhotoFile(file: File | null) {
+  globalPhotoFile = file;
+}
+
+export function getGlobalPhotoFile() {
+  return globalPhotoFile;
+}
+
+// Event type aliases
+type InputChange = React.ChangeEvent<HTMLInputElement>;
+type TextareaChange = React.ChangeEvent<HTMLTextAreaElement>;
+type SelectChange = React.ChangeEvent<HTMLSelectElement>;
+
+interface FieldProps {
+  label: string;
+  placeholder?: string;
+  type?: string;
+  value: string;
+  onChange: (e: InputChange) => void;
+}
+
+interface SelectFieldProps {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (e: SelectChange) => void;
+}
+
+interface TextAreaProps {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: TextareaChange) => void;
+}
 
 export default function ReportFormSample() {
   const router = useRouter();
@@ -30,8 +68,7 @@ export default function ReportFormSample() {
   const [submitting, setSubmitting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
 
-  const [recorderName, setRecorderName] = useState("");
-  const [animalName, setAnimalName] = useState("");
+  const [reporterName, setReporterName] = useState("");
   const [animalType, setAnimalType] = useState("");
   const [gender, setGender] = useState("Unknown");
   const [dateSeen, setDateSeen] = useState("");
@@ -40,7 +77,6 @@ export default function ReportFormSample() {
   const [area, setArea] = useState("");
   const [landmark, setLandmark] = useState("");
   const [road, setRoad] = useState("");
-  const [theme, setTheme] = useState<ReportTheme>("blue");
   const [hasHealthIssues, setHasHealthIssues] = useState<boolean>(false);
   const [healthDetails, setHealthDetails] = useState<string>("");
   const [hasCollar, setHasCollar] = useState<boolean>(false);
@@ -50,13 +86,17 @@ export default function ReportFormSample() {
     "basic"
   );
 
+  // Auth-connected sidebar state
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
     const savedData = sessionStorage.getItem("animalReportFormData");
     if (savedData) {
       try {
         const data = JSON.parse(savedData);
-        setRecorderName(data.recorderName || "");
-        setAnimalName(data.animalName || "");
+        setReporterName(data.reporterName || "");
         setAnimalType(data.animalType || "");
         setGender(data.gender || "Unknown");
         setDateSeen(data.dateSeen || "");
@@ -65,7 +105,6 @@ export default function ReportFormSample() {
         setArea(data.area || "");
         setLandmark(data.landmark || "");
         setRoad(data.road || "");
-        setTheme(data.theme || "blue");
         setHasHealthIssues(data.hasHealthIssues || false);
         setHealthDetails(data.healthDetails || "");
         setHasCollar(data.hasCollar || false);
@@ -75,22 +114,51 @@ export default function ReportFormSample() {
 
         if (data.photoPreview) {
           setPreview(data.photoPreview);
-          if (data.photoBase64 && data.photoName && data.photoType) {
-            fetch(data.photoBase64)
-              .then((res) => res.blob())
-              .then((blob) => {
-                const file = new File([blob], data.photoName, {
-                  type: data.photoType,
-                });
-                setPhotoFile(file);
-              });
-          }
         }
         sessionStorage.removeItem("animalReportFormData");
       } catch (error) {
         console.error("Failed to restore form data:", error);
       }
     }
+  }, []);
+
+  // Fetch current user and keep sidebar info in sync
+  useEffect(() => {
+    const setupAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      if (user) {
+        const nameFromMeta =
+          (user.user_metadata?.full_name as string) ||
+          (user.user_metadata?.name as string) ||
+          "";
+        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+        setUserEmail(user.email || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    };
+    setupAuth();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        const nameFromMeta =
+          (session.user.user_metadata?.full_name as string) ||
+          (session.user.user_metadata?.name as string) ||
+          "";
+        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
+        setUserEmail(session.user.email || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    });
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   function grabCurrentLocation() {
@@ -118,14 +186,19 @@ export default function ReportFormSample() {
   async function handleConfirm() {
     setResultMsg(null);
 
+    if (!reporterName.trim()) {
+      setResultMsg("Please enter your name before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
+
     if (lat == null || lng == null) {
       setResultMsg("Please capture location before proceeding.");
       return;
     }
 
     const formData: any = {
-      recorderName,
-      animalName,
+      reporterName,
       animalType,
       gender,
       dateSeen,
@@ -134,7 +207,6 @@ export default function ReportFormSample() {
       area,
       landmark,
       road,
-      theme,
       hasHealthIssues,
       healthDetails,
       hasCollar,
@@ -144,27 +216,13 @@ export default function ReportFormSample() {
       photoPreview: preview,
     };
 
-    if (photoFile) {
-      try {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(photoFile);
-        });
-        const base64 = await base64Promise;
-        formData.photoBase64 = base64;
-        formData.photoName = photoFile.name;
-        formData.photoType = photoFile.type;
-      } catch (error) {
-        console.error("Failed to convert photo to base64:", error);
-      }
-    }
-
     sessionStorage.setItem("animalReportFormData", JSON.stringify(formData));
 
+    // Store photo file globally for access on confirm page
+    setGlobalPhotoFile(photoFile);
+
     const params = new URLSearchParams({
-      recorderName: recorderName || "",
-      animalName: animalName || "",
+      reporterName: reporterName || "",
       animalType: animalType || "",
       gender: gender || "Unknown",
       dateSeen: dateSeen || "",
@@ -175,7 +233,6 @@ export default function ReportFormSample() {
       healthIssues: hasHealthIssues ? healthDetails || "Yes" : "None",
       animalCollar: hasCollar ? collarDetails || "Has collar" : "None",
       otherInfo: otherInfo || "None",
-      theme: theme,
       lat: lat.toString(),
       lng: lng.toString(),
       photoUrl: preview || "",
@@ -242,38 +299,46 @@ export default function ReportFormSample() {
                 padding: "12px",
               }}
             >
-              <div className="flex items-center gap-3 w-full">
-                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white">LR</span>
+              {isAuthenticated ? (
+                <div className="flex items-center gap-3 w-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                    <span className="text-sm font-bold text-white">
+                      {(userName || "?").charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span
+                      className="font-semibold text-gray-800 text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: "Genty Sans",
+                        fontSize: "16px",
+                        fontStyle: "normal",
+                        fontWeight: 500,
+                        lineHeight: "normal",
+                      }}
+                    >
+                      {userName || ""}
+                    </span>
+                    <span
+                      className="text-xs text-gray-600"
+                      style={{
+                        color: "#3C3333",
+                        fontSize: "12px",
+                        fontStyle: "normal",
+                        fontWeight: 400,
+                        lineHeight: "normal",
+                      }}
+                    >
+                      {userEmail || ""}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span
-                    className="font-semibold text-gray-800 text-sm"
-                    style={{
-                      color: "#3C3333",
-                      fontFamily: "Genty Sans",
-                      fontSize: "16px",
-                      fontStyle: "normal",
-                      fontWeight: 500,
-                      lineHeight: "normal",
-                    }}
-                  >
-                    Lance Andrei Recla
-                  </span>
-                  <span
-                    className="text-xs text-gray-600"
-                    style={{
-                      color: "#3C3333",
-                      fontSize: "12px",
-                      fontStyle: "normal",
-                      fontWeight: 400,
-                      lineHeight: "normal",
-                    }}
-                  >
-                    lrrecla@up.edu.ph
-                  </span>
+              ) : (
+                <div className="w-full text-center py-4">
+                  <span className="text-sm font-semibold text-gray-700">You are not logged in.</span>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Navigation */}
@@ -548,7 +613,7 @@ export default function ReportFormSample() {
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a
             href="#"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
@@ -762,29 +827,27 @@ export default function ReportFormSample() {
                 <Field
                   label="Reporter Name"
                   placeholder="Your name"
-                  value={recorderName}
-                  onChange={(e) => setRecorderName(e.target.value)}
+                  value={reporterName}
+                  onChange={(e: InputChange) => setReporterName(e.target.value)}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Field
-                    label="Type of animal"
-                    placeholder="Dog, Cat, etc."
-                    value={animalType}
-                    onChange={(e) => setAnimalType(e.target.value)}
-                  />
-                </div>
+                <Field
+                  label="Type of animal"
+                  placeholder="Dog, Cat, etc."
+                  value={animalType}
+                  onChange={(e: InputChange) => setAnimalType(e.target.value)}
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
                     label="Gender"
                     options={["Unknown", "Male", "Female"]}
                     value={gender}
-                    onChange={(e) => setGender(e.target.value)}
+                    onChange={(e: SelectChange) => setGender(e.target.value)}
                   />
                   <Field
                     label="Date Seen"
                     type="date"
                     value={dateSeen}
-                    onChange={(e) => setDateSeen(e.target.value)}
+                    onChange={(e: InputChange) => setDateSeen(e.target.value)}
                   />
                 </div>
 
@@ -792,7 +855,7 @@ export default function ReportFormSample() {
                   label="Physical Description"
                   placeholder="Color, size, markings, etc."
                   value={physicalDescription}
-                  onChange={(e) => setPhysicalDescription(e.target.value)}
+                  onChange={(e: TextareaChange) => setPhysicalDescription(e.target.value)}
                 />
                 <div className="rounded-xl bg-[#E6E6E6] p-4 flex flex-col items-center justify-center">
                   <div
@@ -847,9 +910,9 @@ export default function ReportFormSample() {
                   <input
                     id="photo-input"
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.svg"
                     className="hidden"
-                    onChange={(e) => {
+                    onChange={(e: InputChange) => {
                       const file = e.target.files?.[0];
                       if (!file) {
                         setPreview(null);
@@ -877,19 +940,19 @@ export default function ReportFormSample() {
                       label="Area Seen"
                       placeholder="General area"
                       value={area}
-                      onChange={(e) => setArea(e.target.value)}
+                      onChange={(e: InputChange) => setArea(e.target.value)}
                     />
                     <Field
                       label="Landmark Near Location"
                       placeholder="Known landmark"
                       value={landmark}
-                      onChange={(e) => setLandmark(e.target.value)}
+                      onChange={(e: InputChange) => setLandmark(e.target.value)}
                     />
                     <Field
                       label="What Road?"
                       placeholder="Street / road name"
                       value={road}
-                      onChange={(e) => setRoad(e.target.value)}
+                      onChange={(e: InputChange) => setRoad(e.target.value)}
                     />
                   </div>
                 </div>
@@ -907,9 +970,19 @@ export default function ReportFormSample() {
                     <button
                       type="button"
                       onClick={grabCurrentLocation}
-                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+                      className="absolute bottom-14 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
                     >
                       Use My Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLat(7.0858);
+                        setLng(125.4853);
+                      }}
+                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+                    >
+                      Return to UP Oblation
                     </button>
                   </div>
                 </div>
@@ -959,7 +1032,7 @@ export default function ReportFormSample() {
                         style={{ backgroundColor: "#C2C876" }}
                         placeholder="Describe"
                         value={healthDetails}
-                        onChange={(e) => setHealthDetails(e.target.value)}
+                        onChange={(e: InputChange) => setHealthDetails(e.target.value)}
                       />
                     )}
                   </div>
@@ -1005,7 +1078,7 @@ export default function ReportFormSample() {
                         style={{ backgroundColor: "#C2C876" }}
                         placeholder="Describe"
                         value={collarDetails}
-                        onChange={(e) => setCollarDetails(e.target.value)}
+                        onChange={(e: InputChange) => setCollarDetails(e.target.value)}
                       />
                     )}
                   </div>
@@ -1015,37 +1088,8 @@ export default function ReportFormSample() {
                   label="Any Other Information"
                   placeholder="Any additional details..."
                   value={otherInfo}
-                  onChange={(e) => setOtherInfo(e.target.value)}
+                  onChange={(e: TextareaChange) => setOtherInfo(e.target.value)}
                 />
-
-                {/* Theme */}
-                <div className="rounded-xl bg-[#E1E69D] p-4">
-                  <label className="block text-sm font-medium mb-3 text-[#3C3333]">
-                    Theme
-                  </label>
-                  <div className="grid grid-cols-4 gap-3">
-                    {[
-                      { key: "blue" as ReportTheme, color: "bg-[#5E9BBA]" },
-                      { key: "green" as ReportTheme, color: "bg-[#689668]" },
-                      { key: "orange" as ReportTheme, color: "bg-[#DCB57E]" },
-                      { key: "purple" as ReportTheme, color: "bg-[#C575AD]" },
-                    ].map((t) => (
-                      <button
-                        key={t.key}
-                        type="button"
-                        onClick={() => setTheme(t.key)}
-                        aria-label={`${t.key} theme`}
-                        className={`h-10 rounded-md ${
-                          t.color
-                        } transition outline outline-2 ${
-                          theme === t.key
-                            ? "outline-[#3C3333]"
-                            : "outline-transparent"
-                        } hover:brightness-110`}
-                      />
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -1076,7 +1120,7 @@ export default function ReportFormSample() {
               type="button"
               className="flex-1 rounded-lg bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692] transition"
             >
-              {activeTab === "health" ? "Submit" : "Next"}
+              {activeTab === "health" ? "Confirm" : "Next"}
             </button>
           </div>
           {resultMsg && (
@@ -1090,7 +1134,7 @@ export default function ReportFormSample() {
   );
 }
 
-function Field({ label, placeholder, type = "text", value, onChange }) {
+function Field({ label, placeholder, type = "text", value, onChange }: FieldProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label
@@ -1116,7 +1160,7 @@ function Field({ label, placeholder, type = "text", value, onChange }) {
   );
 }
 
-function SelectField({ label, options, value, onChange }) {
+function SelectField({ label, options, value, onChange }: SelectFieldProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label
@@ -1136,7 +1180,7 @@ function SelectField({ label, options, value, onChange }) {
         className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
         style={{ backgroundColor: "#C2C876" }}
       >
-        {options.map((o) => (
+        {options.map((o: string) => (
           <option key={o} value={o}>
             {o}
           </option>
@@ -1146,7 +1190,7 @@ function SelectField({ label, options, value, onChange }) {
   );
 }
 
-function TextArea({ label, placeholder, value, onChange }) {
+function TextArea({ label, placeholder, value, onChange }: TextAreaProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label

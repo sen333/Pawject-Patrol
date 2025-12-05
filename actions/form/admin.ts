@@ -16,7 +16,6 @@ export interface AdminAnimalReportSummary {
 	latitude: number | null;
 	longitude: number | null;
 	report_status: string | null; // 'Pending' | 'Accepted' | 'Rejected'
-	report_theme?: string | null; // 'blue' | 'green' | 'orange' | 'purple'
 	health_issues?: string | null;
 	animal_collar?: string | null;
 	other_information?: string | null;
@@ -33,7 +32,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 	const { data, error } = await supabase
 		.from("animal_report")
 		.select(
-			"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, report_theme, health_issues, animal_collar, other_information"
+			"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
 		)
 		.order("created_at", { ascending: false })
 		.limit(limit * 3); // Fetch more to sort by status

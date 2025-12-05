@@ -53,6 +53,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
+    // Redirect non-logged-in users trying to access user pages to /login
+    if (request.nextUrl.pathname.startsWith("/form") && !request.nextUrl.pathname.startsWith("/login")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+
     // Allow public pages to pass through (including the root path).
     // Avoid redirecting the root path to itself which causes an infinite
     // redirect loop when there's no user.

@@ -23,20 +23,43 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false); // Add mounted state
+  // State for user info
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
+    setMounted(true); // Set mounted true after hydration
+
     // Check if the user is authenticated
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
       setLoading(false);
+      if (user) {
+        setUserEmail(user.email || "");
+        // Try to get name from user metadata, fallback to email username
+        const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
     };
-    
+
     checkAuth();
 
     // Listen for auth state changes (like logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        setUserEmail(session.user.email || "");
+        const nameFromMeta = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
+        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
     });
 
     return () => {
@@ -102,15 +125,21 @@ const Sidebar = () => (
               padding: "12px",
             }}
           >
-            <div className="flex items-center gap-3 w-full">
-              <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                <span className="text-sm font-bold text-white">LR</span>
+            {userName ? (
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{userName[0].toUpperCase()}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail}</span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>Lance Andrei Recla</span>
-                <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>lrrecla@up.edu.ph</span>
+            ) : (
+              <div className="w-full text-center py-4">
+                <span className="text-sm font-semibold text-gray-700">You are not logged in.</span>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Navigation */}
@@ -131,9 +160,9 @@ const Sidebar = () => (
             {[
               { label: "Home", icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="#3C3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M9 22V12H15V22" stroke="#3C3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 22V12H15V22" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               )},
               { label: "About Us", icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -247,7 +276,7 @@ const Sidebar = () => (
 
 
       {/* Bottom Section – Social Links */}
-      <div className="flex items-center gap-3 mt-auto">
+      <div className="flex items-center gap-3 mt-6">
         <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
           <Facebook size={18} />
         </a>

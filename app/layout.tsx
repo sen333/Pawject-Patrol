@@ -14,9 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
+      <body suppressHydrationWarning
         className={`font-sans antialiased`}
-        data-gramm="false"
       >
         {children}
         <Analytics />
