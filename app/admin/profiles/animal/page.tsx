@@ -710,7 +710,7 @@ export default function ReportFormSample() {
         </div>
       </header>
 
-      <section className="max-w-6xl mx-auto px-4 py-6">
+      <section className="max-w-6xl mx-auto px-4 py-6 pl-[24px] pr-[24px]">
         {/* Header Text */}
         <div className="mb-6">
           <h1
@@ -740,7 +740,7 @@ export default function ReportFormSample() {
         <div className="rounded-xl bg-[#E1E69D] border-[#3C3333] backdrop-blur-sm p-5 flex flex-wrap justify-center items-start content-start gap-[15px] md:gap-[15px] lg:gap-[20px] border-1 border-[#3C3333] self-stretch">
           <div className="w-full flex flex-wrap items-stretch gap-[15px] lg:gap-[20px]">
             {/* Picture panel */}
-            <div className="w-full lg:w-[340px] rounded-xl bg-[#E6E6E6] p-4 flex flex-col justify-between">
+            <div className="w-full lg:w-[340px] rounded-xl bg-[#E6E6E6] p-2 flex flex-col justify-between">
               <div
                 className="w-full h-[320px] rounded-lg bg-[#E6E6E6] flex items-center justify-center overflow-hidden cursor-pointer"
                 onClick={() => document.getElementById("photo-input")?.click()}
@@ -1165,7 +1165,7 @@ export default function ReportFormSample() {
                   className={`h-10 rounded-md ${
                     t.color
                   } transition outline outline-2 ${
-                    theme === t.key ? "outline-black" : "outline-transparent"
+                    theme === t.key ? "outline-[#3C3333]" : "outline-transparent"
                   } hover:brightness-110`}
                 />
               ))}
@@ -1197,7 +1197,7 @@ export default function ReportFormSample() {
 
 function Field({ label, placeholder, type = "text", value, onChange, name, id }: FieldProps) {
   return (
-    <div className="rounded-xl bg-[#E1E69D] p-4">
+    <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
         className="block mb-1"
         style={{
@@ -1217,7 +1217,7 @@ function Field({ label, placeholder, type = "text", value, onChange, name, id }:
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       />
     </div>
@@ -1226,7 +1226,7 @@ function Field({ label, placeholder, type = "text", value, onChange, name, id }:
 
 function SelectField({ label, options, value, onChange, name, id }: SelectFieldProps) {
   return (
-    <div className="rounded-xl bg-[#E1E69D] p-4">
+    <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
         className="block mb-1"
         style={{
@@ -1244,7 +1244,7 @@ function SelectField({ label, options, value, onChange, name, id }: SelectFieldP
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       >
         {options.map((o) => (
@@ -1259,7 +1259,7 @@ function SelectField({ label, options, value, onChange, name, id }: SelectFieldP
 
 function TextArea({ label, placeholder, value, onChange, name, id }: TextAreaProps) {
   return (
-    <div className="rounded-xl bg-[#E1E69D] p-4">
+    <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
         className="block mb-1"
         style={{
@@ -1280,7 +1280,7 @@ function TextArea({ label, placeholder, value, onChange, name, id }: TextAreaPro
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       />
     </div>
