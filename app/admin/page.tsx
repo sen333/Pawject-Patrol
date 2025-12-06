@@ -178,13 +178,17 @@ export default function HeaderAndBackground() {
         .from("animal")
         .select("*", { count: "exact", head: true });
 
+      // Count only pending animal reports
       const { count: reportsCount } = await supabase
         .from("animal_report")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("report_status", "Pending");
 
+      // Count only active or filled volunteer requests
       const { count: callCount } = await supabase
         .from("volunteer_call")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .in("call_status", ["Active", "Filled"]);
 
       // Fetch recent entries for quick preview (latest 3)
       const { data: recentAnimalsData } = await supabase
