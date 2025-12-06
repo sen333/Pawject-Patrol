@@ -1117,7 +1117,7 @@ export default function ReportFormSample() {
           <div className="w-full">
             <SelectField
               label="Animal Status"
-              options={["Unknown", "Available for Adoption", "Adopted", "In Shelter", "Under Treatment", "Lost/Missing"]}
+              options={["Unknown", "Available for Adoption", "Adopted", "In Campus", "Under Treatment", "Lost/Missing"]}
               value={animalStatus}
               onChange={(e) => setAnimalStatus(e.target.value)}
               name="animal_status"

@@ -41,7 +41,7 @@ export default function ConfirmPage(props: any) {
   // Check for individual fields in searchParams if no encoded data
   if (!data && searchParams) {
     // Look for any known keys to determine if data is present
-    const anyKeys = ['call_title', 'call_details', 'call_location', 'call_starttime', 'call_endtime', 'capacity', 'call_status', 'status', 'title'];
+    const anyKeys = ['call_title', 'call_details', 'call_location', 'call_starttime', 'call_endtime', 'capacity', 'title'];
     
     // Check if any known keys are present in searchParams
     const hasAny = anyKeys.some((k) => typeof searchParams[k] !== 'undefined');
@@ -55,7 +55,6 @@ export default function ConfirmPage(props: any) {
         call_starttime: searchParams.call_starttime || '',
         call_endtime: searchParams.call_endtime || '',
         capacity: typeof searchParams.capacity !== 'undefined' ? (searchParams.capacity as string) : undefined,
-        call_status: searchParams.call_status || searchParams.status || 'Pending',
       };
     }
   }
@@ -142,10 +141,6 @@ export default function ConfirmPage(props: any) {
             <h2 className="font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Capacity</h2>
             <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.capacity ?? '-'}</p>
           </div>
-          <div>
-            <h2 className="font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Status</h2>
-            <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.call_status || data.status || 'Pending'}</p>
-          </div>
 
           <form action={createAction} method="post" className="flex gap-3 justify-end">
             <input type="hidden" name="call_title" value={data.call_title || data.title || ''} />
@@ -154,7 +149,6 @@ export default function ConfirmPage(props: any) {
             <input type="hidden" name="call_starttime" value={data.call_starttime || ''} />
             <input type="hidden" name="call_endtime" value={data.call_endtime || ''} />
             <input type="hidden" name="capacity" value={String(data.capacity ?? '')} />
-            <input type="hidden" name="call_status" value={data.call_status || data.status || 'Pending'} />
             {
               // Build an Edit URL that preserves the entered values so the request
               // form can be prefilled when navigating back from Confirm.
@@ -167,7 +161,6 @@ export default function ConfirmPage(props: any) {
               if (data.call_starttime) params.set('call_starttime', String(data.call_starttime));
               if (data.call_endtime) params.set('call_endtime', String(data.call_endtime));
               if (typeof data.capacity !== 'undefined' && data.capacity !== null) params.set('capacity', String(data.capacity));
-              params.set('call_status', String(data.call_status || data.status || 'Pending'));
               const href = '/admin/volunteer/request?' + params.toString();
               return (
                 <Link 

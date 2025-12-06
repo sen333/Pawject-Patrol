@@ -36,6 +36,8 @@ type Animal = {
   area?: string | null;
   landmark?: string | null;
   road?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   health_issues?: string | null;
   animal_collar?: string | null;
   other_information?: string | null;
@@ -961,13 +963,62 @@ export default function AdminAnimalDetailPage() {
               <p className="font-bold">{animal.road || "—"}</p>
             </div>
           </div>
-          <div
-            className="w-full h-32 rounded-lg bg-[#DED8D8] flex items-center justify-center"
-            style={{ color: "#999" }}
-          >
-            <MapPin className="w-6 h-6" />
-            <span className="text-xs ml-2">Map Location Placeholder</span>
-          </div>
+          {animal.latitude && animal.longitude ? (
+            <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-300 relative">
+              <iframe
+                id="mapFrame"
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(animal.longitude) - 0.01},${Number(animal.latitude) - 0.01},${Number(animal.longitude) + 0.01},${Number(animal.latitude) + 0.01}&layer=mapnik&marker=${animal.latitude},${animal.longitude}`}
+                allowFullScreen
+              />
+              <button
+                onClick={() => {
+                  const iframe = document.getElementById('mapFrame') as HTMLIFrameElement;
+                  if (iframe) {
+                    iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${Number(animal.longitude) - 0.01},${Number(animal.latitude) - 0.01},${Number(animal.longitude) + 0.01},${Number(animal.latitude) + 0.01}&layer=mapnik&marker=${animal.latitude},${animal.longitude}`;
+                  }
+                }}
+                className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 rounded-lg shadow-lg px-3 py-2 transition-all border border-gray-300 z-10 flex items-center gap-2"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                title="Recenter Map"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="3" />
+                  <line x1="12" y1="1" x2="12" y2="5" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="7.05" y2="7.05" />
+                  <line x1="16.95" y1="16.95" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="5" y2="12" />
+                  <line x1="19" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="7.05" y2="16.95" />
+                  <line x1="16.95" y1="7.05" x2="19.78" y2="4.22" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Recenter</span>
+              </button>
+            </div>
+          ) : (
+            <div
+              className="w-full h-32 rounded-lg bg-[#DED8D8] flex items-center justify-center"
+              style={{ color: "#999" }}
+            >
+              <MapPin className="w-6 h-6" />
+              <span className="text-xs ml-2">No map coordinates available</span>
+            </div>
+          )}
         </div>
 
         {/* Health & Status & Additional Info Container */}
@@ -1016,21 +1067,21 @@ export default function AdminAnimalDetailPage() {
                 <span className="text-gray-500 text-xs">Health Issues</span>
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    animal.health_issues
+                    animal.health_issues && animal.health_issues.toLowerCase() !== "none"
                       ? "bg-blue-100 text-blue-600"
                       : "bg-gray-100 text-gray-500"
                   }`}
                 >
-                  {animal.health_issues ? "Yes" : "No"}
+                  {animal.health_issues && animal.health_issues.toLowerCase() !== "none" ? "Yes" : "No"}
                 </span>
               </div>
 
-              {animal.health_issues && (
+              {animal.health_issues && animal.health_issues.toLowerCase() !== "none" && (
                 <div className="flex flex-col items-start gap-1 w-full pb-2">
                   <span className="text-gray-500 text-xs">
                     Health Description
                   </span>
-                  <span className="font-medium text-gray-900"></span>
+                  <span className="font-medium text-gray-900">{animal.health_issues}</span>
                 </div>
               )}
 
@@ -1058,7 +1109,7 @@ export default function AdminAnimalDetailPage() {
                     <span className="text-gray-500 text-xs">
                       Collar Details
                     </span>
-                    <span className="font-medium text-gray-900"></span>
+                    <span className="font-medium text-gray-900">{animal.animal_collar}</span>
                   </div>
                 )}
             </div>

@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 
 export interface AnimalReportInsert {
+	report_title?: string;       // text
 	reporter_name?: string;      // text
 	animal_name?: string;        // text
 	animal_type?: string;        // 'cat' | 'dog' | 'other'
@@ -59,6 +60,7 @@ export async function createAnimalReport(data: AnimalReportInsert) {
 
 	const insertPayload = {
 		user_id: user.id,
+		report_title: data.report_title ?? null,
 		reporter_name: data.reporter_name ?? null,
 		animal_name: data.animal_name ?? null,
 		animal_type: data.animal_type ?? 'other',

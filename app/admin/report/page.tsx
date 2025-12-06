@@ -12,7 +12,7 @@ import { supabase } from "@/utils/supabase/client";
 // Define the Report type
 type Report = {
 	report_id: string; // UUID
-	animal_name: string | null;
+	report_title: string | null;
 	animal_type: string | null;
 	animal_gender: string | null;
 	date_seen: string | null;
@@ -76,7 +76,7 @@ export default function AdminReportsPage() {
 			const { data, error } = await supabase
 				.from("animal_report")
 				.select(
-					"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
+					"report_id, report_title, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
 				)
 				.order("created_at", { ascending: false })
 				.limit(50);
@@ -181,15 +181,19 @@ export default function AdminReportsPage() {
 								<div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
 									{r.photo_url ? (
 										// eslint-disable-next-line @next/next/no-img-element
-										<img src={r.photo_url} alt={r.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
-									) : (
-										<span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
-									)}
+										<img src={r.photo_url} alt={r.animal_type ?? "Animal"} className="w-full h-full object-cover" />
+											) : (
+												<span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
+											)
+									}
 								</div>
-							<div className="flex-1 min-w-0">
-								<p className="text-sm font-medium truncate" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-									{r.animal_name || 'Unnamed'} - {r.animal_type || 'animal'} ({r.animal_gender || 'unknown'})
-								</p>
+						<div className="flex-1 min-w-0">
+							<p className="text-sm font-semibold truncate" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+								{r.report_title || 'Untitled Report'}
+							</p>
+							<p className="text-sm truncate" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+								{r.animal_type || 'animal'} ({r.animal_gender || 'unknown'})
+							</p>
 								<p className="text-xs truncate" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
 									{r.area || '—'} {r.landmark ? `• near ${r.landmark}` : ''}
 								</p>

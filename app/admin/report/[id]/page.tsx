@@ -16,6 +16,7 @@ const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: f
 // Define the ReportData type to match the database schema
 type ReportData = {
   report_id: string;
+  report_title: string | null;
   animal_name: string | null;
   animal_type: string | null;
   animal_gender: string | null;
