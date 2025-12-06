@@ -613,7 +613,7 @@ export default function CatalogPage() {
                 fontFamily: '"Genty Sans", sans-serif',
               }}
             >
-              Browse all animals available for adoption and care
+              Browse all animals and manage therir profiles.
             </p>
           </header>
 
