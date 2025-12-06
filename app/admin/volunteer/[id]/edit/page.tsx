@@ -79,7 +79,7 @@ export default async function EditVolunteerPage(props: any) {
 
       <div className="max-w-4xl mx-auto px-6 pb-8">
 
-        <form action={updateAction} method="post" className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <form action={updateAction} className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <input type="hidden" name="id" value={id} />
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-2 md:col-span-2">
@@ -88,38 +88,28 @@ export default async function EditVolunteerPage(props: any) {
             </div>
 
             <div className="md:col-span-2 flex flex-col gap-2">
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Details</label>
-              <textarea name="call_details" defaultValue={v.call_details || ''} rows={4} className="border border-gray-300 rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="Describe the task, expectations, and any special instructions" />
+              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Details *</label>
+              <textarea name="call_details" defaultValue={v.call_details || ''} rows={4} required className="border border-gray-300 rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="Describe the task, expectations, and any special instructions" />
             </div>
 
             <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Start *</label>
+              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Start Time *</label>
               <input name="call_starttime" type="datetime-local" defaultValue={toInputLocal(v.call_starttime)} required className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
             </div>
 
             <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>End *</label>
-              <input name="call_endtime" type="datetime-local" defaultValue={toInputLocal(v.call_endtime)} required className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
+              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>End Time</label>
+              <input name="call_endtime" type="datetime-local" defaultValue={toInputLocal(v.call_endtime)} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
             </div>
 
             <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Location</label>
-              <input name="call_location" defaultValue={v.call_location || ''} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="e.g. University grounds" />
+              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Location *</label>
+              <input name="call_location" defaultValue={v.call_location || ''} required className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="e.g. University grounds" />
             </div>
 
             <div>
               <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Capacity</label>
-              <input name="capacity" type="number" min={0} defaultValue={typeof v.capacity === 'number' ? String(v.capacity) : ''} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Status</label>
-              <select name="call_status" defaultValue={v.call_status || 'Pending'} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                <option>Pending</option>
-                <option>Accepted</option>
-                <option>Rejected</option>
-                <option>Cancelled</option>
-              </select>
+              <input name="capacity" type="number" min={0} defaultValue={typeof v.capacity === 'number' ? String(v.capacity) : ''} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="Leave empty for unlimited" />
             </div>
           </div>
 

@@ -73,7 +73,7 @@ function SelectField({ label, options, value, onChange }: any) {
   );
 }
 
-function TextArea({ label, placeholder, value, onChange }: any) {
+function TextArea({ label, placeholder, value, onChange, required }: any) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
@@ -93,6 +93,7 @@ function TextArea({ label, placeholder, value, onChange }: any) {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        required={required}
         className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       />
@@ -624,7 +625,7 @@ export default function RequestPage() {
 
             {/* Details Field */}
             <TextArea
-              label="Details"
+              label="Details *"
               placeholder="Enter volunteer task details"
               value={formData.call_details}
               onChange={(e: any) => handleInputChange('call_details', e.target.value)}
@@ -636,7 +637,7 @@ export default function RequestPage() {
                 label="Start Time *"
                 type="datetime-local"
                 value={formData.call_starttime}
-                
+                required={true}
                 onChange={(e: any) => handleInputChange('call_starttime', e.target.value)}
               />
               <Field
@@ -650,7 +651,7 @@ export default function RequestPage() {
             {/* Location and Capacity */}
             <div className="grid md:grid-cols-2 gap-2">
               <Field
-                label="Location"
+                label="Location *"
                 placeholder="Enter location"
                 value={formData.call_location}
                 onChange={(e: any) => handleInputChange('call_location', e.target.value)}
