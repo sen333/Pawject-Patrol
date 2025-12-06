@@ -1,5 +1,5 @@
 // Import necessary modules and actions
-import { getVolunteerCall, deleteAction } from "@/actions/volunteer/admin";
+import { getVolunteerCall, deleteAction, cancelAction, uncancelAction } from "@/actions/volunteer/admin";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, LogIn } from "lucide-react";
@@ -20,10 +20,10 @@ type Volunteer = {
 // Function to determine badge classes based on status
 function statusBadgeClasses(status?: string | null) {
   const s = (status || "").toLowerCase();
-  if (s.includes("accepted")) return "bg-green-100 text-green-800 border-green-200";
-  if (s.includes("rejected")) return "bg-red-100 text-red-800 border-red-200";
-  if (s.includes("pending")) return "bg-yellow-100 text-yellow-800 border-yellow-200";
-  return "bg-gray-100 text-gray-800 border-gray-200";
+  if (s === "active") return "bg-blue-100 text-blue-800 border-blue-200";
+  if (s === "filled") return "bg-green-100 text-green-800 border-green-200";
+  if (s === "cancelled") return "bg-red-100 text-red-800 border-red-200";
+  return "bg-amber-100 text-amber-800 border-amber-200";
 }
 
 // Function to format date and time for display
@@ -172,13 +172,42 @@ export default async function AdminVolunteerDetailPage(props: any) {
               >
                 Back
               </Link>
-              <Link 
-                href={`/admin/volunteer/${volunteer.call_id}/edit`} 
-                className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                Edit Request
-              </Link>
+              
+              {/* Show Edit button only if not cancelled */}
+              {volunteer.call_status?.toLowerCase() !== 'cancelled' && (
+                <Link 
+                  href={`/admin/volunteer/${volunteer.call_id}/edit`} 
+                  className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                >
+                  Edit Request
+                </Link>
+              )}
+
+              {/* Show Cancel button if not cancelled, or Uncancel button if cancelled */}
+              {volunteer.call_status?.toLowerCase() === 'cancelled' ? (
+                <form action={uncancelAction}>
+                  <input type="hidden" name="id" value={volunteer.call_id} />
+                  <button 
+                    type="submit" 
+                    className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#10B981', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    Uncancel Request
+                  </button>
+                </form>
+              ) : (
+                <form action={cancelAction}>
+                  <input type="hidden" name="id" value={volunteer.call_id} />
+                  <button 
+                    type="submit" 
+                    className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#F59E0B', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    Cancel Request
+                  </button>
+                </form>
+              )}
 
               <form action={deleteAction}>
                 <input type="hidden" name="id" value={volunteer.call_id} />

@@ -62,8 +62,44 @@ export async function listVolunteerCalls(opts?: { search?: string; limit?: numbe
     // Additional debugging
     try {} catch (e) {}
 
+    // Return results based on sort type
+    let result = (data || []) as VolunteerCall[];
+    
+    // If sorting by created_at explicitly, just return database results (ignore status)
+    if (opts?.sortBy === 'created_at') {
+      return result;
+    }
+    
+    // For default sort (no sortBy specified), apply status priority
+    if (!opts?.sortBy) {
+      // Define status priority: Active > Filled > Completed > Cancelled
+      const statusPriority: { [key: string]: number } = {
+        'active': 1,
+        'filled': 2,
+        'completed': 3,
+        'cancelled': 4,
+      };
+      
+      result = result.sort((a, b) => {
+        const statusA = (a.call_status || '').toLowerCase();
+        const statusB = (b.call_status || '').toLowerCase();
+        const priorityA = statusPriority[statusA] || 99;
+        const priorityB = statusPriority[statusB] || 99;
+        
+        // Sort by status priority only
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        
+        // Within same status, sort by created_at (newest first)
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+
     // Return the list of volunteer calls
-    return (data || []) as VolunteerCall[];
+    return result;
   } catch (e) {
     // Log unexpected errors
     console.error(e);
@@ -118,7 +154,7 @@ export async function createAction(formData: FormData): Promise<void> {
       call_starttime: String(formData.get("call_starttime") || null) || null,
       call_endtime: String(formData.get("call_endtime") || null) || null,
       capacity: formData.get("capacity") ? Number(String(formData.get("capacity"))) : null,
-      call_status: String(formData.get("call_status") || "Pending") || "Pending",
+      call_status: String(formData.get("call_status") || "Active") || "Active",
     };
 
     // Check for service role key to use elevated privileges
@@ -247,6 +283,100 @@ export async function updateAction(formData: FormData): Promise<void> {
     console.error(e?.message || "Unexpected error");
 
     // End function
+    return;
+  }
+}
+
+// Server action to cancel a volunteer call by updating status to Cancelled
+export async function cancelAction(formData: FormData): Promise<void> {
+  // Try to cancel the volunteer call
+  try {
+    // Get the ID from the form data
+    const id = String(formData.get("id") || "");
+
+    // Check for missing ID
+    if (!id) {
+      console.error("cancelAction missing id");
+      return;
+    }
+
+    // Create Supabase client
+    const supabase = await getSupabase();
+
+    // Update the status to Cancelled
+    const { error } = await supabase
+      .from("volunteer_call")
+      .update({ call_status: "Cancelled" })
+      .eq("call_id", id);
+
+    // Handle any errors
+    if (error) console.error("cancelAction error:", error);
+
+    // Revalidate paths
+    else {
+      try {
+        revalidatePath('/admin/volunteer');
+        revalidatePath(`/admin/volunteer/${id}`);
+      } catch (_) {}
+    }
+
+    // Redirect back to the volunteer detail page
+    redirect(`/admin/volunteer/${id}`);
+  } catch (e: any) {
+    // If Next's redirect throws, rethrow so the runtime can handle navigation
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+
+    // Log unexpected errors
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
+// Server action to uncancel a volunteer call by updating status to Active
+export async function uncancelAction(formData: FormData): Promise<void> {
+  // Try to uncancel the volunteer call
+  try {
+    // Get the ID from the form data
+    const id = String(formData.get("id") || "");
+
+    // Check for missing ID
+    if (!id) {
+      console.error("uncancelAction missing id");
+      return;
+    }
+
+    // Create Supabase client
+    const supabase = await getSupabase();
+
+    // Update the status to Active
+    const { error } = await supabase
+      .from("volunteer_call")
+      .update({ call_status: "Active" })
+      .eq("call_id", id);
+
+    // Handle any errors
+    if (error) console.error("uncancelAction error:", error);
+
+    // Revalidate paths
+    else {
+      try {
+        revalidatePath('/admin/volunteer');
+        revalidatePath(`/admin/volunteer/${id}`);
+      } catch (_) {}
+    }
+
+    // Redirect back to the volunteer detail page
+    redirect(`/admin/volunteer/${id}`);
+  } catch (e: any) {
+    // If Next's redirect throws, rethrow so the runtime can handle navigation
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+
+    // Log unexpected errors
+    console.error(e?.message || "Unexpected error");
     return;
   }
 }

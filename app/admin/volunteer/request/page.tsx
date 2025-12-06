@@ -112,7 +112,6 @@ export default function RequestPage() {
     call_endtime: "",
     call_location: "",
     capacity: "",
-    call_status: "Pending",
   });
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,7 +147,6 @@ export default function RequestPage() {
       call_endtime: searchParams?.get('call_endtime') || '',
       call_location: searchParams?.get('call_location') || '',
       capacity: searchParams?.get('capacity') || '',
-      call_status: searchParams?.get('call_status') || 'Pending',
     });
   }, [searchParams]);
 
@@ -666,14 +664,6 @@ export default function RequestPage() {
                 onChange={(e: any) => handleInputChange('capacity', e.target.value)}
               />
             </div>
-
-            {/* Status Field */}
-            <SelectField
-              label="Status"
-              options={['Pending', 'Active', 'Cancelled']}
-              value={formData.call_status}
-              onChange={(e: any) => handleInputChange('call_status', e.target.value)}
-            />
 
             {/* Action Buttons */}
             <div className="flex gap-3 text-sm mt-6">
