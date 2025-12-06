@@ -865,22 +865,23 @@ export default function HeaderAndBackground() {
                   ))}
 
                   {/* View All Button */}
-                  <button
-                    className="
-    flex h-[33px] px-[16px] py-[8px]
-    items-start gap-[10px] self-stretch
-    rounded-lg bg-[#DCB57E]
-    text-xs font-medium
-    hover:bg-[#d4a86b] transition-colors mt-[10px]
-    justify-center
-  "
-                    style={{
-                      fontFamily: '"Genty Sans", sans-serif',
-                      color: "#FFF",
-                    }}
-                  >
-                    View All Animals
-                  </button>
+<Link href="/admin/profiles" className="
+      flex h-[33px] px-[16px] py-[8px]
+      items-start gap-[10px] self-stretch
+      rounded-lg bg-[#DCB57E]
+      text-xs font-medium
+      hover:bg-[#d4a86b] transition-colors mt-[10px]
+      justify-center
+    ">
+  <button
+    style={{
+      fontFamily: '"Genty Sans", sans-serif',
+      color: "#FFF",
+    }}
+  >
+    View All Animals
+  </button>
+</Link>
                 </div>
               </div>
 
