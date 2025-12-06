@@ -74,7 +74,7 @@ export async function getAnimalReportById(id: string) {
 }
 
 // Update report status (Accept or Reject)
-export async function updateReportStatus(reportId: string, status: 'Accepted' | 'Rejected') {
+export async function updateReportStatus(reportId: string, status: 'Accepted' | 'Rejected' | 'Pending') {
 	const supabase = await createClient();
 	
 	// Verify admin authentication

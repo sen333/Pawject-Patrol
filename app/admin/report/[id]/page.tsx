@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn } from "lucide-react";
+import { Menu, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/utils/supabase/client";
 import { updateReportStatus } from "@/actions/form/admin";
@@ -33,6 +33,7 @@ type ReportData = {
   animal_collar?: string | null;
   other_information?: string | null;
   report_theme?: string | null;
+  reporter_name?: string | null;
 };
 
 // Admin report detail page component - displays full report information and allows status updates
@@ -46,6 +47,10 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState<string>('Pending');
+  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'health'>('overview');
+  const [allReportIds, setAllReportIds] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [totalReports, setTotalReports] = useState<number>(0);
 
   // Fetch report data on component mount
   useEffect(() => {
@@ -97,6 +102,22 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         return;
       }
 
+      // Fetch all report IDs first to enable navigation
+      const { data: allReports, error: allReportsError } = await supabase
+        .from("animal_report")
+        .select("report_id")
+        .order("created_at", { ascending: false });
+
+      if (!mounted) return;
+
+      if (!allReportsError && allReports) {
+        const reportIds = allReports.map(r => r.report_id);
+        setAllReportIds(reportIds);
+        setTotalReports(reportIds.length);
+        const index = reportIds.indexOf(reportId);
+        setCurrentIndex(index >= 0 ? index : 0);
+      }
+
       // Fetch complete report data from database
       const { data: reportData, error: reportError } = await supabase
         .from("animal_report")
@@ -129,8 +150,24 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     };
   }, [params]);
 
+  // Navigate to previous report
+  const goToPrevious = () => {
+    if (currentIndex > 0 && allReportIds.length > 0) {
+      const prevId = allReportIds[currentIndex - 1];
+      router.push(`/admin/report/${prevId}`);
+    }
+  };
+
+  // Navigate to next report
+  const goToNext = () => {
+    if (currentIndex < allReportIds.length - 1 && allReportIds.length > 0) {
+      const nextId = allReportIds[currentIndex + 1];
+      router.push(`/admin/report/${nextId}`);
+    }
+  };
+
   // Handle report status updates (Accept/Reject)
-  const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected') => {
+  const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected' | 'Pending') => {
     // Validate data presence
     if (!data) return;
     
@@ -179,17 +216,6 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
-  // Determine border/shadow color based on report theme
-  const themeAccent = data.report_theme === 'blue'
-    ? 'border-[#1F4E79] shadow-[0_0_0_3px_rgba(31,78,121,0.15)]'
-    : data.report_theme === 'green'
-      ? 'border-[#2F5E4E] shadow-[0_0_0_3px_rgba(47,94,78,0.15)]'
-      : data.report_theme === 'orange'
-        ? 'border-[#C26437] shadow-[0_0_0_3px_rgba(194,100,55,0.15)]'
-        : data.report_theme === 'purple'
-          ? 'border-[#5C2F74] shadow-[0_0_0_3px_rgba(92,47,116,0.15)]'
-          : 'border-gray-200';
-
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
       {/* Navigation Header */}
@@ -209,7 +235,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
       {/* Page Header */}
       <div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
-        <div className="max-w-4xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-6">
           <h2 
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
             style={{
@@ -223,147 +249,298 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
               outlineColor: '#3C3333',
             }}
           >
-            Report Details
+            Animal Report Details
           </h2>
           <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-            View and manage report information
+            Review and manage animal sighting reports
           </p>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 pb-8">
-        {/* Header with status badge and action buttons */}
+      <div className="max-w-5xl mx-auto px-6 pb-8">
+        {/* Back button and pagination */}
         <div className="flex items-center justify-between mb-4">
           <Link 
             href="/admin/report" 
-            className="text-sm hover:opacity-90"
-            style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
+            className="text-sm hover:opacity-90 inline-flex items-center gap-1 px-3 py-1.5 bg-white rounded-lg border"
+            style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
           >
-            ← Back to reports
+            ⚊ All Reports
           </Link>
-          <div className="flex items-center gap-3">
-            <span className={`text-sm px-3 py-1 rounded-full font-medium ${
-              status === 'Accepted' ? 'bg-green-100 text-green-700' :
-              status === 'Rejected' ? 'bg-red-100 text-red-700' :
-              'bg-yellow-100 text-yellow-700'
-            }`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-              {status}
-            </span>
-            {status === 'Pending' && (
-              <div className="flex gap-2">
+          <span className="text-sm px-3 py-1 bg-white rounded-lg border" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+            {currentIndex + 1} of {totalReports}
+          </span>
+        </div>
+
+        {/* Main report card with navigation arrows */}
+        <div className="relative">
+          {/* Left arrow */}
+          {currentIndex > 0 && (
+            <button
+              onClick={goToPrevious}
+              className="absolute left-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+              aria-label="Previous report"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
+
+          {/* Right arrow */}
+          {currentIndex < allReportIds.length - 1 && (
+            <button
+              onClick={goToNext}
+              className="absolute right-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+              aria-label="Next report"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Header with theme color */}
+          <div className="px-6 py-6 relative" style={{ backgroundColor: '#A67BB5' }}>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs text-white/90 mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                  Record ID: {data.report_id}
+                </p>
+                <h1 className="text-3xl font-bold text-white mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                  {data.report_title ?? 'Untitled Report'}
+                </h1>
+                <p className="text-sm text-white/90" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                  {data.animal_type ?? 'Unknown'} • {data.animal_gender ?? 'Unknown'}
+                </p>
+              </div>
+              <span className={`px-3 py-1 text-white text-xs font-medium rounded-full ${
+                status === 'Accepted' ? 'bg-green-500' :
+                status === 'Rejected' ? 'bg-red-500' :
+                'bg-amber-500'
+              }`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                {status}
+              </span>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'overview' 
+                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
+                    : 'text-gray-500 hover:text-[#3C3333]'
+                }`}
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                ⓘ Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'details' 
+                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
+                    : 'text-gray-500 hover:text-[#3C3333]'
+                }`}
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                🐾 Animal Details
+              </button>
+              <button
+                onClick={() => setActiveTab('location')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'location' 
+                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
+                    : 'text-gray-500 hover:text-[#3C3333]'
+                }`}
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                📍 Location
+              </button>
+              <button
+                onClick={() => setActiveTab('health')}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'health' 
+                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
+                    : 'text-gray-500 hover:text-[#3C3333]'
+                }`}
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                ♥ Health
+              </button>
+            </div>
+          </div>
+
+          {/* Tab content */}
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  {/* Animal photo */}
+                  <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                    {data.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={data.photo_url} alt={data.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center text-gray-400">
+                        <svg className="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                        </svg>
+                        <p className="text-xs" style={{ fontFamily: '"Genty Sans", sans-serif' }}>No photo</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Summary */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Summary</label>
+                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.animal_description ?? 'No description provided.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Overview info */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Recorded By</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.reporter_name ?? 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Date Seen</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.date_seen ? new Date(data.date_seen).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Location</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.landmark || data.area || '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'details' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Type</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_type ?? '—'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Gender</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_gender ?? 'Unknown'}</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Physical Description</label>
+                  <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                    {data.animal_description ?? 'No description provided.'}
+                  </p>
+                </div>
+                {data.other_information && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Other Information</label>
+                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.other_information}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'location' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Area</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.area ?? '—'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Landmark</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.landmark ?? '—'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Road</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.road ?? '—'}</p>
+                  </div>
+                </div>
+                {data.latitude && data.longitude && (
+                  <div className="mt-4">
+                    <label className="text-xs font-medium text-gray-500 block mb-2" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Map View</label>
+                    <AdminMapView latitude={data.latitude} longitude={data.longitude} />
+                    <a
+                      href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs mt-2 inline-block hover:opacity-90"
+                      style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      View on OpenStreetMap →
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'health' && (
+              <div className="space-y-4">
+                {data.health_issues ? (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Health Issues</label>
+                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.health_issues}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500" style={{ fontFamily: '"Genty Sans", sans-serif' }}>No health issues reported.</p>
+                )}
+                {data.animal_collar && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Collar</label>
+                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {data.animal_collar === 'Yes' ? 'Has Collar' : 'No Collar'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons at bottom */}
+          <div className="border-t p-6 flex gap-3">
+            {status === 'Pending' ? (
+              <>
                 <button
                   onClick={() => handleStatusUpdate('Accepted')}
                   disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
-                  style={{ backgroundColor: '#689668', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-green-500 text-white hover:bg-green-600"
+                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
                 >
-                  {updating ? 'Updating...' : 'Accept'}
+                  ✓ Accept Report
                 </button>
                 <button
                   onClick={() => handleStatusUpdate('Rejected')}
                   disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
-                  style={{ backgroundColor: '#DC2626', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-red-500 text-white hover:bg-red-600"
+                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
                 >
-                  {updating ? 'Updating...' : 'Reject'}
+                  ✕ Deny Report
                 </button>
-              </div>
+              </>
+            ) : (
+              <button
+                onClick={() => handleStatusUpdate('Pending')}
+                disabled={updating}
+                className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-gray-500 text-white hover:bg-gray-600"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                ↺ Reset to Pending
+              </button>
             )}
           </div>
-        </div>
-
-        {/* Main report card with theme-based border */}
-        <div className={`bg-white rounded-2xl p-6 md:p-8 border-2 shadow-lg transition-colors ${themeAccent}`}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Animal photo */}
-            <div className="md:col-span-1">
-              <div className="w-full aspect-square bg-gray-100 rounded-lg border overflow-hidden flex items-center justify-center">
-                {data.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.photo_url} alt={data.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>No photo</span>
-                )}
-              </div>
-            </div>
-
-            {/* Animal details */}
-            <div className="md:col-span-2 space-y-3">
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Animal Name</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_name ?? 'Unnamed'}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Type</label>
-                  <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_type ?? '—'}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Gender</label>
-                  <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_gender ?? 'unknown'}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Date Seen</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.date_seen ? new Date(data.date_seen).toLocaleString() : '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Physical Description</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_description ?? '—'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Location Section */}
-          <div className="mt-6 pt-6 border-t">
-            <h2 className="text-lg font-semibold mb-4" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Location Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Area</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.area ?? '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Landmark</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.landmark ?? '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Road</label>
-                <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.road ?? '—'}</p>
-              </div>
-            </div>
-            {/* Optional additional information (health, collar, other) */}
-            {(data.health_issues || data.animal_collar || data.other_information) && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold mb-2" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Additional Details</h3>
-                <div className="space-y-2 text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                  {data.health_issues && (
-                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Health Issues:</span> {data.health_issues}</p>
-                  )}
-                  {data.animal_collar && (
-                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Collar:</span> {data.animal_collar === 'Yes' ? 'Has Collar' : 'Has No Collar'}</p>
-                  )}
-                  {data.other_information && (
-                    <p><span className="font-medium" style={{ color: '#6B7280' }}>Other Info:</span> {data.other_information}</p>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* Interactive map view if coordinates are available */}
-            {data.latitude && data.longitude && (
-              <div className="mt-4" id="map-section">
-                <label className="text-xs font-medium block mb-2" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>Map View</label>
-                <AdminMapView latitude={data.latitude} longitude={data.longitude} />
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs mt-2 inline-block hover:opacity-90"
-                  style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
-                >
-                  View on OpenStreetMap →
-                </a>
-              </div>
-            )}
           </div>
         </div>
       </div>
