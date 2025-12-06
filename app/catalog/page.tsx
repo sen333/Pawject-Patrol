@@ -66,6 +66,8 @@ interface Animal {
   animal_collar: string | null;
   animal_theme: string | null;
   created_at: string | null;
+  vaccination_status?: string | null;
+  health_issues?: string | null;
 }
 
 // Animal Detail Modal Component
@@ -277,9 +279,34 @@ function AnimalDetailModal({
               </>
             )}
             {activeTab === "health" && (
-              <p className="text-center py-8 opacity-70">
-                No health information available
-              </p>
+              <div className="space-y-4">
+                {animal.vaccination_status || animal.health_issues ? (
+                  <>
+                    {animal.vaccination_status && (
+                      <div>
+                        <p className="font-semibold mb-1">Vaccination Status:</p>
+                        <p className="leading-relaxed">{animal.vaccination_status}</p>
+                      </div>
+                    )}
+                    {animal.health_issues && animal.health_issues.toLowerCase() !== "none" && (
+                      <div>
+                        <p className="font-semibold mb-1">Health Issues:</p>
+                        <p className="leading-relaxed">{animal.health_issues}</p>
+                      </div>
+                    )}
+                    {(!animal.health_issues || animal.health_issues.toLowerCase() === "none") && animal.vaccination_status && (
+                      <div>
+                        <p className="font-semibold mb-1">Health Issues:</p>
+                        <p className="leading-relaxed">None</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-center py-8 opacity-70">
+                    No health information available
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
