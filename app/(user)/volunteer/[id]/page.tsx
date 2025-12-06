@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail, Calendar, MapPin, Users } from 'lucide-react';
+import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail, Calendar, MapPin, Users, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
-import { getVolunteerSignupCount } from '@/actions/volunteer/user';
-import { syncAllVolunteerCallStatuses } from '@/actions/volunteer/admin';
+import { joinVolunteerCall, leaveVolunteerCall, getUserResponseStatus, getVolunteerSignupCount } from '@/actions/volunteer/user';
+import { syncVolunteerCallStatus } from '@/actions/volunteer/admin';
 
 // Volunteer Call type definition
 interface VolunteerCall {
@@ -40,21 +40,23 @@ function statusBadgeClasses(status?: string | null) {
   if (s === 'active') return 'bg-blue-100 text-blue-800 border-blue-200';
   if (s === 'filled') return 'bg-green-100 text-green-800 border-green-200';
   if (s === 'cancelled') return 'bg-red-100 text-red-800 border-red-200';
-  return 'bg-gray-100 text-gray-800 border-gray-200';
+  return 'bg-amber-100 text-amber-800 border-amber-200';
 }
 
-// Volunteer Page Component
-export default function VolunteerPage() {
+// Volunteer Detail Page Component
+export default function VolunteerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const unwrappedParams = use(params);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [volunteers, setVolunteers] = useState<VolunteerCall[]>([]);
+  const [volunteer, setVolunteer] = useState<VolunteerCall | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [search, setSearch] = useState('');
-  const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
+  const [signupCount, setSignupCount] = useState(0);
+  const [userStatus, setUserStatus] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -89,59 +91,109 @@ export default function VolunteerPage() {
     };
   }, []);
 
-  // Fetch volunteer opportunities
+  // Fetch volunteer opportunity details
   useEffect(() => {
-    const fetchVolunteers = async () => {
+    const fetchVolunteer = async () => {
       setLoading(true);
       setError(null);
 
-      // Sync all statuses first
-      await syncAllVolunteerCallStatuses();
+      // Sync status first
+      await syncVolunteerCallStatus(unwrappedParams.id);
 
       const { data, error } = await supabase
         .from('volunteer_call')
         .select('*')
-        .in('call_status', ['Active', 'Filled', 'Cancelled'])
-        .order('call_starttime', { ascending: true });
+        .eq('call_id', unwrappedParams.id)
+        .single();
 
       if (error) {
         setError(error.message);
-        setVolunteers([]);
+        setVolunteer(null);
       } else {
-        const volunteerData = (data || []) as VolunteerCall[];
-        setVolunteers(volunteerData);
+        setVolunteer(data as VolunteerCall);
         
-        // Fetch signup counts for each opportunity
-        const counts: Record<string, number> = {};
-        await Promise.all(
-          volunteerData.map(async (v) => {
-            const count = await getVolunteerSignupCount(v.call_id);
-            counts[v.call_id] = count;
-          })
-        );
-        setSignupCounts(counts);
+        // Fetch signup count and user status
+        const count = await getVolunteerSignupCount(unwrappedParams.id);
+        setSignupCount(count);
+        
+        const status = await getUserResponseStatus(unwrappedParams.id);
+        setUserStatus(status);
       }
 
       setLoading(false);
     };
 
-    fetchVolunteers();
-  }, []);
-
-  // Filter volunteers based on search
-  const filteredVolunteers = volunteers.filter(volunteer => {
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      if (
-        !(volunteer.call_title || '').toLowerCase().includes(q) &&
-        !(volunteer.call_details || '').toLowerCase().includes(q) &&
-        !(volunteer.call_location || '').toLowerCase().includes(q)
-      ) {
-        return false;
-      }
+    if (unwrappedParams.id) {
+      fetchVolunteer();
     }
-    return true;
-  });
+  }, [unwrappedParams.id]);
+
+  // Handle joining volunteer opportunity
+  const handleJoin = async () => {
+    if (!isAuthenticated) {
+      alert('Please log in to join this opportunity');
+      return;
+    }
+
+    setJoining(true);
+    const result = await joinVolunteerCall(unwrappedParams.id);
+    setJoining(false);
+
+    if (result.success) {
+      // Refetch volunteer data to get updated status
+      const { data: updatedCall } = await supabase
+        .from('volunteer_call')
+        .select('*')
+        .eq('call_id', unwrappedParams.id)
+        .single();
+      
+      if (updatedCall) {
+        setVolunteer(updatedCall as VolunteerCall);
+      }
+      
+      // Refresh counts and status
+      const count = await getVolunteerSignupCount(unwrappedParams.id);
+      setSignupCount(count);
+      const status = await getUserResponseStatus(unwrappedParams.id);
+      setUserStatus(status);
+      alert('Successfully joined this opportunity!');
+    } else {
+      alert(result.error || 'Failed to join opportunity');
+    }
+  };
+
+  // Handle leaving volunteer opportunity
+  const handleLeave = async () => {
+    if (!confirm('Are you sure you want to leave this opportunity?')) {
+      return;
+    }
+
+    setJoining(true);
+    const result = await leaveVolunteerCall(unwrappedParams.id);
+    setJoining(false);
+
+    if (result.success) {
+      // Refetch volunteer data to get updated status
+      const { data: updatedCall } = await supabase
+        .from('volunteer_call')
+        .select('*')
+        .eq('call_id', unwrappedParams.id)
+        .single();
+      
+      if (updatedCall) {
+        setVolunteer(updatedCall as VolunteerCall);
+      }
+      
+      // Refresh counts and status
+      const count = await getVolunteerSignupCount(unwrappedParams.id);
+      setSignupCount(count);
+      const status = await getUserResponseStatus(unwrappedParams.id);
+      setUserStatus(status);
+      alert('You have left this opportunity.');
+    } else {
+      alert(result.error || 'Failed to leave opportunity');
+    }
+  };
 
   // Sidebar Component
   const Sidebar = () => (
@@ -349,7 +401,7 @@ export default function VolunteerPage() {
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-6">
+        <div className="flex items-center gap-3 mt-auto">
           <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
@@ -367,12 +419,79 @@ export default function VolunteerPage() {
     </>
   );
 
+  // Loading state
+  if (loading) {
+    return (
+      <>
+        <main className="min-h-screen bg-[#E6E6E6]">
+          <Sidebar />
+          <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
+            <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+              <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+                  <Menu className="w-6 h-6 text-gray-800" />
+                </button>
+                <div className="flex-1 flex justify-center items-center h-full">
+                  <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+                </div>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                  <LogIn className="w-6 h-6 text-gray-800" />
+                </button>
+              </div>
+            </div>
+            <div className="text-center py-24">
+              <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Loading...</p>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // Error or not found state
+  if (error || !volunteer) {
+    return (
+      <>
+        <main className="min-h-screen bg-[#E6E6E6]">
+          <Sidebar />
+          <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
+            <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+              <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition">
+                  <Menu className="w-6 h-6 text-gray-800" />
+                </button>
+                <div className="flex-1 flex justify-center items-center h-full">
+                  <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+                </div>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                  <LogIn className="w-6 h-6 text-gray-800" />
+                </button>
+              </div>
+            </div>
+            <div className="text-center py-24">
+              <p style={{ color: '#DC2626', fontFamily: '"Genty Sans", sans-serif' }}>
+                {error || 'Volunteer opportunity not found.'}
+              </p>
+              <button
+                onClick={() => router.push('/volunteer')}
+                className="mt-4 px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Back to Opportunities
+              </button>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <main className="min-h-screen bg-[#E6E6E6]">
         {/* Sidebar */}
         <Sidebar />
-        
+
         <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
           {/* Navigation header */}
           <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
@@ -391,6 +510,14 @@ export default function VolunteerPage() {
 
           {/* Page header */}
           <header className="flex flex-col items-start justify-center py-6 mb-6">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 mb-4 text-sm hover:opacity-70 transition"
+              style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Opportunities
+            </button>
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
               style={{
@@ -404,145 +531,183 @@ export default function VolunteerPage() {
                 outlineColor: '#3C3333',
               }}
             >
-              Volunteer Opportunities
+              {volunteer.call_title || 'Volunteer Opportunity'}
             </h1>
-            <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-              Join us in making a difference for animals in need
-            </p>
           </header>
 
-          {/* Search bar */}
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search opportunities..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-[#C2C876] focus:outline-none transition"
-              style={{ fontFamily: '"Genty Sans", sans-serif' }}
-            />
-          </div>
-
-          {/* Loading state */}
-          {loading && (
-            <div className="text-center py-12">
-              <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Loading opportunities...</p>
+          {/* Volunteer Details Card */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+            {/* Card header with status */}
+            <div className="relative h-28 flex items-center px-6" style={{ backgroundColor: '#C2C876' }}>
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full flex items-center justify-center text-xl font-bold" style={{ backgroundColor: '#3C3333', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}>
+                  {(volunteer.call_title && volunteer.call_title[0]) ? volunteer.call_title[0].toUpperCase() : 'V'}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                    {volunteer.call_title || 'Untitled'}
+                  </h2>
+                  <div className={`mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                    {volunteer.call_status || 'Unknown'}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Error state */}
-          {error && (
-            <div className="text-center py-12">
-              <p style={{ color: '#DC2626', fontFamily: '"Genty Sans", sans-serif' }}>Error: {error}</p>
-            </div>
-          )}
-
-          {/* Volunteer opportunities grid */}
-          {!loading && !error && (
-            <>
-              {filteredVolunteers.length === 0 ? (
-                <div className="text-center py-12">
-                  <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                    {search ? 'No opportunities match your search.' : 'No volunteer opportunities available at the moment.'}
+            {/* Card content */}
+            <div className="p-6 md:p-8">
+              {volunteer.call_details && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                    Description
+                  </h3>
+                  <p className="leading-relaxed whitespace-pre-line" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                    {volunteer.call_details}
                   </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-                  {filteredVolunteers.map((volunteer) => (
-                    <div
-                      key={volunteer.call_id}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/volunteer/${volunteer.call_id}`)}
-                    >
-                      {/* Card header with status */}
-                      <div className="relative h-24 flex items-center px-4" style={{ backgroundColor: '#C2C876' }}>
-                        <div className="flex items-center justify-between w-full">
-                          <h3 className="text-xl font-bold truncate" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                            {volunteer.call_title || 'Untitled'}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Card content */}
-                      <div className="p-4">
-                        {/* Status badge */}
-                        <div className="mb-3">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`}
-                            style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                          >
-                            {volunteer.call_status || 'Unknown'}
-                          </span>
-                        </div>
-
-                        {/* Details */}
-                        {volunteer.call_details && (
-                          <p className="text-sm mb-3 line-clamp-2" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                            {volunteer.call_details}
-                          </p>
-                        )}
-
-                        {/* Meta information */}
-                        <div className="space-y-2">
-                          {volunteer.call_starttime && (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
-                              <Calendar className="w-4 h-4" />
-                              <span>{formatDateTime(volunteer.call_starttime)}</span>
-                            </div>
-                          )}
-                          {volunteer.call_location && (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
-                              <MapPin className="w-4 h-4" />
-                              <span className="truncate">{volunteer.call_location}</span>
-                            </div>
-                          )}
-                          {volunteer.capacity !== null && (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
-                              <Users className="w-4 h-4" />
-                              <span>
-                                {signupCounts[volunteer.call_id] || 0}/{volunteer.capacity} volunteers
-                                {(() => {
-                                  const spotsLeft = volunteer.capacity - (signupCounts[volunteer.call_id] || 0);
-                                  if (spotsLeft > 1) {
-                                    return (
-                                      <span style={{ color: '#16A34A', fontWeight: 600 }}>
-                                        {' '}({spotsLeft} slots left)
-                                      </span>
-                                    );
-                                  } else if (spotsLeft === 1) {
-                                    return (
-                                      <span style={{ color: '#16A34A', fontWeight: 600 }}>
-                                        {' '}(1 slot left)
-                                      </span>
-                                    );
-                                  } else if (spotsLeft === 0) {
-                                    return (
-                                      <span style={{ color: '#DC2626', fontWeight: 600 }}>
-                                        {' '}(Full)
-                                      </span>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        {/* View details button - all opportunities can be viewed */}
-                        <button
-                          onClick={() => router.push(`/volunteer/${volunteer.call_id}`)}
-                          className="mt-4 w-full px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
-                          style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
-                        >
-                          View Details
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
-            </>
-          )}
+
+              {/* Details grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 mt-1" style={{ color: '#6B7280' }} />
+                  <div>
+                    <dt className="font-medium text-sm mb-1" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                      Start Time
+                    </dt>
+                    <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {formatDateTime(volunteer.call_starttime)}
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 mt-1" style={{ color: '#6B7280' }} />
+                  <div>
+                    <dt className="font-medium text-sm mb-1" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                      End Time
+                    </dt>
+                    <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {formatDateTime(volunteer.call_endtime)}
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 mt-1" style={{ color: '#6B7280' }} />
+                  <div>
+                    <dt className="font-medium text-sm mb-1" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                      Location
+                    </dt>
+                    <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {volunteer.call_location || 'To be announced'}
+                    </dd>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Users className="w-5 h-5 mt-1" style={{ color: '#6B7280' }} />
+                  <div>
+                    <dt className="font-medium text-sm mb-1" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                      Capacity
+                    </dt>
+                    <dd style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                      {volunteer.capacity !== null ? (
+                        <>
+                          {signupCount}/{volunteer.capacity} volunteers
+                          {volunteer.capacity - signupCount > 0 && (
+                            <span style={{ color: '#16A34A', fontWeight: 600 }}>
+                              {' '}({volunteer.capacity - signupCount} spots remaining)
+                            </span>
+                          )}
+                          {volunteer.capacity - signupCount <= 0 && (
+                            <span style={{ color: '#DC2626', fontWeight: 600 }}>
+                              {' '}(Full)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        'Unlimited'
+                      )}
+                    </dd>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                {userStatus ? (
+                  <>
+                    <button
+                      disabled
+                      className="flex-1 px-6 py-3 rounded-md text-base font-semibold opacity-70 cursor-not-allowed"
+                      style={{ backgroundColor: '#3B82F6', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      Already Joined
+                    </button>
+                    <button
+                      onClick={handleLeave}
+                      disabled={joining}
+                      className="px-6 py-3 rounded-md text-base font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                      style={{ backgroundColor: '#DC2626', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      {joining ? 'Leaving...' : 'Leave Opportunity'}
+                    </button>
+                  </>
+                ) : volunteer.call_status?.toLowerCase() === 'active' && volunteer.capacity && signupCount >= volunteer.capacity ? (
+                  <button
+                    disabled
+                    className="flex-1 px-6 py-3 rounded-md text-base font-semibold opacity-50 cursor-not-allowed"
+                    style={{ backgroundColor: '#9CA3AF', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    Capacity Full
+                  </button>
+                ) : volunteer.call_status?.toLowerCase() === 'active' ? (
+                  <button
+                    onClick={handleJoin}
+                    disabled={joining}
+                    className="flex-1 px-6 py-3 rounded-md text-base font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    {joining ? 'Joining...' : 'Join This Opportunity'}
+                  </button>
+                ) : volunteer.call_status?.toLowerCase() === 'filled' ? (
+                  <button
+                    disabled
+                    className="flex-1 px-6 py-3 rounded-md text-base font-semibold opacity-50 cursor-not-allowed"
+                    style={{ backgroundColor: '#9CA3AF', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    This Opportunity is Filled
+                  </button>
+                ) : volunteer.call_status?.toLowerCase() === 'cancelled' ? (
+                  <button
+                    disabled
+                    className="flex-1 px-6 py-3 rounded-md text-base font-semibold opacity-50 cursor-not-allowed"
+                    style={{ backgroundColor: '#9CA3AF', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    This Opportunity was Cancelled
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleJoin}
+                    disabled={joining}
+                    className="flex-1 px-6 py-3 rounded-md text-base font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    {joining ? 'Joining...' : 'Express Interest'}
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => router.push('/volunteer')}
+                  className="px-6 py-3 rounded-md text-base font-medium hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#E6E6E6', color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
+                >
+                  Back to List
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </>

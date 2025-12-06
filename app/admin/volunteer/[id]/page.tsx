@@ -1,5 +1,5 @@
 // Import necessary modules and actions
-import { getVolunteerCall, deleteAction, cancelAction, uncancelAction } from "@/actions/volunteer/admin";
+import { getVolunteerCall, deleteAction, cancelAction, uncancelAction, completeAction, getVolunteerResponses } from "@/actions/volunteer/admin";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, LogIn } from "lucide-react";
@@ -77,6 +77,9 @@ export default async function AdminVolunteerDetailPage(props: any) {
       </main>
     );
   }
+
+  // Fetch volunteer responses (users who joined)
+  const responses: any[] = await getVolunteerResponses(id);
 
   // Render the volunteer detail page
   return (
@@ -164,6 +167,59 @@ export default async function AdminVolunteerDetailPage(props: any) {
               </div>
             </dl>
 
+            {/* Volunteers Section */}
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                Volunteers Joined ({responses.length})
+              </h3>
+              {responses.length > 0 ? (
+                <div className="space-y-2">
+                  {responses.map((response: any) => {
+                    const userName = response.user?.name || response.user?.email || 'Unknown User';
+                    const firstLetter = userName[0]?.toUpperCase() || 'U';
+                    
+                    return (
+                      <div 
+                        key={response.response_id} 
+                        className="flex items-center justify-between p-3 rounded-lg border"
+                        style={{ backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' }}
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Profile Picture */}
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: '#3C3333' }}
+                          >
+                            <span className="text-sm font-bold text-white">{firstLetter}</span>
+                          </div>
+                          
+                          {/* User Info */}
+                          <div>
+                            <div className="font-medium" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                              {userName}
+                            </div>
+                            {response.user?.email && response.user.email !== userName && (
+                              <div className="text-xs mt-0.5" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                                {response.user.email}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs" style={{ color: '#9CA3AF', fontFamily: '"Genty Sans", sans-serif' }}>
+                          {formatDateTime(response.created_at)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-sm" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                  No volunteers have joined yet.
+                </div>
+              )}
+            </div>
+
             <div className="mt-8 flex gap-3">
               <Link 
                 href="/admin/volunteer" 
@@ -173,8 +229,8 @@ export default async function AdminVolunteerDetailPage(props: any) {
                 Back
               </Link>
               
-              {/* Show Edit button only if not cancelled */}
-              {volunteer.call_status?.toLowerCase() !== 'cancelled' && (
+              {/* Show Edit button only if not cancelled and not completed */}
+              {volunteer.call_status?.toLowerCase() !== 'cancelled' && volunteer.call_status?.toLowerCase() !== 'completed' && (
                 <Link 
                   href={`/admin/volunteer/${volunteer.call_id}/edit`} 
                   className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -182,6 +238,20 @@ export default async function AdminVolunteerDetailPage(props: any) {
                 >
                   Edit Request
                 </Link>
+              )}
+
+              {/* Show Complete button if not already completed or cancelled */}
+              {volunteer.call_status?.toLowerCase() !== 'completed' && volunteer.call_status?.toLowerCase() !== 'cancelled' && (
+                <form action={completeAction}>
+                  <input type="hidden" name="id" value={volunteer.call_id} />
+                  <button 
+                    type="submit" 
+                    className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#10B981', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
+                  >
+                    Complete Request
+                  </button>
+                </form>
               )}
 
               {/* Show Cancel button if not cancelled, or Uncancel button if cancelled */}
@@ -196,7 +266,7 @@ export default async function AdminVolunteerDetailPage(props: any) {
                     Uncancel Request
                   </button>
                 </form>
-              ) : (
+              ) : volunteer.call_status?.toLowerCase() !== 'completed' && (
                 <form action={cancelAction}>
                   <input type="hidden" name="id" value={volunteer.call_id} />
                   <button 
