@@ -39,7 +39,9 @@ function statusBadgeClasses(status?: string | null) {
   const s = (status || '').toLowerCase();
   if (s === 'active') return 'bg-blue-100 text-blue-800 border-blue-200';
   if (s === 'filled') return 'bg-green-100 text-green-800 border-green-200';
+  if (s === 'ongoing') return 'bg-purple-100 text-purple-800 border-purple-200';
   if (s === 'cancelled') return 'bg-red-100 text-red-800 border-red-200';
+  if (s === 'completed') return 'bg-gray-100 text-gray-800 border-gray-200';
   return 'bg-gray-100 text-gray-800 border-gray-200';
 }
 
@@ -56,6 +58,7 @@ export default function VolunteerPage() {
   const [search, setSearch] = useState('');
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [userJoinedCalls, setUserJoinedCalls] = useState<Set<string>>(new Set());
 
   // Define fetchVolunteers using useCallback to prevent recreation on every render
   const fetchVolunteers = useCallback(async (isInitialLoad = false) => {
@@ -66,17 +69,45 @@ export default function VolunteerPage() {
     // Sync all statuses first
     await syncAllVolunteerCallStatuses();
 
+    // Get current user's joined calls
+    const { data: { user } } = await supabase.auth.getUser();
+    let joinedCallIds: Set<string> = new Set();
+    if (user) {
+      const { data: joined } = await supabase
+        .from('volunteer_response')
+        .select('call_id')
+        .eq('user_id', user.id);
+      joinedCallIds = new Set(joined?.map(j => j.call_id) || []);
+      setUserJoinedCalls(joinedCallIds);
+    }
+
     const { data, error } = await supabase
       .from('volunteer_call')
       .select('*')
-      .in('call_status', ['Active', 'Filled', 'Cancelled'])
+      .in('call_status', ['Active', 'Filled', 'Ongoing', 'Cancelled'])
       .order('call_starttime', { ascending: true });
 
     if (error) {
       setError(error.message);
       setVolunteers([]);
     } else {
-      const volunteerData = (data || []) as VolunteerCall[];
+      let volunteerData = (data || []) as VolunteerCall[];
+      
+      // Sync statuses on the client side based on time
+      const now = new Date();
+      volunteerData = volunteerData.map(call => {
+        const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
+        const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
+        const currentStatus = (call.call_status || '').toLowerCase();
+        
+        // Check if ongoing (between start and end time)
+        if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
+          return { ...call, call_status: 'Ongoing' };
+        }
+        
+        return call;
+      });
+      
       setVolunteers(volunteerData);
       
       // Fetch signup counts directly from volunteer_response table
@@ -513,14 +544,31 @@ export default function VolunteerPage() {
 
                       {/* Card content */}
                       <div className="p-4">
-                        {/* Status badge */}
-                        <div className="mb-3">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`}
-                            style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                          >
-                            {volunteer.call_status || 'Unknown'}
-                          </span>
+                        {/* Status badges */}
+                        <div className="mb-3 flex gap-2 flex-wrap">
+                          {userJoinedCalls.has(volunteer.call_id) ? (
+                            <span
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-800 border-blue-200"
+                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                            >
+                              Joined
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`}
+                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                            >
+                              {volunteer.call_status || 'Unknown'}
+                            </span>
+                          )}
+                          {volunteer.call_status?.toLowerCase() === 'ongoing' && (
+                            <span
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-800 border-purple-200"
+                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                            >
+                              Ongoing
+                            </span>
+                          )}
                         </div>
 
                         {/* Details */}

@@ -126,6 +126,7 @@ export async function syncVolunteerCallStatus(callId: string) {
     if (currentStatus === 'cancelled') return;
     
     const now = new Date();
+    const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
     const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
     
     // Check if the event has ended -> mark as Completed
@@ -139,7 +140,21 @@ export async function syncVolunteerCallStatus(callId: string) {
       return;
     }
     
-    // For ongoing/future events, check capacity
+    // Check if the event is currently ongoing (started but not ended)
+    const isOngoing = startTime && now >= startTime && endTime && now <= endTime;
+    
+    // For ongoing events, set status to Ongoing
+    if (isOngoing) {
+      if (currentStatus !== 'ongoing') {
+        await serviceClient
+          .from('volunteer_call')
+          .update({ call_status: 'Ongoing' })
+          .eq('call_id', callId);
+      }
+      return;
+    }
+    
+    // For future events, check capacity
     if (call.capacity) {
       const signupCount = await getSignupCount(serviceClient, callId);
       

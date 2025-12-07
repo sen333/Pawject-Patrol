@@ -996,32 +996,47 @@ export default function UserDashboard() {
           
           {volunteerCalls.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {volunteerCalls.map((call) => (
-                <Link 
-                  key={call.call_id} 
-                  href={`/volunteer/${call.call_id}`}
-                  className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-semibold text-sm flex-1" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {call.call_title || 'Volunteer Opportunity'}
-                    </h4>
-                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                      Joined
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-xs text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {formatDateTime(call.call_starttime)}
+              {volunteerCalls.map((call) => {
+                // Determine if the call is ongoing based on time
+                const now = new Date();
+                const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
+                const isUpcoming = startTime && startTime > now;
+                const callStatus = (call.call_status || '').toLowerCase();
+                
+                return (
+                  <Link 
+                    key={call.call_id} 
+                    href={`/volunteer/${call.call_id}`}
+                    className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h4 className="font-semibold text-sm flex-1" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+                        {call.call_title || 'Volunteer Opportunity'}
+                      </h4>
+                      <div className="flex gap-2">
+                        {callStatus === 'ongoing' && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800 border border-purple-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                            Ongoing
+                          </span>
+                        )}
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                          Joined
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center text-xs text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {call.call_location || 'Location TBA'}
+                    <div className="space-y-2">
+                      <div className="flex items-center text-xs text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {formatDateTime(call.call_starttime)}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        <MapPin className="w-4 h-4 mr-2" />
+                        {call.call_location || 'Location TBA'}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="bg-white rounded-xl p-8 border border-gray-200 text-center">

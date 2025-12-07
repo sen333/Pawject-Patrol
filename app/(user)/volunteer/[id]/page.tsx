@@ -39,7 +39,9 @@ function statusBadgeClasses(status?: string | null) {
   const s = (status || '').toLowerCase();
   if (s === 'active') return 'bg-blue-100 text-blue-800 border-blue-200';
   if (s === 'filled') return 'bg-green-100 text-green-800 border-green-200';
+  if (s === 'ongoing') return 'bg-purple-100 text-purple-800 border-purple-200';
   if (s === 'cancelled') return 'bg-red-100 text-red-800 border-red-200';
+  if (s === 'completed') return 'bg-gray-100 text-gray-800 border-gray-200';
   return 'bg-amber-100 text-amber-800 border-amber-200';
 }
 
@@ -110,7 +112,20 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
         setError(error.message);
         setVolunteer(null);
       } else {
-        setVolunteer(data as VolunteerCall);
+        let volunteerData = data as VolunteerCall;
+        
+        // Sync status on the client side based on time
+        const now = new Date();
+        const startTime = volunteerData.call_starttime ? new Date(volunteerData.call_starttime) : null;
+        const endTime = volunteerData.call_endtime ? new Date(volunteerData.call_endtime) : null;
+        const currentStatus = (volunteerData.call_status || '').toLowerCase();
+        
+        // Check if ongoing (between start and end time)
+        if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
+          volunteerData = { ...volunteerData, call_status: 'Ongoing' };
+        }
+        
+        setVolunteer(volunteerData);
         
         // Fetch signup count and user status
         const count = await getVolunteerSignupCount(unwrappedParams.id);
@@ -547,8 +562,21 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
                   <h2 className="text-2xl font-bold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
                     {volunteer.call_title || 'Untitled'}
                   </h2>
-                  <div className={`mt-1 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                    {volunteer.call_status || 'Unknown'}
+                  <div className="mt-1 flex gap-2 flex-wrap">
+                    {userStatus ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-800 border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        Joined
+                      </span>
+                    ) : (
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        {volunteer.call_status || 'Unknown'}
+                      </span>
+                    )}
+                    {volunteer.call_status?.toLowerCase() === 'ongoing' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-800 border-purple-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        Ongoing
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -98,14 +98,29 @@ export async function getUpcomingVolunteerCalls(limit: number = 3) {
   // Fetch only the calls the user has joined
   const { data, error } = await supabase
     .from('volunteer_call')
-    .select('call_id, call_title, call_starttime, call_location, capacity, call_status')
+    .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
     .gte('call_starttime', new Date().toISOString())
     .in('call_id', joinedCallIds)
     .order('call_starttime', { ascending: true })
     .limit(limit);
+  
+  // Sync statuses on the client side based on time
+  const now = new Date();
+  const syncedData = (data || []).map(call => {
+    const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
+    const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
+    const currentStatus = (call.call_status || '').toLowerCase();
+    
+    // Check if ongoing (between start and end time)
+    if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
+      return { ...call, call_status: 'Ongoing' };
+    }
+    
+    return call;
+  });
     
   return { 
-    data: data || [], 
+    data: syncedData, 
     userJoined: joinedCallIds
   };
 }
