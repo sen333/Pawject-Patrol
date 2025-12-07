@@ -199,7 +199,7 @@ function ConfirmationContent() {
 					{/* Top two-column: picture left, fields right */}
 					<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-stretch">
 						{/* Picture panel */}
-						<div className="rounded-xl bg-[#E6E6E6] p-4 flex flex-col">
+						<div className="rounded-xl bg-[#E1E69D] p-4 flex flex-col">
 							<div 
 								className="w-full h-[300px] rounded-lg bg-white flex items-center justify-center overflow-hidden cursor-pointer transition relative group border-2 border-[#3C3333]"
 								onClick={() => photoUrl && setShowImageModal(true)}
@@ -237,15 +237,12 @@ function ConfirmationContent() {
 								<DisplayField label="Gender" value={gender} />
 								<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
 							</div>
-							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-								<label className="block text-sm font-medium text-[#3C3333] mb-2">Physical Description</label>
-								<p className="text-sm text-[#3C3333] whitespace-pre-wrap min-h-[120px]">{physicalDescription || "—"}</p>
-							</div>
+							<DisplayTextArea label="Physical Description" value={physicalDescription || "—"} />
 						</div>
 					</div>
 
 					{/* Location fields */}
-					<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 						<DisplayField label="Area Seen (Location)" value={area || "—"} />
 						<DisplayField label="Landmark Near Location" value={landmark || "—"} />
 						<DisplayField label="What Road?" value={road || "—"} />
@@ -253,7 +250,7 @@ function ConfirmationContent() {
 
 					{/* Map display */}
 					{lat && lng && (
-						<div className="rounded-xl bg-[#E6E6E6] p-4 mt-2">
+						<div className="rounded-xl bg-[#E1E69D] p-4">
 							<label 
 								className="block mb-2" 
 								style={{
@@ -349,7 +346,7 @@ function DisplayTextArea({ label, value }: { label: string; value: string }) {
 			>
 				{label}
 			</label>
-			<p className="text-base whitespace-pre-wrap" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', fontWeight: 400 }}>{value}</p>
+			<p className="text-base whitespace-pre-wrap min-h-[100px]" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', fontWeight: 400 }}>{value}</p>
 		</div>
 	);
 }

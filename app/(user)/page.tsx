@@ -241,7 +241,7 @@ export default function UserDashboard() {
               {/* Report ID */}
               <div className="bg-white/20 rounded-lg p-3 border border-white/40">
                 <h3 className="font-semibold mb-1 text-xs">Report ID</h3>
-                <p className="text-xs font-mono">{report.report_id}</p>
+                <p className="text-sm">{report.report_id}</p>
               </div>
 
               {/* Reporter Information */}
