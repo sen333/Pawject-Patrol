@@ -100,9 +100,19 @@ export default function VolunteerPage() {
         const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
         const currentStatus = (call.call_status || '').toLowerCase();
         
-        // Check if ongoing (between start and end time)
-        if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
+        // Status priority: Cancelled > Completed > Ongoing (time-based) > others
+        if (currentStatus === 'cancelled') {
+          // Keep cancelled status
+          return call;
+        } else if (currentStatus === 'completed') {
+          // Keep completed status (overrides all except cancelled)
+          return call;
+        } else if (startTime && endTime && now >= startTime && now <= endTime) {
+          // Check if ongoing (between start and end time) - overrides active/filled
           return { ...call, call_status: 'Ongoing' };
+        } else if (endTime && now > endTime && currentStatus !== 'completed') {
+          // If past end time and not already marked completed, mark as completed
+          return { ...call, call_status: 'Completed' };
         }
         
         return call;

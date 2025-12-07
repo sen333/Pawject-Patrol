@@ -692,7 +692,7 @@ export default function AdminAnimalDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          {/* Left Column - Photo */}
           <div
-            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl"
+            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl max-h-[600px]"
             style={{ backgroundColor: "#E6E6E6" }}
           >
             <h3
@@ -717,7 +717,7 @@ export default function AdminAnimalDetailPage() {
             </h3>
             
             <div
-              className="w-full flex-1 min-h-0 rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
+              className="w-full flex-1 min-h-[300px] max-h-[450px] rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
               style={{ backgroundColor: "#DED8D8" }}
               onClick={() => animal.animal_photo && setShowImageModal(true)}
             >
@@ -854,7 +854,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Recorder
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
                   {animal.recorder_name}
                 </p>
               </div>
@@ -908,7 +908,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Date Seen
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
                   {new Date(animal.date_seen).toLocaleDateString()}
                 </p>
               </div>
@@ -1057,7 +1057,7 @@ export default function AdminAnimalDetailPage() {
                 <span className="text-gray-500 text-xs">
                   Vaccination Status
                 </span>
-                <span className="font-medium text-gray-900">
+                <span className="font-bold text-gray-900">
                   {animal.vaccination_status || "Unknown"}
                 </span>
               </div>
@@ -1081,7 +1081,7 @@ export default function AdminAnimalDetailPage() {
                   <span className="text-gray-500 text-xs">
                     Health Description
                   </span>
-                  <span className="font-medium text-gray-900">{animal.health_issues}</span>
+                  <span className="font-bold text-gray-900">{animal.health_issues}</span>
                 </div>
               )}
 
@@ -1109,7 +1109,7 @@ export default function AdminAnimalDetailPage() {
                     <span className="text-gray-500 text-xs">
                       Collar Details
                     </span>
-                    <span className="font-medium text-gray-900">{animal.animal_collar}</span>
+                    <span className="font-bold text-gray-900">{animal.animal_collar}</span>
                   </div>
                 )}
             </div>
@@ -1163,7 +1163,7 @@ export default function AdminAnimalDetailPage() {
               </svg>
               Additional Information
             </h3>
-            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700">
+            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700 font-bold">
               {animal.other_information || "No additional information provided"}
             </p>
           </div>
@@ -1172,7 +1172,7 @@ export default function AdminAnimalDetailPage() {
         {/* Back Button Only */}
         <div className="space-y-3 pb-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/admin/profiles')}
             className="w-full py-3 rounded-xl text-white transition-all"
             style={{
               backgroundColor: themeColor,

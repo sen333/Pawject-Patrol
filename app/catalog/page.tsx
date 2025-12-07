@@ -762,7 +762,8 @@ export default function CatalogPage() {
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -795,11 +796,11 @@ export default function CatalogPage() {
             <span className="font-semibold text-gray-800 text-sm">
               Task Volunteer
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a
             href="#"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"

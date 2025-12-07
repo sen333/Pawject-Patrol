@@ -120,9 +120,17 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
         const endTime = volunteerData.call_endtime ? new Date(volunteerData.call_endtime) : null;
         const currentStatus = (volunteerData.call_status || '').toLowerCase();
         
-        // Check if ongoing (between start and end time)
-        if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
+        // Status priority: Cancelled > Completed > Ongoing (time-based) > others
+        if (currentStatus === 'cancelled') {
+          // Keep cancelled status
+        } else if (currentStatus === 'completed') {
+          // Keep completed status (overrides all except cancelled)
+        } else if (startTime && endTime && now >= startTime && now <= endTime) {
+          // Check if ongoing (between start and end time) - overrides active/filled
           volunteerData = { ...volunteerData, call_status: 'Ongoing' };
+        } else if (endTime && now > endTime && currentStatus !== 'completed') {
+          // If past end time and not already marked completed, mark as completed
+          volunteerData = { ...volunteerData, call_status: 'Completed' };
         }
         
         setVolunteer(volunteerData);
@@ -563,18 +571,18 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
                     {volunteer.call_title || 'Untitled'}
                   </h2>
                   <div className="mt-1 flex gap-2 flex-wrap">
-                    {userStatus ? (
+                    {/* Display single status badge - priority: status > user joined state */}
+                    {volunteer.call_status?.toLowerCase() === 'ongoing' ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-800 border-purple-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                        Ongoing
+                      </span>
+                    ) : userStatus ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-blue-100 text-blue-800 border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
                         Joined
                       </span>
                     ) : (
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(volunteer.call_status)}`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
                         {volunteer.call_status || 'Unknown'}
-                      </span>
-                    )}
-                    {volunteer.call_status?.toLowerCase() === 'ongoing' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-800 border-purple-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                        Ongoing
                       </span>
                     )}
                   </div>

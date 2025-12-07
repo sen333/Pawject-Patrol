@@ -99,25 +99,39 @@ export async function getUpcomingVolunteerCalls(limit: number = 3) {
   const { data, error } = await supabase
     .from('volunteer_call')
     .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
-    .gte('call_starttime', new Date().toISOString())
     .in('call_id', joinedCallIds)
     .order('call_starttime', { ascending: true })
-    .limit(limit);
+    .limit(limit * 3); // Fetch more to account for filtering
   
-  // Sync statuses on the client side based on time
+  // Sync statuses and filter out completed/cancelled
   const now = new Date();
-  const syncedData = (data || []).map(call => {
-    const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
-    const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
-    const currentStatus = (call.call_status || '').toLowerCase();
-    
-    // Check if ongoing (between start and end time)
-    if (startTime && endTime && now >= startTime && now <= endTime && currentStatus !== 'cancelled') {
-      return { ...call, call_status: 'Ongoing' };
-    }
-    
-    return call;
-  });
+  const syncedData = (data || [])
+    .map(call => {
+      const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
+      const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
+      const currentStatus = (call.call_status || '').toLowerCase();
+      
+      // Status priority: Cancelled > Completed > Ongoing (time-based) > others
+      if (currentStatus === 'cancelled') {
+        return { ...call, call_status: 'Cancelled' };
+      } else if (currentStatus === 'completed') {
+        return { ...call, call_status: 'Completed' };
+      } else if (startTime && endTime && now >= startTime && now <= endTime) {
+        // Ongoing (between start and end time)
+        return { ...call, call_status: 'Ongoing' };
+      } else if (endTime && now > endTime) {
+        // Past end time - mark as completed
+        return { ...call, call_status: 'Completed' };
+      }
+      
+      return call;
+    })
+    .filter(call => {
+      const status = (call.call_status || '').toLowerCase();
+      // Only show active, filled, or ongoing - hide completed and cancelled
+      return status !== 'completed' && status !== 'cancelled';
+    })
+    .slice(0, limit); // Apply limit after filtering
     
   return { 
     data: syncedData, 

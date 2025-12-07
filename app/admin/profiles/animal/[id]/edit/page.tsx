@@ -751,9 +751,21 @@ export default function EditAnimalPage() {
 									<button
 										type="button"
 										onClick={grabCurrentLocation}
-										className="absolute bottom-4 right-4 z-20 rounded-md bg-[#8D52A7] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7B4692]"
+										className="absolute bottom-14 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
 									>
 										Use My Location
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+										// Reset to UP Oblation default coordinates
+										setLat(7.0858);
+										setLng(125.4853);
+										setSubmitMsg(null);
+										}}
+										className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+									>
+										Return to UP Oblation
 									</button>
 								</div>
 							</div>
