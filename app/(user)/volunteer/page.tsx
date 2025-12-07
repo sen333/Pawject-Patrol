@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail, Calendar, MapPin, Users } from 'lucide-react';
@@ -55,6 +55,48 @@ export default function VolunteerPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [search, setSearch] = useState('');
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Define fetchVolunteers using useCallback to prevent recreation on every render
+  const fetchVolunteers = useCallback(async (isInitialLoad = false) => {
+    // Don't set loading on refetch to avoid UI flicker
+    if (isInitialLoad) setLoading(true);
+    setError(null);
+
+    // Sync all statuses first
+    await syncAllVolunteerCallStatuses();
+
+    const { data, error } = await supabase
+      .from('volunteer_call')
+      .select('*')
+      .in('call_status', ['Active', 'Filled', 'Cancelled'])
+      .order('call_starttime', { ascending: true });
+
+    if (error) {
+      setError(error.message);
+      setVolunteers([]);
+    } else {
+      const volunteerData = (data || []) as VolunteerCall[];
+      setVolunteers(volunteerData);
+      
+      // Fetch signup counts directly from volunteer_response table
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        volunteerData.map(async (v) => {
+          const { count } = await supabase
+            .from('volunteer_response')
+            .select('*', { count: 'exact', head: true })
+            .eq('call_id', v.call_id);
+          
+          counts[v.call_id] = count || 0;
+        })
+      );
+      setSignupCounts(counts);
+      setLastUpdate(new Date());
+    }
+
+    if (isInitialLoad) setLoading(false);
+  }, []);
 
   // Check authentication
   useEffect(() => {
@@ -91,42 +133,48 @@ export default function VolunteerPage() {
 
   // Fetch volunteer opportunities
   useEffect(() => {
-    const fetchVolunteers = async () => {
-      setLoading(true);
-      setError(null);
+    // Initial fetch
+    fetchVolunteers(true);
 
-      // Sync all statuses first
-      await syncAllVolunteerCallStatuses();
+    // Create unique channel names to avoid conflicts between multiple clients
+    const channelId = Math.random().toString(36).substring(7);
+    
+    // Set up real-time subscription for volunteer_call changes
+    const callSubscription = supabase
+      .channel(`volunteer_call_changes_${channelId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'volunteer_call' },
+        async () => {
+          // Add small delay to ensure database transaction is committed
+          setTimeout(async () => {
+            await fetchVolunteers(false);
+          }, 500);
+        }
+      )
+      .subscribe();
 
-      const { data, error } = await supabase
-        .from('volunteer_call')
-        .select('*')
-        .in('call_status', ['Active', 'Filled', 'Cancelled'])
-        .order('call_starttime', { ascending: true });
+    // Set up real-time subscription for volunteer_response changes
+    const responseSubscription = supabase
+      .channel(`volunteer_response_changes_${channelId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'volunteer_response' },
+        async () => {
+          // Add small delay to ensure database transaction is committed
+          setTimeout(async () => {
+            await fetchVolunteers(false);
+          }, 500);
+        }
+      )
+      .subscribe();
 
-      if (error) {
-        setError(error.message);
-        setVolunteers([]);
-      } else {
-        const volunteerData = (data || []) as VolunteerCall[];
-        setVolunteers(volunteerData);
-        
-        // Fetch signup counts for each opportunity
-        const counts: Record<string, number> = {};
-        await Promise.all(
-          volunteerData.map(async (v) => {
-            const count = await getVolunteerSignupCount(v.call_id);
-            counts[v.call_id] = count;
-          })
-        );
-        setSignupCounts(counts);
-      }
-
-      setLoading(false);
+    // Cleanup subscriptions on unmount
+    return () => {
+      callSubscription.unsubscribe();
+      responseSubscription.unsubscribe();
     };
-
-    fetchVolunteers();
-  }, []);
+  }, [fetchVolunteers]);
 
   // Filter volunteers based on search
   const filteredVolunteers = volunteers.filter(volunteer => {

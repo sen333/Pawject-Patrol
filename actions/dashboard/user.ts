@@ -75,31 +75,38 @@ export async function getUserRecentReports(limit: number = 5) {
   return { success: !error, data: data || [], error: error?.message };
 }
 
-// Get upcoming volunteer calls
+// Get upcoming volunteer calls that the user has joined
 export async function getUpcomingVolunteerCalls(limit: number = 3) {
   const supabase = await createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   
-  const { data, error } = await supabase
-    .from('volunteer_call')
-    .select('call_id, call_title, call_starttime, call_location, capacity, call_status')
-    .eq('call_status', 'Active')
-    .gte('call_starttime', new Date().toISOString())
-    .order('call_starttime', { ascending: true })
-    .limit(limit);
-    
-  if (!user || error) return { data: data || [], userJoined: [] };
+  if (!user) return { data: [], userJoined: [] };
   
-  // Get user's joined calls
+  // Get user's joined call IDs first
   const { data: joined } = await supabase
     .from('volunteer_response')
     .select('call_id')
     .eq('user_id', user.id);
     
+  const joinedCallIds = joined?.map(j => j.call_id) || [];
+  
+  if (joinedCallIds.length === 0) {
+    return { data: [], userJoined: [] };
+  }
+  
+  // Fetch only the calls the user has joined
+  const { data, error } = await supabase
+    .from('volunteer_call')
+    .select('call_id, call_title, call_starttime, call_location, capacity, call_status')
+    .gte('call_starttime', new Date().toISOString())
+    .in('call_id', joinedCallIds)
+    .order('call_starttime', { ascending: true })
+    .limit(limit);
+    
   return { 
     data: data || [], 
-    userJoined: joined?.map(j => j.call_id) || [] 
+    userJoined: joinedCallIds
   };
 }
 

@@ -102,7 +102,7 @@ export default function UserDashboard() {
         getUserDashboardStats(),
         getCommunityStats(),
         getUserRecentReports(50),
-        getUpcomingVolunteerCalls(3),
+        getUpcomingVolunteerCalls(50),
         getRecentCatalogAnimals(3)
       ]);
       
@@ -987,7 +987,7 @@ export default function UserDashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold" style={{ color: '#3C3333', fontFamily: '"Kawaii RT", sans-serif' }}>
-              Upcoming Volunteer Opportunities
+              My Upcoming Volunteer Opportunities
             </h3>
             <Link href="/volunteer" className="text-sm hover:underline" style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}>
               View All →
@@ -1006,11 +1006,9 @@ export default function UserDashboard() {
                     <h4 className="font-semibold text-sm flex-1" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
                       {call.call_title || 'Volunteer Opportunity'}
                     </h4>
-                    {userJoinedCalls.includes(call.call_id) && (
-                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                        Joined
-                      </span>
-                    )}
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+                      Joined
+                    </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center text-xs text-gray-600" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
@@ -1029,10 +1027,10 @@ export default function UserDashboard() {
             <div className="bg-white rounded-xl p-8 border border-gray-200 text-center">
               <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
               <p className="text-sm text-gray-500 mb-3" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                No upcoming volunteer opportunities at the moment
+                You haven't joined any volunteer opportunities yet
               </p>
               <Link href="/volunteer" className="inline-block px-4 py-2 rounded-lg text-sm text-white hover:opacity-90" style={{ backgroundColor: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}>
-                View All Opportunities
+                Browse Opportunities
               </Link>
             </div>
           )}
