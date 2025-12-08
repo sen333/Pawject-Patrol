@@ -266,6 +266,9 @@ export default function ReportFormSample() {
     sessionStorage.setItem("animalReportFormData", JSON.stringify(formData));
     sessionStorage.setItem("animalProfileFormData", JSON.stringify(formData));
 
+    // Set confirm_access cookie before redirecting to confirm page
+    document.cookie = "confirm_access=true; path=/; max-age=300";
+
     // Build URL params with both camelCase and snake_case keys to be robust
     const params = new URLSearchParams();
     params.set("recorderName", recorderName || "");

@@ -168,6 +168,8 @@ export default function RequestPage() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Set confirm_access cookie before redirecting to confirm page
+    document.cookie = "confirm_access=true; path=/; max-age=300";
     const queryParams = new URLSearchParams(formData).toString();
     router.push(`/admin/volunteer/request/confirm?${queryParams}`);
   };
