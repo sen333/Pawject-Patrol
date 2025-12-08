@@ -250,7 +250,7 @@ function ConfirmationContent() {
 
 					{/* Map display */}
 					{lat && lng && (
-						<div className="rounded-xl bg-[#E1E69D] p-4">
+						<div className="rounded-xl bg-[#E1E69D] p-4 mt-2">
 							<label 
 								className="block mb-2" 
 								style={{

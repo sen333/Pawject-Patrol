@@ -1,17 +1,18 @@
-// NOTE: This is a temporarily prompted admin report detail page to test backend, not yet the final version
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, LogIn, ChevronLeft, ChevronRight, X, Facebook, Instagram, Twitter, Mail} from "lucide-react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/utils/supabase/client";
 import { updateReportStatus } from "@/actions/form/admin";
 
 // Dynamically import the AdminMapView component for client-side rendering only
-const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
+const AdminMapView = dynamic(() => import("@/components/AdminMapView"), {
+  ssr: false,
+});
 
 // Define the ReportData type to match the database schema
 type ReportData = {
@@ -37,21 +38,31 @@ type ReportData = {
 };
 
 // Admin report detail page component - displays full report information and allows status updates
-export default function AdminReportDetail({ params }: { params: Promise<{ id: string }> }) {
+export default function AdminReportDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
-  
+
   // State management for report data and UI states
   const [id, setId] = useState<string | null>(null);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
-  const [status, setStatus] = useState<string>('Pending');
-  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'health'>('overview');
+  const [status, setStatus] = useState<string>("Pending");
+  const [activeTab, setActiveTab] = useState<"overview" | "animalinfo" | "location" | "health">("overview");
   const [allReportIds, setAllReportIds] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [totalReports, setTotalReports] = useState<number>(0);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+   // User info state for sidebar
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Fetch report data on component mount
   useEffect(() => {
@@ -63,25 +74,28 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
       // Await params
       const resolvedParams = await params;
       const reportId = resolvedParams.id;
-      
+
       // Set report ID in state
       if (!mounted) return;
       setId(reportId);
 
       // Validate report ID
-      if (!reportId || reportId.trim() === '') {
-        setError('Invalid report ID');
+      if (!reportId || reportId.trim() === "") {
+        setError("Invalid report ID");
         setLoading(false);
         return;
       }
 
       // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (!mounted) return;
-      
+
       // Handle authentication errors
       if (authError || !user) {
-        setError('Not authenticated');
+        setError("Not authenticated");
         setLoading(false);
         return;
       }
@@ -98,7 +112,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
       // Handle admin check errors
       if (adminError || !admin) {
-        setError('Unauthorized');
+        setError("Unauthorized");
         setLoading(false);
         return;
       }
@@ -138,7 +152,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
       // Set report data and status in state
       setData(reportData);
-      setStatus(reportData.report_status || 'Pending');
+      setStatus(reportData.report_status || "Pending");
       setLoading(false);
     };
 
@@ -171,7 +185,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected' | 'Pending') => {
     // Validate data presence
     if (!data) return;
-    
+
     // Update status in backend
     setUpdating(true);
 
@@ -193,8 +207,19 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   // Show loading state while fetching data
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E6E6E6' }}>
-        <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Loading...</p>
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#E1E69D" }}
+      >
+        <p
+          className="text-sm"
+          style={{
+            color: "#3C3333",
+            fontFamily: '"Genty Sans", sans-serif',
+          }}
+        >
+          Loading...
+        </p>
       </main>
     );
   }
@@ -202,13 +227,27 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   // Show error state if data fetch failed
   if (error || !data) {
     return (
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E6E6E6' }}>
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#E1E69D" }}
+      >
         <div className="text-center">
-          <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{error || 'Report not found'}</p>
-          <Link 
-            href="/admin/report" 
+          <p
+            className="text-sm"
+            style={{
+              color: "#3C3333",
+              fontFamily: '"Genty Sans", sans-serif',
+            }}
+          >
+            {error || "Report not found"}
+          </p>
+          <Link
+            href="/admin/report"
             className="text-xs mt-2 inline-block hover:opacity-90"
-            style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
+            style={{
+              color: "#8D52A7",
+              fontFamily: '"Genty Sans", sans-serif',
+            }}
           >
             ← Back to reports
           </Link>
@@ -217,186 +256,799 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
-  return (
-    <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
-      {/* Navigation Header */}
-      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <Menu className="w-6 h-6 text-gray-800" />
-          </Link>
-          <div className="flex-1 flex justify-center items-center h-full">
-            <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+  // Sidebar component (copied from admin pages for consistency)
+  function Sidebar() {
+    return (
+      <>
+        <div
+          className={`fixed inset-0 bg-black/50 z-30 transition-opacity ${
+            sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setSidebarOpen(false)}
+        />
+        <div
+          className={`fixed left-0 top-0 h-screen w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } overflow-y-auto`}
+          style={{
+            display: "flex",
+            padding: "24px",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-lg transition"
+          >
+            <X className="w-6 h-6 text-gray-800" />
+          </button>
+          <div className="flex flex-col gap-6 items-center w-full">
+            <Image src="/YFALogo.png" alt="Youth for Animals Logo" width={92} height={77} />
+            <div className="flex flex-col gap-6 items-center w-full">
+              <div
+                className="w-full"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: "5px",
+                  alignSelf: "stretch",
+                  borderRadius: "16px",
+                  border: "1px solid #3C3333",
+                  backgroundColor: "#E6E6E6",
+                  padding: "12px",
+                }}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                    <span className="text-sm font-bold text-white">
+                      {userName ? userName[0].toUpperCase() : "?"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                    <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <div className="flex items-center gap-3 mt-6">
+            <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
+              <Facebook size={18} />
+            </a>
+            <a href="#" className="bg-[#8D52A7] p-2 rounded-full text-white hover:opacity-80">
+              <Instagram size={18} />
+            </a>
+            <a href="#" className="bg-[#5E9BBA] p-2 rounded-full text-white hover:opacity-80">
+              <Twitter size={18} />
+            </a>
+            <a href="#" className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80">
+              <Mail size={18} />
+            </a>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <main className="min-h-screen" style={{ backgroundColor: "#E1E69D" }}>
+      {/* Sidebar */}
+      <Sidebar />
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] sticky top-0 z-20">
+        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <Menu className="w-6 h-6 text-gray-800" />
+          </button>
+          <div className="flex-1 flex justify-center items-center h-full">
+            <Image
+              src="/Moodboard2.png"
+              alt="Pawject Patrol Logo"
+              width={77}
+              height={36}
+            />
+          </div>
+          <Link
+            href="/admin/login"
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <LogIn className="w-6 h-6 text-gray-800" />
           </Link>
         </div>
       </div>
 
-      {/* Page Header */}
-      <div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
-            style={{
-              color: '#C2C876',
-              WebkitTextStrokeWidth: '.5px',
-              WebkitTextStrokeColor: '#3C3333',
-              fontFamily: '"Kawaii RT", sans-serif',
-              fontStyle: 'normal',
-              fontWeight: 400,
-              lineHeight: 'normal',
-              outlineColor: '#3C3333',
-            }}
+      {/* Content Container */}
+      <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
+        <div className="flex flex-col items-center mt-8">
+          {/* Main Card Container */}
+          <div
+            className="flex flex-col items-center w-full overflow-hidden bg-white rounded-2xl"
           >
-            Animal Report Details
-          </h2>
-          <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-            Review and manage animal sighting reports
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 pb-8">
-        {/* Back button and pagination */}
-        <div className="flex items-center justify-between mb-4">
-          <Link 
-            href="/admin/report" 
-            className="text-sm hover:opacity-90 inline-flex items-center gap-1 px-3 py-1.5 bg-white rounded-lg border"
-            style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
-          >
-            ⚊ All Reports
-          </Link>
-          <span className="text-sm px-3 py-1 bg-white rounded-lg border" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-            {currentIndex + 1} of {totalReports}
-          </span>
-        </div>
-
-        {/* Main report card with navigation arrows */}
-        <div className="relative">
-          {/* Left arrow */}
-          {currentIndex > 0 && (
-            <button
-              onClick={goToPrevious}
-              className="absolute left-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
-              aria-label="Previous report"
+            {/* Report Header - Purple Section */}
+            <div
+              className="flex flex-col items-start gap-[10px] w-full p-6"
+              style={{ backgroundColor: "#8D52A7" }}
             >
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
-            </button>
-          )}
+              <p
+                className="text-xs text-white opacity-80"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Report ID
+              </p>
 
-          {/* Right arrow */}
-          {currentIndex < allReportIds.length - 1 && (
-            <button
-              onClick={goToNext}
-              className="absolute right-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
-              aria-label="Next report"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-700" />
-            </button>
-          )}
+              <h2
+                className="text-2xl font-bold text-white"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                {data.report_title || "Untitled Report"}
+              </h2>
 
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Header with theme color */}
-          <div className="px-6 py-6 relative" style={{ backgroundColor: '#A67BB5' }}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs text-white/90 mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                  Record ID: {data.report_id}
-                </p>
-                <h1 className="text-3xl font-bold text-white mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                  {data.report_title ?? 'Untitled Report'}
-                </h1>
-                <p className="text-sm text-white/90" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                  {data.animal_type ?? 'Unknown'} • {data.animal_gender ?? 'Unknown'}
-                </p>
-              </div>
-              <span className={`px-3 py-1 text-white text-xs font-medium rounded-full ${
-                status === 'Accepted' ? 'bg-green-500' :
-                status === 'Rejected' ? 'bg-red-500' :
-                'bg-amber-500'
-              }`} style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                {status}
-              </span>
+              <p
+                className="text-sm text-white opacity-90"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                {data.animal_type || "Animal"} • {data.animal_gender || "Unknown"}
+              </p>
             </div>
-          </div>
 
-          {/* Tabs */}
-          <div className="border-b">
-            <div className="flex">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
-                    : 'text-gray-500 hover:text-[#3C3333]'
-                }`}
-                style={{ fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                ⓘ Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'details' 
-                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
-                    : 'text-gray-500 hover:text-[#3C3333]'
-                }`}
-                style={{ fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                🐾 Animal Details
-              </button>
-              <button
-                onClick={() => setActiveTab('location')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'location' 
-                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
-                    : 'text-gray-500 hover:text-[#3C3333]'
-                }`}
-                style={{ fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                📍 Location
-              </button>
-              <button
-                onClick={() => setActiveTab('health')}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'health' 
-                    ? 'border-b-2 border-[#3C3333] text-[#3C3333]' 
-                    : 'text-gray-500 hover:text-[#3C3333]'
-                }`}
-                style={{ fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                ♥ Health
-              </button>
-            </div>
-          </div>
+           {/* Icon Navigation */}
+<div className="flex flex-wrap md:flex-nowrap w-full items-start bg-[#E6E6E6] p-2 gap-2">
+  {/* Overview Tab */}
+  <button
+    onClick={() => setActiveTab("overview")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "overview" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 16V12"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 8H12.01"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
 
-          {/* Tab content */}
-          <div className="p-6">
-            {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {/* Animal photo - click to open modal */}
-                  <div
-                    className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-90 transition relative"
-                    onClick={() => data.photo_url && setShowImageModal(true)}
-                  >
-                    {data.photo_url ? (
-                      <img
-                        src={data.photo_url}
-                        alt={data.animal_name ?? 'Animal'}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-center text-gray-400">
-                        <svg className="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+  {/* Animal Information Tab */}
+  <button
+    onClick={() => setActiveTab("animalinfo")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "animalinfo" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21"
+        stroke={activeTab === "animalinfo" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+        stroke={activeTab === "animalinfo" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+
+  {/* Location Tab */}
+  <button
+    onClick={() => setActiveTab("location")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "location" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M3 6L9 3L15 6L21 3V18L15 21L9 18L3 21V6Z"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 3V18"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 6V21"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+
+  {/* Health Tab */}
+  <button
+    onClick={() => setActiveTab("health")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "health" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M11 2C10.4696 2 9.96086 2.21071 9.58579 2.58579C9.21071 2.96086 9 3.46957 9 4V9H4C3.46957 9 2.96086 9.21071 2.58579 9.58579C2.21071 9.96086 2 10.4696 2 11V13C2 14.1 2.9 15 4 15H9V20C9 21.1 9.9 22 11 22H13C13.5304 22 14.0391 21.7893 14.4142 21.4142C14.7893 21.0391 15 20.5304 15 20V15H20C20.5304 15 21.0391 14.7893 21.4142 14.4142C21.7893 14.0391 22 13.5304 22 13V11C22 10.4696 21.7893 9.96086 21.4142 9.58579C21.0391 9.21071 20.5304 9 20 9H15V4C15 3.46957 14.7893 2.96086 14.4142 2.58579C14.0391 2.21071 13.5304 2 13 2H11Z"
+        stroke={activeTab === "health" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+</div>
+
+            {/* Body Content Container */}
+            <div className="flex flex-col w-full p-6 gap-[24px]">
+              {/* Photo Section */}
+              {activeTab === "overview" && (
+                <>
+                  <div className="flex h-[298px] pl-0 justify-center items-center self-stretch">
+                    <div
+                      className="w-full h-full rounded-2xl flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
+                      style={{
+                        backgroundColor: "#8D52A7",
+                        aspectRatio: "1",
+                      }}
+                      onClick={() => data.photo_url && setShowImageModal(true)}
+                    >
+                      {data.photo_url ? (
+                        <img
+                          src={data.photo_url}
+                          alt={data.report_title || "Report"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg
+                          className="w-16 h-16 text-white opacity-80"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
-                        <p className="text-xs" style={{ fontFamily: '"Genty Sans", sans-serif' }}>No photo</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reporter Name */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Recorded By
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.reporter_name}
+                    </p>
+                  </div>
+
+                  {/* Date Seen */}
+                  {data.date_seen && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Date Seen
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {new Date(data.date_seen).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Location */}
+                  {data.area && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Location
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {data.area}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Summary
+                    </p>
+                    <p
+                      className="text-sm leading-relaxed"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description ||
+                        data.other_information ||
+                        "No summary provided"}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Animal Information Tab */}
+              {activeTab === "animalinfo" && (
+                <>
+                  <div className="w-full gap-[24px]">
+                    {data.reporter_name && (
+                      <div className="w-full ">
+                        <p
+                          className="text-sm mb-1"
+                          style={{
+                            color: "#4A5565",
+                            fontFamily: '"Genty Sans", sans-serif',
+                          }}
+                        >
+                          Type of Animal
+                        </p>
+                        <p
+                          className="text-sm font-medium"
+                          style={{
+                            color: "#3C3333",
+                            fontFamily: '"Genty Sans", sans-serif',
+                          }}
+                        >
+                          {data.animal_type}
+                        </p>
                       </div>
                     )}
                   </div>
+                  {/* Animal Gender */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Gender
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_gender}
+                    </p>
+                  </div>
+
+                  {/* Physical Description */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Physical Description
+                    </p>
+                    <p
+                      className="text-sm leading-relaxed"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description ||
+                        data.other_information ||
+                        "No Description provided"}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Location Tab */}
+              {activeTab === "location" && (
+                <div className="w-full space-y-4">
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Area Seen
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.area || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Nearby Landmarks
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.landmark || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Road/Street
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.road || "—"}
+                    </p>
+                  </div>
+                  {data.latitude && data.longitude && (
+                    <div className="mt-4">
+                      <p
+                        className="text-sm mb-2"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Map View
+                      </p>
+                      <div className="rounded-lg h-48 overflow-hidden">
+                        <AdminMapView
+                          latitude={data.latitude}
+                          longitude={data.longitude}
+                        />
+                      </div>
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs mt-2 inline-block hover:opacity-90"
+                        style={{
+                          color: "#8D52A7",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        View on OpenStreetMap →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Health Tab */}
+              {activeTab === "health" && (
+                <div className="w-full space-y-4">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Health Issues
+                    </p>
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        backgroundColor: data.health_issues ? "#DBEAFE" : "#F3F4F6",
+                        color: data.health_issues ? "#1E40AF" : "#6B7280",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.health_issues ? "Yes" : "No"}
+                    </span>
+                  </div>
+
+                  {data.health_issues && (
+                    <div className="pl-4">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Health Issues
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {"Not specified"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Has Collar
+                    </p>
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        backgroundColor: data.animal_collar ? "#DBEAFE" : "#F3F4F6",
+                        color: data.animal_collar ? "#1E40AF" : "#6B7280",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_collar ? "Yes" : "No"}
+                    </span>
+                  </div>
+
+                  {data.animal_collar && (
+                    <div className="pl-4">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Collar Details
+                      </p>
+                      <p
+                        className="text-sm"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {"Not specified"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Physical Description
+                    </p>
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description || "No description provided"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {status === "Pending" && (
+                <div className="w-full space-y-3">
+                  <button
+                    onClick={() => handleStatusUpdate("Accepted")}
+                    disabled={updating}
+                    className="w-full py-3 rounded-xl text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:opacity-90"
+                    style={{
+                      backgroundColor: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {updating ? "Updating..." : "Accept Report"}
+                  </button>
+
+                  <button
+                    onClick={() => handleStatusUpdate("Rejected")}
+                    disabled={updating}
+                    className="w-full py-3 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-gray-50 disabled:opacity-50"
+                    style={{
+                      backgroundColor: "transparent",
+                      border: "2px solid #8D52A7",
+                      color: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    Deny Report
+                  </button>
+                </div>
+              )}
+
+              {status !== "Pending" && (
+                <div className="w-full">
+                  <button
+                    onClick={() => router.back()}
+                    className="w-full py-3 rounded-xl text-white transition-all hover:opacity-90"
+                    style={{
+                      backgroundColor: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    ← Back to Reports
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Image Modal */}
       {showImageModal && data.photo_url && (
         <div
@@ -407,172 +1059,16 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
             onClick={() => setShowImageModal(false)}
             className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-6 h-6" />
           </button>
           <img
             src={data.photo_url}
-            alt={data.animal_name ?? 'Animal'}
+            alt={data.report_title || "Report"}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
-
-                  {/* Summary */}
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Summary</label>
-                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.animal_description ?? 'No description provided.'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Overview info */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Recorded By</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.reporter_name ?? 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Date Seen</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.date_seen ? new Date(data.date_seen).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '—'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Location</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.landmark || data.area || '—'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'details' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Type</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_type ?? '—'}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Gender</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.animal_gender ?? 'Unknown'}</p>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Physical Description</label>
-                  <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                    {data.animal_description ?? 'No description provided.'}
-                  </p>
-                </div>
-                {data.other_information && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Other Information</label>
-                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.other_information}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'location' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Area</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.area ?? '—'}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Landmark</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.landmark ?? '—'}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Road</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.road ?? '—'}</p>
-                  </div>
-                </div>
-                {data.latitude && data.longitude && (
-                  <div className="mt-4">
-                    <label className="text-xs font-medium text-gray-500 block mb-2" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Map View</label>
-                    <AdminMapView latitude={data.latitude} longitude={data.longitude} />
-                    <a
-                      href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs mt-2 inline-block hover:opacity-90"
-                      style={{ color: '#C2C876', fontFamily: '"Genty Sans", sans-serif' }}
-                    >
-                      View on OpenStreetMap →
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'health' && (
-              <div className="space-y-4">
-                {data.health_issues ? (
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Health Issues</label>
-                    <p className="text-sm leading-relaxed" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.health_issues}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500" style={{ fontFamily: '"Genty Sans", sans-serif' }}>No health issues reported.</p>
-                )}
-                {data.animal_collar && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 block mb-1" style={{ fontFamily: '"Genty Sans", sans-serif' }}>Collar</label>
-                    <p className="text-sm" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
-                      {data.animal_collar === 'Yes' ? 'Has Collar' : 'No Collar'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Action buttons at bottom */}
-          <div className="border-t p-6 flex gap-3">
-            {status === 'Pending' ? (
-              <>
-                <button
-                  onClick={() => handleStatusUpdate('Accepted')}
-                  disabled={updating}
-                  className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-green-500 text-white hover:bg-green-600"
-                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                >
-                  ✓ Accept Report
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate('Rejected')}
-                  disabled={updating}
-                  className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-red-500 text-white hover:bg-red-600"
-                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                >
-                  ✕ Deny Report
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => handleStatusUpdate('Pending')}
-                disabled={updating}
-                className="flex-1 py-3 text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 bg-gray-500 text-white hover:bg-gray-600"
-                style={{ fontFamily: '"Genty Sans", sans-serif' }}
-              >
-                ↺ Reset to Pending
-              </button>
-            )}
-          </div>
-          </div>
-        </div>
-      </div>
     </main>
   );
 }

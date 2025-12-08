@@ -589,7 +589,7 @@ export default function CatalogPage() {
               </button>
             </div>
           </div>
-          {/* Page header below navigation, styled like animal profile form */}
+          {/* Page header below navigation*/}
           <header className="flex flex-col items-start justify-center py-6 mb-6">
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
@@ -613,7 +613,7 @@ export default function CatalogPage() {
                 fontFamily: '"Genty Sans", sans-serif',
               }}
             >
-              Browse all animals and manage therir profiles.
+              Browse all animals and manage their profiles.
             </p>
           </header>
 
