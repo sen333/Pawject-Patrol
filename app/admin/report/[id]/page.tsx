@@ -51,6 +51,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   const [allReportIds, setAllReportIds] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [totalReports, setTotalReports] = useState<number>(0);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   // Fetch report data on component mount
   useEffect(() => {
@@ -376,11 +377,17 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  {/* Animal photo */}
-                  <div className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                  {/* Animal photo - click to open modal */}
+                  <div
+                    className="w-full aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-90 transition relative"
+                    onClick={() => data.photo_url && setShowImageModal(true)}
+                  >
                     {data.photo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={data.photo_url} alt={data.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
+                      <img
+                        src={data.photo_url}
+                        alt={data.animal_name ?? 'Animal'}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="text-center text-gray-400">
                         <svg className="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24">
@@ -390,6 +397,28 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
                       </div>
                     )}
                   </div>
+      {/* Image Modal */}
+      {showImageModal && data.photo_url && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <button
+            onClick={() => setShowImageModal(false)}
+            className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img
+            src={data.photo_url}
+            alt={data.animal_name ?? 'Animal'}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
 
                   {/* Summary */}
                   <div>
