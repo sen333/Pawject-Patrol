@@ -568,7 +568,9 @@ export default function AdminAnimalDetailPage() {
       {/* Navigation header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+          onClick={() => setSidebarOpen(true)} 
+          className="p-2 hover:bg-gray-100 rounded-lg transition">
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <div className="flex-1 flex justify-center items-center h-full">

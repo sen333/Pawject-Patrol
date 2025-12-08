@@ -786,9 +786,9 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/profiles"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
-    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E]
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E] p-[]
   "
                 >
                   <div className="flex-1 px-1">
@@ -921,7 +921,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/report"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]
   "
@@ -1164,7 +1164,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/volunteer"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#C575AD]
   "
