@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Menu, LogIn, FileText, PawPrint, Users, MapPin, Calendar, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
+import { Menu, LogIn, FileText, PawPrint, User, MapPin, Calendar, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import { 
   getUserDashboardStats, 
@@ -1027,8 +1027,17 @@ export default function UserDashboard() {
                   outlineColor: "#3C3333",
                 }}
               >
-                Welcome back, <span style={{ color: "#5E9BBA" }}>Pawject</span>{" "}
-                <span style={{ color: "#C2C876" }}>Patrol</span>
+                Welcome back,{" "}
+                {userName
+                  .split(" ")
+                  .map((word, idx) => {
+                    const colors = ["#5E9BBA", "#C2C876", "#C575AD"];
+                    return (
+                      <span key={idx} style={{ color: colors[idx % colors.length] }}>
+                        {word}{" "}
+                      </span>
+                    );
+                  })}
                 <span style={{ color: "#C575AD" }}>!</span>
               </h1>
 
@@ -1066,50 +1075,7 @@ export default function UserDashboard() {
                   {/* Left Side: Icon Stacked on Title */}
                   <div className="flex flex-col justify-between">
                     {/* Icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      viewBox="0 0 32 32"
-                      fill="none"
-                    >
-                      <path
-                        d="M19.333 2.6665H7.99967C7.29243 2.6665 6.61415 2.94746 6.11406 3.44755C5.61396 3.94765 5.33301 4.62593 5.33301 5.33317V26.6665C5.33301 27.3737 5.61396 28.052 6.11406 28.5521C6.61415 29.0522 7.29243 29.3332 7.99967 29.3332H23.9997C24.7069 29.3332 25.3852 29.0522 25.8853 28.5521C26.3854 28.052 26.6663 27.3737 26.6663 26.6665V9.99984L19.333 2.6665Z"
-                        stroke="#5E9BBA"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M18.667 2.6665V10.6665H26.667"
-                        stroke="#5E9BBA"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M21.3337 17.3335H10.667"
-                        stroke="#5E9BBA"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M21.3337 22.6665H10.667"
-                        stroke="#5E9BBA"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M13.3337 12H10.667"
-                        stroke="#5E9BBA"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-
+                    <FileText className="text-[#5E9BBA] w-[32px] h-[32px]" />
                     {/* Title */}
                     <h2
                       className="text-lg"
@@ -1152,42 +1118,7 @@ export default function UserDashboard() {
                   {/* Left Side: Icon Stacked on Title */}
                   <div className="flex flex-col justify-between">
                     {/* Icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      viewBox="0 0 32 32"
-                      fill="none"
-                    >
-                      <path
-                        d="M14.6667 7.99984C16.1394 7.99984 17.3333 6.80593 17.3333 5.33317C17.3333 3.86041 16.1394 2.6665 14.6667 2.6665C13.1939 2.6665 12 3.86041 12 5.33317C12 6.80593 13.1939 7.99984 14.6667 7.99984Z"
-                        stroke="#689668"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M24 13.3332C25.4728 13.3332 26.6667 12.1393 26.6667 10.6665C26.6667 9.19374 25.4728 7.99984 24 7.99984C22.5272 7.99984 21.3333 9.19374 21.3333 10.6665C21.3333 12.1393 22.5272 13.3332 24 13.3332Z"
-                        stroke="#689668"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M26.6667 23.9998C28.1394 23.9998 29.3333 22.8059 29.3333 21.3332C29.3333 19.8604 28.1394 18.6665 26.6667 18.6665C25.1939 18.6665 24 19.8604 24 21.3332C24 22.8059 25.1939 23.9998 26.6667 23.9998Z"
-                        stroke="#689668"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M12 13.3332C12.8755 13.3332 13.7424 13.5056 14.5512 13.8406C15.3601 14.1757 16.095 14.6667 16.714 15.2858C17.3331 15.9048 17.8242 16.6398 18.1592 17.4486C18.4942 18.2575 18.6667 19.1244 18.6667 19.9998V24.6665C18.6663 25.7818 18.2665 26.8601 17.5398 27.706C16.813 28.552 15.8073 29.1097 14.7048 29.2781C13.6023 29.4466 12.4759 29.2146 11.5297 28.6242C10.5835 28.0339 9.88001 27.1241 9.54666 26.0598C8.97777 24.2243 7.77777 23.0221 5.94666 22.4532C4.8829 22.12 3.97355 21.417 3.38314 20.4715C2.79273 19.526 2.56028 18.4004 2.72784 17.2983C2.8954 16.1963 3.45191 15.1906 4.29667 14.4633C5.14142 13.736 6.21861 13.3351 7.33332 13.3332H12Z"
-                        stroke="#689668"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
+                    <PawPrint className="text-[#689668] w-[32px] h-[32px]" />
 
                     {/* Title */}
                     <h2
@@ -1231,28 +1162,7 @@ export default function UserDashboard() {
                   {/* Left Side: Icon Stacked on Title */}
                   <div className="flex flex-col justify-between">
                     {/* Icon */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      viewBox="0 0 32 32"
-                      fill="none"
-                    >
-                      <path
-                        d="M25.3337 28V25.3333C25.3337 23.9188 24.7718 22.5623 23.7716 21.5621C22.7714 20.5619 21.4148 20 20.0003 20H12.0003C10.5858 20 9.22928 20.5619 8.22909 21.5621C7.2289 22.5623 6.66699 23.9188 6.66699 25.3333V28"
-                        stroke="#C575AD"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M16.0003 14.6667C18.9458 14.6667 21.3337 12.2789 21.3337 9.33333C21.3337 6.38781 18.9458 4 16.0003 4C13.0548 4 10.667 6.38781 10.667 9.33333C10.667 12.2789 13.0548 14.6667 16.0003 14.6667Z"
-                        stroke="#C575AD"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
+                    <User className="text-[#C575AD] w-[32px] h-[32px]" />
 
                     {/* Title */}
                     <h2
@@ -1297,54 +1207,63 @@ export default function UserDashboard() {
 
                 {/* Card Wrapper  */}
                 <div className="relative w-full">
-                  {/* Left Button */}
-                  <button
-                    className="absolute left-0 top-1/2 z-20 -translate-y-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-white border-2 border-[#8D52A7] flex items-center justify-center hover:bg-gray-50 shadow-md transition-transform active:scale-95"
-                    onClick={() => setActiveVolunteerIdx((prev) => prev > 0 ? prev - 1 : volunteerCalls.length - 1)}
-                    disabled={volunteerCalls.length === 0}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M15 18L9 12L15 6"
-                        stroke="#8D52A7"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
+                  {/* Left/Right Buttons: Only show if not loading and more than one opportunity */}
+                  {(!loading && volunteerCalls.length > 1) && (
+                    <>
+                      {/* Left Button */}
+                      <button
+                        className="absolute left-0 top-1/2 z-20 -translate-y-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-white border-2 border-[#8D52A7] flex items-center justify-center hover:bg-gray-50 shadow-md transition-transform active:scale-95"
+                        onClick={() => setActiveVolunteerIdx((prev) => prev > 0 ? prev - 1 : volunteerCalls.length - 1)}
+                        disabled={volunteerCalls.length === 0}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M15 18L9 12L15 6"
+                            stroke="#8D52A7"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
 
-                  {/* Right Button  */}
-                  <button
-                    className="absolute right-0 top-1/2 z-20 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-white border-2 border-[#8D52A7] flex items-center justify-center hover:bg-gray-50 shadow-md transition-transform active:scale-95"
-                    onClick={() => setActiveVolunteerIdx((prev) => prev < volunteerCalls.length - 1 ? prev + 1 : 0)}
-                    disabled={volunteerCalls.length === 0}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M9 18L15 12L9 6"
-                        stroke="#8D52A7"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
+                      {/* Right Button  */}
+                      <button
+                        className="absolute right-0 top-1/2 z-20 -translate-y-1/2 translate-x-1/2 w-12 h-12 rounded-full bg-white border-2 border-[#8D52A7] flex items-center justify-center hover:bg-gray-50 shadow-md transition-transform active:scale-95"
+                        onClick={() => setActiveVolunteerIdx((prev) => prev < volunteerCalls.length - 1 ? prev + 1 : 0)}
+                        disabled={volunteerCalls.length === 0}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M9 18L15 12L9 6"
+                            stroke="#8D52A7"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </>
+                  )}
 
                   {/* The Card Content */}
-                    {volunteerCalls.length === 0 ? (
+                    {loading ? (
+                      <div className="w-full flex items-center justify-center py-8">
+                        <span className="text-lg font-semibold text-gray-500">Loading volunteer opportunities...</span>
+                      </div>
+                    ) : volunteerCalls.length === 0 ? (
                       <div className="text-gray-500 text-center py-8">
                         No volunteer opportunities found.
                       </div>
@@ -1801,30 +1720,30 @@ export default function UserDashboard() {
                         <path
                           d="M102.5 42.0226C102.5 30.7288 86.3353 21.767 66.6246 24.3751C37.6888 28.1938 24.4663 73.1738 25.6246 81.2501C26.4446 86.962 43.3058 95.2413 63.0986 89.3751C76.0238 85.5401 83.1886 77.5938 87.1246 69.0626"
                           stroke="#A5885F"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M82 113.75V117.812"
                           stroke="#A5885F"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M115.312 132.031H130.688L123 138.125L115.312 132.031Z"
                           stroke="#A5885F"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M45.3051 91.3821C42.4364 100.163 40.9898 109.197 41.0001 118.268C41.0001 152.165 77.7156 170.625 123 170.625C168.285 170.625 205 152.165 205 118.268C205 109.647 203.34 100.393 199.947 91.3821M105.206 41.9659C111.067 41.0531 117.027 40.6041 123 40.6252C130.995 40.6252 138.375 41.5027 145.15 43.1115"
                           stroke="#A5885F"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                       </svg>
                     </div>
@@ -1885,16 +1804,16 @@ export default function UserDashboard() {
                         <path
                           d="M108.146 12.0835H44.7497C40.7935 12.0835 36.9994 13.3566 34.202 15.6226C31.4046 17.8887 29.833 20.9621 29.833 24.1668V120.834C29.833 124.038 31.4046 127.112 34.202 129.378C36.9994 131.644 40.7935 132.917 44.7497 132.917H134.25C138.206 132.917 142 131.644 144.797 129.378C147.595 127.112 149.166 124.038 149.166 120.834V45.3127L108.146 12.0835Z"
                           stroke="#47748C"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M104.417 12.0835V48.3335H149.167"
                           stroke="#47748C"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                       </svg>
                     </div>
@@ -1954,30 +1873,30 @@ export default function UserDashboard() {
                         <path
                           d="M134.25 82.0418V44.7502C134.25 40.794 132.679 36.9999 129.881 34.2025C127.084 31.4051 123.29 29.8335 119.334 29.8335C115.378 29.8335 111.583 31.4051 108.786 34.2025C105.989 36.9999 104.417 40.794 104.417 44.7502"
                           stroke="#945882"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M104.416 74.5832V29.8332C104.416 25.877 102.845 22.0829 100.047 19.2855C97.2499 16.4881 93.4558 14.9165 89.4997 14.9165C85.5435 14.9165 81.7494 16.4881 78.952 19.2855C76.1546 22.0829 74.583 25.877 74.583 29.8332V44.7498"
                           stroke="#945882"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M74.5833 78.3127V44.7502C74.5833 40.794 73.0118 36.9999 70.2143 34.2025C67.4169 31.4051 63.6228 29.8335 59.6667 29.8335C55.7105 29.8335 51.9164 31.4051 49.119 34.2025C46.3216 36.9999 44.75 40.794 44.75 44.7502V104.417"
                           stroke="#945882"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                         <path
                           d="M134.25 59.6667C134.25 55.7105 135.821 51.9164 138.619 49.119C141.416 46.3216 145.21 44.75 149.166 44.75C153.122 44.75 156.917 46.3216 159.714 49.119C162.511 51.9164 164.083 55.7105 164.083 59.6667V104.417C164.083 120.241 157.797 135.418 146.607 146.607C135.417 157.797 120.241 164.083 104.416 164.083H89.4996C68.6163 164.083 55.9371 157.669 44.8242 146.631L17.9742 119.781C15.4081 116.939 14.0331 113.219 14.1341 109.391C14.2351 105.563 15.8042 101.921 18.5166 99.2179C21.229 96.5151 24.8769 94.9589 28.7051 94.8715C32.5332 94.7841 36.2484 96.1721 39.0813 98.7483L52.208 111.875"
                           stroke="#945882"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                       </svg>{" "}
                     </div>
