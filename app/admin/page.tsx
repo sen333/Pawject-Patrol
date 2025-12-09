@@ -634,7 +634,7 @@ export default function HeaderAndBackground() {
       </div>
 
       <div className="relative z-10 w-full flex flex-col items-center flex-1">
-        {/* Header with menu, logo, and logout button */}
+        {/* Header */}
         <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
           <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
             <button
@@ -759,7 +759,7 @@ export default function HeaderAndBackground() {
                       {loading ? "..." : volunteerRequests}
                     </span>
                     <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
-                      Volunteer Tasks
+                      Volunteer Task
                     </span>
                   </div>
                 </section>

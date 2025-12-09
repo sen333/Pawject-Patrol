@@ -21,17 +21,25 @@ export async function getUserDashboardStats() {
     .eq('user_id', user.id)
     .eq('report_status', 'Accepted');
     
-  // Volunteer stats
+  // Volunteer stats: count responses for this user where the related call is Active, Ongoing, or Filled
   const { count: volunteersJoined } = await supabase
     .from('volunteer_response')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    .select('response_id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .in('call_id',
+      (
+        (await supabase
+          .from('volunteer_call')
+          .select('call_id')
+          .in('call_status', ['Active', 'Ongoing', 'Filled'])
+        ).data?.map(c => c.call_id) || []
+      )
+    );
     
   return {
     totalReports: totalReports || 0,
     acceptedReports: acceptedReports || 0,
     volunteersJoined: volunteersJoined || 0,
-    impactScore: (acceptedReports || 0) + (volunteersJoined || 0)
   };
 }
 
