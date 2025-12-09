@@ -526,7 +526,7 @@ export default function ReportFormSample() {
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("admin"); // Redirect to landing page
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >

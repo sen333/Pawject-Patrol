@@ -79,6 +79,12 @@ export default function AdminReportsPage() {
 				return;
 			}
 
+			// Set user info for sidebar
+			setUserEmail(user.email || "");
+			const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+			setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+			setIsAuthenticated(true);
+
 			// Fetch animal reports
 			const { data, error } = await supabase
 				.from("animal_report")
@@ -90,9 +96,6 @@ export default function AdminReportsPage() {
 			
 			// Check if still mounted
 			if (!mounted) return;
-
-			// Debug logging
-			console.log("AdminReports fetch", { user, admin, data, error });
 
 			// Handle fetch results
 			if (!error && data) {
@@ -176,7 +179,7 @@ export default function AdminReportsPage() {
                 padding: "12px",
               }}
             >
-              {userName ? (
+              {isAuthenticated ? (
                 <div className="flex items-center gap-3 w-full">
                   <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
                     <span className="text-sm font-bold text-white">
@@ -364,7 +367,7 @@ export default function AdminReportsPage() {
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin"); // Redirect to landing page
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -397,7 +400,7 @@ export default function AdminReportsPage() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -425,12 +428,12 @@ export default function AdminReportsPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -451,11 +454,12 @@ export default function AdminReportsPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+		  	href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -486,13 +490,13 @@ export default function AdminReportsPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a
             href="#"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"

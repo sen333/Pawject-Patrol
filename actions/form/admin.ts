@@ -111,7 +111,6 @@ export async function updateReportStatus(reportId: string, status: 'Accepted' | 
 	}
 	
 	// Successfully updated
-	console.log('Report status updated successfully:', data);
 	return { success: true };
 }
 

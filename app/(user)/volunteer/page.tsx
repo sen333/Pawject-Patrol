@@ -99,7 +99,7 @@ export default function VolunteerPage() {
         const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
         const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
         const currentStatus = (call.call_status || '').toLowerCase();
-        
+
         // Status priority: Cancelled > Completed > Ongoing (time-based) > others
         if (currentStatus === 'cancelled') {
           // Keep cancelled status
@@ -107,14 +107,14 @@ export default function VolunteerPage() {
         } else if (currentStatus === 'completed') {
           // Keep completed status (overrides all except cancelled)
           return call;
-        } else if (startTime && endTime && now >= startTime && now <= endTime) {
-          // Check if ongoing (between start and end time) - overrides active/filled
+        } else if (startTime && now >= startTime) {
+          // Ongoing if now >= startTime (regardless of endTime)
           return { ...call, call_status: 'Ongoing' };
         } else if (endTime && now > endTime && currentStatus !== 'completed') {
           // If past end time and not already marked completed, mark as completed
           return { ...call, call_status: 'Completed' };
         }
-        
+
         return call;
       });
       
@@ -540,7 +540,7 @@ export default function VolunteerPage() {
                   {filteredVolunteers.map((volunteer) => (
                     <div
                       key={volunteer.call_id}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer flex flex-col h-full"
                       onClick={() => router.push(`/volunteer/${volunteer.call_id}`)}
                     >
                       {/* Card header with status */}
@@ -553,8 +553,8 @@ export default function VolunteerPage() {
                       </div>
 
                       {/* Card content */}
-                      <div className="p-4">
-                        {/* Status badges */}
+                      <div className="p-4 flex flex-col flex-1">
+                        {/* Status badge: only one per card */}
                         <div className="mb-3 flex gap-2 flex-wrap">
                           {userJoinedCalls.has(volunteer.call_id) ? (
                             <span
@@ -569,14 +569,6 @@ export default function VolunteerPage() {
                               style={{ fontFamily: '"Genty Sans", sans-serif' }}
                             >
                               {volunteer.call_status || 'Unknown'}
-                            </span>
-                          )}
-                          {volunteer.call_status?.toLowerCase() === 'ongoing' && (
-                            <span
-                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-purple-100 text-purple-800 border-purple-200"
-                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                            >
-                              Ongoing
                             </span>
                           )}
                         </div>
@@ -603,7 +595,7 @@ export default function VolunteerPage() {
                             </div>
                           )}
                           {volunteer.capacity !== null && (
-                            <div className="flex items-center gap-2 text-xs" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
+                            <div className="flex items-center gap-2 text-xs mb-6" style={{ color: '#6B7280', fontFamily: '"Genty Sans", sans-serif' }}>
                               <Users className="w-4 h-4" />
                               <span>
                                 {signupCounts[volunteer.call_id] || 0}/{volunteer.capacity} volunteers
@@ -634,10 +626,10 @@ export default function VolunteerPage() {
                             </div>
                           )}
                         </div>
-                        {/* View details button - all opportunities can be viewed */}
+                        {/* View details button - always at bottom */}
                         <button
-                          onClick={() => router.push(`/volunteer/${volunteer.call_id}`)}
-                          className="mt-4 w-full px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); router.push(`/volunteer/${volunteer.call_id}`); }}
+                          className="mt-auto w-full px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
                           style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
                         >
                           View Details

@@ -389,7 +389,7 @@ export default function RequestPage() {
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/");
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >

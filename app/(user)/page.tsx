@@ -113,13 +113,6 @@ export default function UserDashboard() {
         setVolunteerCalls(volunteersData.data || []);
         setUserJoinedCalls(volunteersData.userJoined || []);
         setCatalogAnimals(catalogData.data || []);
-        console.log('Dashboard data loaded:', {
-          stats: statsData,
-          reports: reportsData.data?.length,
-          volunteers: volunteersData.data?.length,
-          catalogAnimals: catalogData.data?.length,
-          catalogData
-        });
         setLoading(false);
       }
     };

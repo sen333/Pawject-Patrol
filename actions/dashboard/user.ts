@@ -152,9 +152,6 @@ export async function getRecentCatalogAnimals(limit: number = 6) {
   if (error) {
     console.error('Error fetching catalog animals:', error);
   }
-  
-  console.log('Catalog animals fetched:', data?.length || 0, 'animals');
-  console.log('Sample animal data:', data?.[0]);
     
   return { success: !error, data: data || [], error: error?.message };
 }

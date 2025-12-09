@@ -1,6 +1,38 @@
 // Server-side code for managing volunteer calls in the admin interface
 "use server";
 
+// Server action to uncomplete a volunteer call by updating status to Active
+export async function uncompleteAction(formData: FormData): Promise<void> {
+  try {
+    const id = String(formData.get("id") || "");
+    if (!id) {
+      console.error("uncompleteAction missing id");
+      return;
+    }
+    // Use service client to bypass RLS for status update
+    const serviceClient = getServiceClient();
+    const { error } = await serviceClient
+      .from("volunteer_call")
+      .update({ call_status: "Active" })
+      .eq("call_id", id);
+    if (error) {
+      console.error("uncompleteAction error:", error);
+    } else {
+      try {
+        revalidatePath('/admin/volunteer');
+        revalidatePath(`/admin/volunteer/${id}`);
+      } catch (_) {}
+    }
+    redirect(`/admin/volunteer/${id}`);
+  } catch (e: any) {
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
 // Import necessary modules
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -122,14 +154,14 @@ export async function syncVolunteerCallStatus(callId: string) {
     
     const currentStatus = (call.call_status || '').toLowerCase();
     
-    // Don't override Cancelled status (admin decision)
-    if (currentStatus === 'cancelled') return;
-    
+    // Don't override Cancelled or Completed status (admin decision)
+    if (currentStatus === 'cancelled' || currentStatus === 'completed') return;
+
     const now = new Date();
     const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
     const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
-    
-    // Check if the event has ended -> mark as Completed
+
+    // Completed status overrides all except Cancelled
     if (endTime && now > endTime) {
       if (currentStatus !== 'completed') {
         await serviceClient
@@ -139,10 +171,9 @@ export async function syncVolunteerCallStatus(callId: string) {
       }
       return;
     }
-    
-    // Check if the event is currently ongoing (started but not ended)
-    const isOngoing = startTime && now >= startTime && endTime && now <= endTime;
-    
+
+    // Check if the event is currently ongoing (started)
+    const isOngoing = startTime && now >= startTime;
     // For ongoing events, set status to Ongoing
     if (isOngoing) {
       if (currentStatus !== 'ongoing') {
@@ -342,8 +373,8 @@ export async function createAction(formData: FormData): Promise<void> {
       call_title: String(formData.get("call_title") || "").trim() || null,
       call_details: String(formData.get("call_details") || "").trim() || null,
       call_location: String(formData.get("call_location") || "").trim() || null,
-      call_starttime: String(formData.get("call_starttime") || null) || null,
-      call_endtime: String(formData.get("call_endtime") || null) || null,
+      call_starttime: formData.get("call_starttime") ? String(formData.get("call_starttime")) : null,
+      call_endtime: formData.get("call_endtime") ? String(formData.get("call_endtime")) : null,
       capacity: formData.get("capacity") ? Number(String(formData.get("capacity"))) : null,
       call_status: String(formData.get("call_status") || "Active") || "Active",
     };
@@ -438,11 +469,17 @@ export async function updateAction(formData: FormData): Promise<void> {
     const updateData: any = {};
 
     // Populate updateData with provided fields
-    if (formData.has("call_title")) updateData.call_title = String(formData.get("call_title") || null) || null;
-    if (formData.has("call_details")) updateData.call_details = String(formData.get("call_details") || null) || null;
-    if (formData.has("call_location")) updateData.call_location = String(formData.get("call_location") || null) || null;
-    if (formData.has("call_starttime")) updateData.call_starttime = String(formData.get("call_starttime") || null) || null;
-    if (formData.has("call_endtime")) updateData.call_endtime = String(formData.get("call_endtime") || null) || null;
+    if (formData.has("call_title")) updateData.call_title = String(formData.get("call_title") || "").trim() || null;
+    if (formData.has("call_details")) updateData.call_details = String(formData.get("call_details") || "").trim() || null;
+    if (formData.has("call_location")) updateData.call_location = String(formData.get("call_location") || "").trim() || null;
+    if (formData.has("call_starttime")) {
+      const val = formData.get("call_starttime");
+      updateData.call_starttime = val ? String(val) : null;
+    }
+    if (formData.has("call_endtime")) {
+      const val = formData.get("call_endtime");
+      updateData.call_endtime = val ? String(val) : null;
+    }
     if (formData.has("capacity")) updateData.capacity = formData.get("capacity") ? Number(String(formData.get("capacity"))) : null;
     if (formData.has("call_status")) updateData.call_status = String(formData.get("call_status") || "") || null;
 

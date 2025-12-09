@@ -628,7 +628,8 @@ export default function ReportFormSample() {
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -661,7 +662,7 @@ export default function ReportFormSample() {
             <span className="font-semibold text-gray-800 text-sm">
               Task Volunteer
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}

@@ -451,7 +451,7 @@ export default function HeaderAndBackground() {
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin"); // Redirect to landing page
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -484,7 +484,7 @@ export default function HeaderAndBackground() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -512,12 +512,12 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -538,11 +538,12 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -573,9 +574,9 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
@@ -895,23 +896,23 @@ export default function HeaderAndBackground() {
                   </div>
 
                   {/* View All Button */}
-<Link href="/admin/profiles" className="
-      flex h-[33px] px-[16px] py-[8px]
-      items-start gap-[10px] self-stretch
-      rounded-lg bg-[#DCB57E]
-      text-xs font-medium
-      hover:bg-[#d4a86b] transition-colors mt-[10px]
-      justify-center
-    ">
-  <button
-    style={{
-      fontFamily: '"Genty Sans", sans-serif',
-      color: "#FFF",
-    }}
-  >
-    View All Animals
-  </button>
-</Link>
+                <Link href="/admin/profiles" className="
+                      flex h-[33px] px-[16px] py-[8px]
+                      items-start gap-[10px] self-stretch
+                      rounded-lg bg-[#DCB57E]
+                      text-xs font-medium
+                      hover:bg-[#d4a86b] transition-colors mt-[10px]
+                      justify-center
+                    ">
+                  <button
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                      color: "#FFF",
+                    }}
+                  >
+                    View All Animals
+                  </button>
+                </Link>
                 </div>
               </div>
 
@@ -921,11 +922,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/report"
                   className="
-<<<<<<< HEAD
-    flex h-[86px] min-w-[270px] pl-[10px]
-=======
     flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
->>>>>>> origin/staging
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]
   "

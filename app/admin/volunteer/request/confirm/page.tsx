@@ -142,7 +142,7 @@ export default function ConfirmPage(props: any) {
             <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.capacity ?? '-'}</p>
           </div>
 
-          <form action={createAction} method="post" className="flex gap-3 justify-end">
+          <form action={createAction} className="flex gap-3 justify-end">
             <input type="hidden" name="call_title" value={data.call_title || data.title || ''} />
             <input type="hidden" name="call_details" value={data.call_details || ''} />
             <input type="hidden" name="call_location" value={data.call_location || ''} />
