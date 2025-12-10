@@ -40,6 +40,7 @@ interface FieldProps {
   type?: string;
   value: string;
   onChange: (e: InputChange) => void;
+  required?: boolean;
 }
 
 interface SelectFieldProps {
@@ -47,6 +48,7 @@ interface SelectFieldProps {
   options: string[];
   value: string;
   onChange: (e: SelectChange) => void;
+  required?: boolean;
 }
 
 interface TextAreaProps {
@@ -54,6 +56,7 @@ interface TextAreaProps {
   placeholder?: string;
   value: string;
   onChange: (e: TextareaChange) => void;
+  required?: boolean;
 }
 
 export default function ReportFormSample() {
@@ -200,6 +203,42 @@ export default function ReportFormSample() {
       return;
     }
 
+    if (!animalType.trim()) {
+      setResultMsg("Please enter the type of animal before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
+
+    if (!dateSeen) {
+      setResultMsg("Please select the date the animal was seen.");
+      setActiveTab("basic");
+      return;
+    }
+
+    if (!physicalDescription.trim()) {
+      setResultMsg("Please enter a physical description of the animal.");
+      setActiveTab("basic");
+      return;
+    }
+
+    if (!area.trim()) {
+      setResultMsg("Please enter the area where the animal was seen.");
+      setActiveTab("location");
+      return;
+    }
+
+    if (!landmark.trim()) {
+      setResultMsg("Please enter a landmark near the location.");
+      setActiveTab("location");
+      return;
+    }
+
+    if (!road.trim()) {
+      setResultMsg("Please enter the road name.");
+      setActiveTab("location");
+      return;
+    }
+
     if (lat == null || lng == null) {
       setResultMsg("Please capture location before proceeding.");
       return;
@@ -230,6 +269,9 @@ export default function ReportFormSample() {
     // Store photo file globally for access on confirm page
     setGlobalPhotoFile(photoFile);
 
+    // Set confirm_access cookie before redirecting to confirm page
+    document.cookie = "confirm_access=true; path=/; max-age=300";
+
     const params = new URLSearchParams({
       reportTitle: reportTitle || "",
       reporterName: reporterName || "",
@@ -251,6 +293,7 @@ export default function ReportFormSample() {
     router.push(`/form/confirm?${params.toString()}`);
   }
 
+  // Sidebar Component
   // Sidebar Component
   const Sidebar = () => (
     <>
@@ -309,11 +352,11 @@ export default function ReportFormSample() {
                 padding: "12px",
               }}
             >
-              {isAuthenticated ? (
+              {userName ? (
                 <div className="flex items-center gap-3 w-full">
                   <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
                     <span className="text-sm font-bold text-white">
-                      {(userName || "?").charAt(0).toUpperCase()}
+                      {userName[0].toUpperCase()}
                     </span>
                   </div>
                   <div className="flex flex-col">
@@ -328,7 +371,7 @@ export default function ReportFormSample() {
                         lineHeight: "normal",
                       }}
                     >
-                      {userName || ""}
+                      {userName}
                     </span>
                     <span
                       className="text-xs text-gray-600"
@@ -340,13 +383,15 @@ export default function ReportFormSample() {
                         lineHeight: "normal",
                       }}
                     >
-                      {userEmail || ""}
+                      {userEmail}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="w-full text-center py-4">
-                  <span className="text-sm font-semibold text-gray-700">You are not logged in.</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    You are not logged in.
+                  </span>
                 </div>
               )}
             </div>
@@ -393,6 +438,7 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => router.push("/"),
                 },
                 {
                   label: "About Us",
@@ -413,6 +459,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -443,6 +504,21 @@ export default function ReportFormSample() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -466,6 +542,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -489,13 +580,28 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/");
+                    item.onClick();
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -586,7 +692,8 @@ export default function ReportFormSample() {
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -619,13 +726,13 @@ export default function ReportFormSample() {
             <span className="font-semibold text-gray-800 text-sm">
               Task Volunteer
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
           <a
-            href="#"
+            href="https://www.facebook.com/YFAUPMin"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
           >
             <Facebook size={18} />
@@ -643,7 +750,7 @@ export default function ReportFormSample() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -673,11 +780,16 @@ export default function ReportFormSample() {
               className="flex-shrink-0"
             />
           </div>
-          <Link
-            href="/"
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <LogIn className="w-6 h-6 text-gray-800" />
+          <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/");
+              }}
+            >
+              <LogIn className="w-6 h-6 text-gray-800" />
+            </button>
           </Link>
         </div>
       </header>
@@ -835,43 +947,49 @@ export default function ReportFormSample() {
             {activeTab === "basic" && (
               <div className="space-y-4">
                 <Field
-                  label="Report Title"
+                  label="Report Title *"
                   placeholder="Brief title for this report"
                   value={reportTitle}
                   onChange={(e: InputChange) => setReportTitle(e.target.value)}
+                  required
                 />
                 <Field
-                  label="Reporter Name"
+                  label="Reporter Name *"
                   placeholder="Your name"
                   value={reporterName}
                   onChange={(e: InputChange) => setReporterName(e.target.value)}
+                  required
                 />
                 <Field
-                  label="Type of animal"
+                  label="Type of animal *"
                   placeholder="Dog, Cat, etc."
                   value={animalType}
                   onChange={(e: InputChange) => setAnimalType(e.target.value)}
+                  required
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
-                    label="Gender"
+                    label="Gender *"
                     options={["Unknown", "Male", "Female"]}
                     value={gender}
                     onChange={(e: SelectChange) => setGender(e.target.value)}
+                    required
                   />
                   <Field
-                    label="Date Seen"
+                    label="Date Seen *"
                     type="date"
                     value={dateSeen}
                     onChange={(e: InputChange) => setDateSeen(e.target.value)}
+                    required
                   />
                 </div>
 
                 <TextArea
-                  label="Physical Description"
+                  label="Physical Description *"
                   placeholder="Color, size, markings, etc."
                   value={physicalDescription}
                   onChange={(e: TextareaChange) => setPhysicalDescription(e.target.value)}
+                  required
                 />
                 <div className="rounded-xl bg-[#E6E6E6] p-4 flex flex-col items-center justify-center">
                   <div
@@ -953,22 +1071,25 @@ export default function ReportFormSample() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 gap-3">
                     <Field
-                      label="Area Seen"
+                      label="Area Seen *"
                       placeholder="General area"
                       value={area}
                       onChange={(e: InputChange) => setArea(e.target.value)}
+                      required
                     />
                     <Field
-                      label="Landmark Near Location"
+                      label="Landmark Near Location *"
                       placeholder="Known landmark"
                       value={landmark}
                       onChange={(e: InputChange) => setLandmark(e.target.value)}
+                      required
                     />
                     <Field
-                      label="What Road?"
+                      label="What Road? *"
                       placeholder="Street / road name"
                       value={road}
                       onChange={(e: InputChange) => setRoad(e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -1150,7 +1271,7 @@ export default function ReportFormSample() {
   );
 }
 
-function Field({ label, placeholder, type = "text", value, onChange }: FieldProps) {
+function Field({ label, placeholder, type = "text", value, onChange, required }: FieldProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label
@@ -1169,6 +1290,7 @@ function Field({ label, placeholder, type = "text", value, onChange }: FieldProp
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        required={required}
         className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       />
@@ -1176,7 +1298,7 @@ function Field({ label, placeholder, type = "text", value, onChange }: FieldProp
   );
 }
 
-function SelectField({ label, options, value, onChange }: SelectFieldProps) {
+function SelectField({ label, options, value, onChange, required }: SelectFieldProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label
@@ -1193,6 +1315,7 @@ function SelectField({ label, options, value, onChange }: SelectFieldProps) {
       <select
         value={value}
         onChange={onChange}
+        required={required}
         className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       >
@@ -1206,7 +1329,7 @@ function SelectField({ label, options, value, onChange }: SelectFieldProps) {
   );
 }
 
-function TextArea({ label, placeholder, value, onChange }: TextAreaProps) {
+function TextArea({ label, placeholder, value, onChange, required }: TextAreaProps) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-4">
       <label
@@ -1226,6 +1349,7 @@ function TextArea({ label, placeholder, value, onChange }: TextAreaProps) {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        required={required}
         className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
         style={{ backgroundColor: "#C2C876" }}
       />

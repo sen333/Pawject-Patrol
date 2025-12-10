@@ -215,48 +215,17 @@ export default function AdminAnimalDetailPage() {
                 padding: "12px",
               }}
             >
-              {userName ? (
-                <div className="flex items-center gap-3 w-full">
-                  <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">
-                      {userName[0].toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span
-                      className="font-semibold text-gray-800 text-sm"
-                      style={{
-                        color: "#3C3333",
-                        fontFamily: "Genty Sans",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 500,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userName}
-                    </span>
-                    <span
-                      className="text-xs text-gray-600"
-                      style={{
-                        color: "#3C3333",
-                        fontSize: "12px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userEmail}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full text-center py-4">
-                  <span className="text-sm font-semibold text-gray-700">
-                    You are not logged in.
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {userName ? userName[0].toUpperCase() : "?"}
                   </span>
                 </div>
-              )}
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
+                </div>
+              </div>
             </div>
 
             {/* Navigation */}
@@ -321,6 +290,21 @@ export default function AdminAnimalDetailPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -351,6 +335,21 @@ export default function AdminAnimalDetailPage() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -374,6 +373,21 @@ export default function AdminAnimalDetailPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -397,13 +411,28 @@ export default function AdminAnimalDetailPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -436,7 +465,7 @@ export default function AdminAnimalDetailPage() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -464,12 +493,12 @@ export default function AdminAnimalDetailPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -490,11 +519,12 @@ export default function AdminAnimalDetailPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -525,17 +555,14 @@ export default function AdminAnimalDetailPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
-          <a
-            href="#"
-            className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
-          >
+        <div className="flex items-center gap-3 mt-6">
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -551,7 +578,7 @@ export default function AdminAnimalDetailPage() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -568,7 +595,9 @@ export default function AdminAnimalDetailPage() {
       {/* Navigation header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+          onClick={() => setSidebarOpen(true)} 
+          className="p-2 hover:bg-gray-100 rounded-lg transition">
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <div className="flex-1 flex justify-center items-center h-full">
@@ -692,7 +721,7 @@ export default function AdminAnimalDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          {/* Left Column - Photo */}
           <div
-            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl"
+            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl max-h-[600px]"
             style={{ backgroundColor: "#E6E6E6" }}
           >
             <h3
@@ -717,7 +746,7 @@ export default function AdminAnimalDetailPage() {
             </h3>
             
             <div
-              className="w-full flex-1 min-h-0 rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
+              className="w-full flex-1 min-h-[300px] max-h-[450px] rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
               style={{ backgroundColor: "#DED8D8" }}
               onClick={() => animal.animal_photo && setShowImageModal(true)}
             >
@@ -854,7 +883,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Recorder
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
                   {animal.recorder_name}
                 </p>
               </div>
@@ -908,7 +937,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Date Seen
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
                   {new Date(animal.date_seen).toLocaleDateString()}
                 </p>
               </div>
@@ -1057,7 +1086,7 @@ export default function AdminAnimalDetailPage() {
                 <span className="text-gray-500 text-xs">
                   Vaccination Status
                 </span>
-                <span className="font-medium text-gray-900">
+                <span className="font-bold text-gray-900">
                   {animal.vaccination_status || "Unknown"}
                 </span>
               </div>
@@ -1081,7 +1110,7 @@ export default function AdminAnimalDetailPage() {
                   <span className="text-gray-500 text-xs">
                     Health Description
                   </span>
-                  <span className="font-medium text-gray-900">{animal.health_issues}</span>
+                  <span className="font-bold text-gray-900">{animal.health_issues}</span>
                 </div>
               )}
 
@@ -1109,7 +1138,7 @@ export default function AdminAnimalDetailPage() {
                     <span className="text-gray-500 text-xs">
                       Collar Details
                     </span>
-                    <span className="font-medium text-gray-900">{animal.animal_collar}</span>
+                    <span className="font-bold text-gray-900">{animal.animal_collar}</span>
                   </div>
                 )}
             </div>
@@ -1163,7 +1192,7 @@ export default function AdminAnimalDetailPage() {
               </svg>
               Additional Information
             </h3>
-            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700">
+            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700 font-bold">
               {animal.other_information || "No additional information provided"}
             </p>
           </div>
@@ -1172,7 +1201,7 @@ export default function AdminAnimalDetailPage() {
         {/* Back Button Only */}
         <div className="space-y-3 pb-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/admin/profiles')}
             className="w-full py-3 rounded-xl text-white transition-all"
             style={{
               backgroundColor: themeColor,

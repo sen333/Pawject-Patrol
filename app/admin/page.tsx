@@ -369,6 +369,21 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -399,6 +414,21 @@ export default function HeaderAndBackground() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -422,6 +452,21 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -445,13 +490,28 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -484,7 +544,7 @@ export default function HeaderAndBackground() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -512,12 +572,12 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -538,11 +598,12 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -573,14 +634,14 @@ export default function HeaderAndBackground() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
-          <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -596,7 +657,7 @@ export default function HeaderAndBackground() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -633,7 +694,7 @@ export default function HeaderAndBackground() {
       </div>
 
       <div className="relative z-10 w-full flex flex-col items-center flex-1">
-        {/* Header with menu, logo, and logout button */}
+        {/* Header */}
         <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
           <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
             <button
@@ -758,7 +819,7 @@ export default function HeaderAndBackground() {
                       {loading ? "..." : volunteerRequests}
                     </span>
                     <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
-                      Volunteer Tasks
+                      Volunteer Task
                     </span>
                   </div>
                 </section>
@@ -786,9 +847,9 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/profiles"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
-    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E]
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E] p-[]
   "
                 >
                   <div className="flex-1 px-1">
@@ -895,23 +956,23 @@ export default function HeaderAndBackground() {
                   </div>
 
                   {/* View All Button */}
-<Link href="/admin/profiles" className="
-      flex h-[33px] px-[16px] py-[8px]
-      items-start gap-[10px] self-stretch
-      rounded-lg bg-[#DCB57E]
-      text-xs font-medium
-      hover:bg-[#d4a86b] transition-colors mt-[10px]
-      justify-center
-    ">
-  <button
-    style={{
-      fontFamily: '"Genty Sans", sans-serif',
-      color: "#FFF",
-    }}
-  >
-    View All Animals
-  </button>
-</Link>
+                <Link href="/admin/profiles" className="
+                      flex h-[33px] px-[16px] py-[8px]
+                      items-start gap-[10px] self-stretch
+                      rounded-lg bg-[#DCB57E]
+                      text-xs font-medium
+                      hover:bg-[#d4a86b] transition-colors mt-[10px]
+                      justify-center
+                    ">
+                  <button
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                      color: "#FFF",
+                    }}
+                  >
+                    View All Animals
+                  </button>
+                </Link>
                 </div>
               </div>
 
@@ -921,7 +982,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/report"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]
   "
@@ -967,6 +1028,7 @@ export default function HeaderAndBackground() {
                   ) : (
                     recentReports.slice(0, 3).map((report, idx) => {
                       const isResolved = report.report_status === 'Resolved' || report.report_status === 'Accepted';
+                      const isRejected = report.report_status === 'Rejected';
                       const timeAgo = (() => {
                         if (!report.created_at) return 'Unknown';
                         const now = new Date();
@@ -1015,6 +1077,20 @@ export default function HeaderAndBackground() {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   />
+                                </g>
+                              </svg>
+                            ) : isRejected ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                              >
+                                <g>
+                                  <circle cx="7" cy="7" r="6" stroke="#DC2626" strokeWidth="2" fill="none" />
+                                  <line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+                                  <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
                                 </g>
                               </svg>
                             ) : (
@@ -1164,7 +1240,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/volunteer"
                   className="
-    flex h-[86px] min-w-[270px] pl-[10px]
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#C575AD]
   "

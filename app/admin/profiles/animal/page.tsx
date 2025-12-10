@@ -266,6 +266,9 @@ export default function ReportFormSample() {
     sessionStorage.setItem("animalReportFormData", JSON.stringify(formData));
     sessionStorage.setItem("animalProfileFormData", JSON.stringify(formData));
 
+    // Set confirm_access cookie before redirecting to confirm page
+    document.cookie = "confirm_access=true; path=/; max-age=300";
+
     // Build URL params with both camelCase and snake_case keys to be robust
     const params = new URLSearchParams();
     params.set("recorderName", recorderName || "");
@@ -350,7 +353,6 @@ export default function ReportFormSample() {
           />
 
           <div className="flex flex-col gap-6 items-center w-full">
-            {/* Account Information */}
             {/* Account Information */}
             <div
               className="w-full"
@@ -441,6 +443,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -471,6 +488,21 @@ export default function ReportFormSample() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -494,6 +526,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -517,13 +564,28 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -556,7 +618,7 @@ export default function ReportFormSample() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -584,12 +646,12 @@ export default function ReportFormSample() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -610,11 +672,12 @@ export default function ReportFormSample() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -645,17 +708,14 @@ export default function ReportFormSample() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
-          <a
-            href="#"
-            className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
-          >
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -671,7 +731,7 @@ export default function ReportFormSample() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />

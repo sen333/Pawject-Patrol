@@ -215,48 +215,17 @@ export default function CatalogPage() {
                 padding: "12px",
               }}
             >
-              {userName ? (
-                <div className="flex items-center gap-3 w-full">
-                  <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">
-                      {userName[0].toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span
-                      className="font-semibold text-gray-800 text-sm"
-                      style={{
-                        color: "#3C3333",
-                        fontFamily: "Genty Sans",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 500,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userName}
-                    </span>
-                    <span
-                      className="text-xs text-gray-600"
-                      style={{
-                        color: "#3C3333",
-                        fontSize: "12px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userEmail}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full text-center py-4">
-                  <span className="text-sm font-semibold text-gray-700">
-                    You are not logged in.
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {userName ? userName[0].toUpperCase() : "?"}
                   </span>
                 </div>
-              )}
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
+                </div>
+              </div>
             </div>
 
             {/* Navigation */}
@@ -321,6 +290,21 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -351,6 +335,21 @@ export default function CatalogPage() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -374,6 +373,21 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -397,13 +411,28 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -436,7 +465,7 @@ export default function CatalogPage() {
           }}
         >
           <Link
-            href="/catalog"
+            href="/admin/profiles"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -464,12 +493,12 @@ export default function CatalogPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
+              Animal Profiles
             </span>
           </Link>
 
           <Link
-            href="/form"
+            href="/admin/report"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -490,11 +519,12 @@ export default function CatalogPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
+              Animal Reports
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/admin/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -525,17 +555,14 @@ export default function CatalogPage() {
               </svg>
             </div>
             <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
+              Volunteer Requests
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
-          <a
-            href="#"
-            className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
-          >
+        <div className="flex items-center gap-3 mt-6">
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -551,7 +578,7 @@ export default function CatalogPage() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -566,9 +593,9 @@ export default function CatalogPage() {
       <main className="min-h-screen bg-[#E6E6E6]">
         {/* Sidebar */}
         <Sidebar />
-        <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-0">
           {/* Navigation header */}
-          <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+          <div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
             <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -589,7 +616,7 @@ export default function CatalogPage() {
               </button>
             </div>
           </div>
-          {/* Page header below navigation, styled like animal profile form */}
+          {/* Page header below navigation*/}
           <header className="flex flex-col items-start justify-center py-6 mb-6">
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
@@ -613,16 +640,16 @@ export default function CatalogPage() {
                 fontFamily: '"Genty Sans", sans-serif',
               }}
             >
-              Browse all animals and manage therir profiles.
+              Browse all animals and manage their profiles.
             </p>
           </header>
 
           {/* Filter Buttons and Search input in one row */}
-          <div className="flex flex-wrap gap-2 mb-6 items-center justify-between">
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 items-stretch sm:items-center justify-between">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-6 py-2 rounded-full font-medium transition-all ${
+                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
                   filter === "all"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -632,7 +659,7 @@ export default function CatalogPage() {
               </button>
               <button
                 onClick={() => setFilter("cat")}
-                className={`px-6 py-2 rounded-full font-medium transition-all ${
+                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
                   filter === "cat"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -642,7 +669,7 @@ export default function CatalogPage() {
               </button>
               <button
                 onClick={() => setFilter("dog")}
-                className={`px-4 py-2 rounded-full font-medium transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
                   filter === "dog"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -651,19 +678,19 @@ export default function CatalogPage() {
                 🐶 Dogs
               </button>
             </div>
-            <div className="flex-1 flex justify-end min-w-[300px]">
+            <div className="flex-1 flex justify-end min-w-full sm:min-w-[250px] md:min-w-[300px]">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, breed, or species..."
-                className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="w-full max-w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               />
             </div>
           </div>
 
           {/* Pet Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredAnimals.map((pet: Animal) => {
               // Convert animal_theme name to hex color
               const color = getThemeColor(pet.animal_theme);
@@ -780,6 +807,21 @@ export default function CatalogPage() {
             </div>
           )}
         </div>
+
+        {/* Floating Action Button */}
+        <Link
+          href="/admin/profiles/animal"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 w-12 h-12 sm:w-14 sm:h-14 bg-[#C2C876] text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50"
+          title="Add New Animal"
+          style={{
+            backgroundColor: '#C2C876',
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </Link>
       </main>
     </>
   );
