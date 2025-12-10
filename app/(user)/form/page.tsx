@@ -294,6 +294,7 @@ export default function ReportFormSample() {
   }
 
   // Sidebar Component
+  // Sidebar Component
   const Sidebar = () => (
     <>
       {/* Backdrop */}
@@ -351,11 +352,11 @@ export default function ReportFormSample() {
                 padding: "12px",
               }}
             >
-              {isAuthenticated ? (
+              {userName ? (
                 <div className="flex items-center gap-3 w-full">
                   <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
                     <span className="text-sm font-bold text-white">
-                      {(userName || "?").charAt(0).toUpperCase()}
+                      {userName[0].toUpperCase()}
                     </span>
                   </div>
                   <div className="flex flex-col">
@@ -370,7 +371,7 @@ export default function ReportFormSample() {
                         lineHeight: "normal",
                       }}
                     >
-                      {userName || ""}
+                      {userName}
                     </span>
                     <span
                       className="text-xs text-gray-600"
@@ -382,13 +383,15 @@ export default function ReportFormSample() {
                         lineHeight: "normal",
                       }}
                     >
-                      {userEmail || ""}
+                      {userEmail}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="w-full text-center py-4">
-                  <span className="text-sm font-semibold text-gray-700">You are not logged in.</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    You are not logged in.
+                  </span>
                 </div>
               )}
             </div>
@@ -435,6 +438,7 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => router.push("/"),
                 },
                 {
                   label: "About Us",
@@ -455,6 +459,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -485,6 +504,21 @@ export default function ReportFormSample() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -508,6 +542,21 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -531,13 +580,28 @@ export default function ReportFormSample() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/");
+                    item.onClick();
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -668,7 +732,7 @@ export default function ReportFormSample() {
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
           <a
-            href="#"
+            href="https://www.facebook.com/YFAUPMin"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
           >
             <Facebook size={18} />
@@ -686,7 +750,7 @@ export default function ReportFormSample() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -716,11 +780,16 @@ export default function ReportFormSample() {
               className="flex-shrink-0"
             />
           </div>
-          <Link
-            href="/"
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <LogIn className="w-6 h-6 text-gray-800" />
+          <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/");
+              }}
+            >
+              <LogIn className="w-6 h-6 text-gray-800" />
+            </button>
           </Link>
         </div>
       </header>

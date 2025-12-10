@@ -369,6 +369,21 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -399,6 +414,21 @@ export default function HeaderAndBackground() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -422,6 +452,21 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -445,13 +490,28 @@ export default function HeaderAndBackground() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/admin"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -581,7 +641,7 @@ export default function HeaderAndBackground() {
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
-          <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -597,7 +657,7 @@ export default function HeaderAndBackground() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -968,6 +1028,7 @@ export default function HeaderAndBackground() {
                   ) : (
                     recentReports.slice(0, 3).map((report, idx) => {
                       const isResolved = report.report_status === 'Resolved' || report.report_status === 'Accepted';
+                      const isRejected = report.report_status === 'Rejected';
                       const timeAgo = (() => {
                         if (!report.created_at) return 'Unknown';
                         const now = new Date();
@@ -1016,6 +1077,20 @@ export default function HeaderAndBackground() {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   />
+                                </g>
+                              </svg>
+                            ) : isRejected ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                              >
+                                <g>
+                                  <circle cx="7" cy="7" r="6" stroke="#DC2626" strokeWidth="2" fill="none" />
+                                  <line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+                                  <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
                                 </g>
                               </svg>
                             ) : (

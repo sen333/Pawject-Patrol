@@ -215,48 +215,17 @@ export default function CatalogPage() {
                 padding: "12px",
               }}
             >
-              {userName ? (
-                <div className="flex items-center gap-3 w-full">
-                  <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">
-                      {userName[0].toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span
-                      className="font-semibold text-gray-800 text-sm"
-                      style={{
-                        color: "#3C3333",
-                        fontFamily: "Genty Sans",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 500,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userName}
-                    </span>
-                    <span
-                      className="text-xs text-gray-600"
-                      style={{
-                        color: "#3C3333",
-                        fontSize: "12px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                        lineHeight: "normal",
-                      }}
-                    >
-                      {userEmail}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full text-center py-4">
-                  <span className="text-sm font-semibold text-gray-700">
-                    You are not logged in.
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {userName ? userName[0].toUpperCase() : "?"}
                   </span>
                 </div>
-              )}
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
+                </div>
+              </div>
             </div>
 
             {/* Navigation */}
@@ -321,6 +290,21 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -351,6 +335,21 @@ export default function CatalogPage() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -374,6 +373,21 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -397,13 +411,28 @@ export default function CatalogPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/admin"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -533,10 +562,7 @@ export default function CatalogPage() {
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
-          <a
-            href="#"
-            className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
-          >
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -552,7 +578,7 @@ export default function CatalogPage() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />

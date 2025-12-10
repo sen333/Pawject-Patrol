@@ -853,9 +853,9 @@ export default function CatalogPage() {
                   height={36}
                 />
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <Link href="/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
                 <LogIn className="w-6 h-6 text-gray-800" />
-              </button>
+              </Link>
             </div>
           </div>
           {/* Page header below navigation, styled like animal profile form */}

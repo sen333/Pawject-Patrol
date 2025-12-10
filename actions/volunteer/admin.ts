@@ -69,7 +69,7 @@ function getServiceClient() {
 }
 
 // Helper function to get signup count for a volunteer call
-async function getSignupCount(supabase: any, callId: string): Promise<number> {
+export async function getSignupCount(supabase: any, callId: string): Promise<number> {
   try {
     const { count } = await supabase
       .from('volunteer_response')
@@ -271,53 +271,44 @@ export async function listVolunteerCalls(opts?: { search?: string; limit?: numbe
 
     // Execute the query
     const { data, error } = await q;
-    
-    // Handle any errors
     if (error) {
       console.error("listVolunteerCalls error:", error);
       return [];
     }
 
-    // Additional debugging
-    try {} catch (e) {}
+    // Use service role client for joined count to ensure RLS is bypassed
+    const serviceClient = getServiceClient();
+    const callsWithJoined = await Promise.all(
+      (data || []).map(async (call: VolunteerCall) => {
+        const joined_count = call.call_id ? await getSignupCount(serviceClient, call.call_id) : 0;
+        return { ...call, joined_count };
+      })
+    );
 
-    // Return results based on sort type
-    let result = (data || []) as VolunteerCall[];
-    
-    // If sorting by created_at explicitly, just return database results (ignore status)
+    let result = callsWithJoined;
     if (opts?.sortBy === 'created_at') {
       return result;
     }
-    
-    // For default sort (no sortBy specified), apply status priority
     if (!opts?.sortBy) {
-      // Define status priority: Active > Filled > Completed > Cancelled
       const statusPriority: { [key: string]: number } = {
         'active': 1,
         'filled': 2,
         'completed': 3,
         'cancelled': 4,
       };
-      
       result = result.sort((a, b) => {
         const statusA = (a.call_status || '').toLowerCase();
         const statusB = (b.call_status || '').toLowerCase();
         const priorityA = statusPriority[statusA] || 99;
         const priorityB = statusPriority[statusB] || 99;
-        
-        // Sort by status priority only
         if (priorityA !== priorityB) {
           return priorityA - priorityB;
         }
-        
-        // Within same status, sort by created_at (newest first)
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     }
-
-    // Return the list of volunteer calls
     return result;
   } catch (e) {
     // Log unexpected errors

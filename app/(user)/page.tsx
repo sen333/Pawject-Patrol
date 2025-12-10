@@ -717,6 +717,7 @@ export default function UserDashboard() {
                       />
                     </svg>
                   ),
+                  onClick: () => router.push("/"),
                 },
                 {
                   label: "About Us",
@@ -737,6 +738,21 @@ export default function UserDashboard() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -767,6 +783,21 @@ export default function UserDashboard() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -790,6 +821,21 @@ export default function UserDashboard() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -813,13 +859,28 @@ export default function UserDashboard() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== "undefined") {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={() => {
                     setSidebarOpen(false);
-                    router.push("/"); // Redirect to landing page
+                    item.onClick();
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -910,7 +971,8 @@ export default function UserDashboard() {
             </span>
           </Link>
 
-          <button
+          <Link
+            href="/volunteer"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
             onClick={() => setSidebarOpen(false)}
           >
@@ -943,13 +1005,13 @@ export default function UserDashboard() {
             <span className="font-semibold text-gray-800 text-sm">
               Task Volunteer
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
           <a
-            href="#"
+            href="https://www.facebook.com/YFAUPMin"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"
           >
             <Facebook size={18} />
@@ -967,7 +1029,7 @@ export default function UserDashboard() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -1030,11 +1092,12 @@ export default function UserDashboard() {
                 Welcome back,{" "}
                 {userName
                   .split(" ")
-                  .map((word, idx) => {
+                  .map((word, idx, arr) => {
                     const colors = ["#5E9BBA", "#C2C876", "#C575AD"];
+                    // Only add space if not the last word
                     return (
                       <span key={idx} style={{ color: colors[idx % colors.length] }}>
-                        {word}{" "}
+                        {word}{idx < arr.length - 1 ? " " : ""}
                       </span>
                     );
                   })}
@@ -1260,254 +1323,316 @@ export default function UserDashboard() {
 
                   {/* The Card Content */}
                     {loading ? (
-                      <div className="w-full flex items-center justify-center py-8">
-                        <span className="text-lg font-semibold text-gray-500">Loading volunteer opportunities...</span>
-                      </div>
-                    ) : volunteerCalls.length === 0 ? (
-                      <div className="text-gray-500 text-center py-8">
-                        No volunteer opportunities found.
-                      </div>
-                    ) : (
                       <div
-                        key={volunteerCalls[activeVolunteerIdx]?.call_id || 'active'}
+                        className="flex flex-col items-center justify-center w-full box-border"
                         style={{
-                          display: "flex",
-                          padding: "24px",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          gap: "24px",
+                          height: "auto",
+                          padding: "25.044px 25.044px 25.044px",
                           borderRadius: "14px",
-                          border: "1px solid #8D52A7",
-                          background: "#E6E6E6",
-                          boxSizing: "border-box",
-                          marginRight: "40px",
-                          marginLeft: "40px",
+                          border: "1.052px solid #8D52A7",
+                          background: "#FFF",
+                          boxShadow:
+                            "0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10)",
+                          width: "100%"
                         }}
                       >
-                        {/* Title */}
+                        <PawPrint className="text-[#8D52A7] w-[32px] h-[32px] mb-2" />
                         <h2
-                          className="text-2xl"
+                          className="text-lg mb-1"
                           style={{
-                            color: "#8D52A7",
+                            color: "#3C3333",
                             fontFamily: '"Genty Sans", sans-serif',
-                            fontSize: "24px",
                           }}
                         >
-                          {volunteerCalls[activeVolunteerIdx]?.call_title}
+                          My Volunteer Opportunities
                         </h2>
-
-                        {/* Event Details */}
-                        <div className="flex flex-col gap-3 w-full">
-                          {/* Date Row */}
-                          <div className="flex items-center gap-3">
-                            {/* Date Icon */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              className="shrink-0" // Prevents icon from squishing
-                            >
-                              <g clipPath="url(#clip0_date)">
-                                <path
-                                  d="M5.33008 1.33252V3.99739"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M10.6592 1.33252V3.99739"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M12.6585 2.66504H3.33146C2.59557 2.66504 1.99902 3.26159 1.99902 3.99747V13.3245C1.99902 14.0604 2.59557 14.6569 3.33146 14.6569H12.6585C13.3944 14.6569 13.9909 14.0604 13.9909 13.3245V3.99747C13.9909 3.26159 13.3944 2.66504 12.6585 2.66504Z"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M1.99902 6.66211H13.9909"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </g>
-                              <defs>
-                                <clipPath id="clip0_date">
-                                  <rect
-                                    width="15.9892"
-                                    height="15.9892"
-                                    fill="white"
-                                  />
-                                </clipPath>
-                              </defs>
-                            </svg>
-
-                            {/* Date Text */}
-                            <span
-                              className="text-sm"
-                              style={{
-                                color: "#3C3333",
-                                fontFamily: '"Genty Sans", sans-serif',
-                              }}
-                            >
-                              {(() => {
-                                const start = volunteerCalls[activeVolunteerIdx]?.call_starttime;
-                                const end = volunteerCalls[activeVolunteerIdx]?.call_endtime;
-                                if (!end) return formatDate(start);
-                                const startDate = start ? new Date(start) : null;
-                                const endDate = end ? new Date(end) : null;
-                                const sameDay = startDate && endDate &&
-                                  startDate.getFullYear() === endDate.getFullYear() &&
-                                  startDate.getMonth() === endDate.getMonth() &&
-                                  startDate.getDate() === endDate.getDate();
-                                if (sameDay) {
-                                  return formatDate(start);
-                                } else {
-                                  return `${formatDate(start)} - ${formatDate(end)}`;
-                                }
-                              })()}
-                            </span>
-                          </div>
-
-                          {/* Time Row */}
-                          <div className="flex items-center gap-3">
-                            {/* Time Icon */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              className="shrink-0"
-                            >
-                              <g clipPath="url(#clip0_time)">
-                                <path
-                                  d="M7.96191 3.98096V7.96183L10.6158 9.28878"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.32696"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M7.96193 14.5967C11.6262 14.5967 14.5967 11.6262 14.5967 7.96193C14.5967 4.29764 11.6262 1.32715 7.96193 1.32715C4.29764 1.32715 1.32715 4.29764 1.32715 7.96193C1.32715 11.6262 4.29764 14.5967 7.96193 14.5967Z"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.32696"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </g>
-                              <defs>
-                                <clipPath id="clip0_time">
-                                  <rect
-                                    width="15.9235"
-                                    height="15.9235"
-                                    fill="white"
-                                  />
-                                </clipPath>
-                              </defs>
-                            </svg>
-
-                            {/* Time Text */}
-                            <span
-                              className="text-sm"
-                              style={{
-                                color: "#3C3333",
-                                fontFamily: '"Genty Sans", sans-serif',
-                              }}
-                            >
-                              {formatTime(volunteerCalls[activeVolunteerIdx]?.call_starttime)}
-                              {volunteerCalls[activeVolunteerIdx]?.call_endtime ? (
-                                <>
-                                  {' - '}
-                                  {formatTime(volunteerCalls[activeVolunteerIdx]?.call_endtime)}
-                                </>
-                              ) : null}
-                            </span>
-                          </div>
-
-                          {/* Location Row */}
-                          <div className="flex items-center gap-3">
-                            {/* Location Icon */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              className="shrink-0"
-                            >
-                              <g clipPath="url(#clip0_location)">
-                                <path
-                                  d="M13.3245 6.66225C13.3245 9.98868 9.63433 13.453 8.39517 14.5229C8.27973 14.6098 8.13921 14.6567 7.99477 14.6567C7.85034 14.6567 7.70982 14.6098 7.59438 14.5229C6.35521 13.453 2.66504 9.98868 2.66504 6.66225C2.66504 5.24872 3.22656 3.89308 4.22608 2.89356C5.2256 1.89404 6.58124 1.33252 7.99477 1.33252C9.40831 1.33252 10.7639 1.89404 11.7635 2.89356C12.763 3.89308 13.3245 5.24872 13.3245 6.66225Z"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M7.99474 8.66088C9.09857 8.66088 9.99339 7.76605 9.99339 6.66222C9.99339 5.5584 9.09857 4.66357 7.99474 4.66357C6.89092 4.66357 5.99609 5.5584 5.99609 6.66222C5.99609 7.76605 6.89092 8.66088 7.99474 8.66088Z"
-                                  stroke="#8B5CA6"
-                                  strokeWidth="1.33243"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </g>
-                              <defs>
-                                <clipPath id="clip0_location">
-                                  <rect
-                                    width="15.9892"
-                                    height="15.9892"
-                                    fill="white"
-                                  />
-                                </clipPath>
-                              </defs>
-                            </svg>
-                            <span
-                              className="text-sm"
-                              style={{
-                                color: "#3C3333",
-                                fontFamily: '"Genty Sans", sans-serif',
-                              }}>
-                              {volunteerCalls[activeVolunteerIdx]?.call_location}
-                            </span>
-                          </div>
+                        <div className="text-gray-500 text-center text-sm mb-3">
+                          No volunteer opportunities found.
                         </div>
-
-                        {/* View Button */}
                         <button
-                          className="w-full text-white text-lg rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-                          style={{
-                            backgroundColor: "#8D52A7",
-                            padding: "12px 0",
-                            fontFamily: '"Genty Sans", sans-serif',
-                          }}
-                          onClick={() => router.push(`/volunteer/${volunteerCalls[activeVolunteerIdx]?.call_id}`)}
+                          className="mt-1 px-4 py-2 rounded-lg bg-[#8D52A7] text-white font-semibold hover:bg-[#7B4692] transition"
+                          onClick={() => router.push('/volunteer')}
                         >
-                          View
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M5 12h14" />
-                            <path d="M12 5l7 7-7 7" />
-                          </svg>
+                          Browse Opportunities
                         </button>
                       </div>
+                    ) : (
+                      volunteerCalls[activeVolunteerIdx] && volunteerCalls[activeVolunteerIdx].call_id ? (
+                        <div
+                          key={volunteerCalls[activeVolunteerIdx]?.call_id || 'active'}
+                          style={{
+                            display: "flex",
+                            padding: "24px",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            gap: "24px",
+                            borderRadius: "14px",
+                            border: "1px solid #8D52A7",
+                            background: "#E6E6E6",
+                            boxSizing: "border-box",
+                            marginRight: "40px",
+                            marginLeft: "40px",
+                          }}
+                        >
+                          {/* Title */}
+                          <h2
+                            className="text-2xl"
+                            style={{
+                              color: "#8D52A7",
+                              fontFamily: '"Genty Sans", sans-serif',
+                              fontSize: "24px",
+                            }}
+                          >
+                            {volunteerCalls[activeVolunteerIdx]?.call_title}
+                          </h2>
+
+                          {/* Event Details */}
+                          <div className="flex flex-col gap-3 w-full">
+                            {/* Date Row */}
+                            <div className="flex items-center gap-3">
+                              {/* Date Icon */}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                className="shrink-0" // Prevents icon from squishing
+                              >
+                                <g clipPath="url(#clip0_date)">
+                                  <path
+                                    d="M5.33008 1.33252V3.99739"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M10.6592 1.33252V3.99739"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M12.6585 2.66504H3.33146C2.59557 2.66504 1.99902 3.26159 1.99902 3.99747V13.3245C1.99902 14.0604 2.59557 14.6569 3.33146 14.6569H12.6585C13.3944 14.6569 13.9909 14.0604 13.9909 13.3245V3.99747C13.9909 3.26159 13.3944 2.66504 12.6585 2.66504Z"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M1.99902 6.66211H13.9909"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                                <defs>
+                                  <clipPath id="clip0_date">
+                                    <rect
+                                      width="15.9892"
+                                      height="15.9892"
+                                      fill="white"
+                                    />
+                                  </clipPath>
+                                </defs>
+                              </svg>
+
+                              {/* Date Text */}
+                              <span
+                                className="text-sm"
+                                style={{
+                                  color: "#3C3333",
+                                  fontFamily: '"Genty Sans", sans-serif',
+                                }}
+                              >
+                                {(() => {
+                                  const start = volunteerCalls[activeVolunteerIdx]?.call_starttime;
+                                  const end = volunteerCalls[activeVolunteerIdx]?.call_endtime;
+                                  if (!end) return formatDate(start);
+                                  const startDate = start ? new Date(start) : null;
+                                  const endDate = end ? new Date(end) : null;
+                                  const sameDay = startDate && endDate &&
+                                    startDate.getFullYear() === endDate.getFullYear() &&
+                                    startDate.getMonth() === endDate.getMonth() &&
+                                    startDate.getDate() === endDate.getDate();
+                                  if (sameDay) {
+                                    return formatDate(start);
+                                  } else {
+                                    return `${formatDate(start)} - ${formatDate(end)}`;
+                                  }
+                                })()}
+                              </span>
+                            </div>
+
+                            {/* Time Row */}
+                            <div className="flex items-center gap-3">
+                              {/* Time Icon */}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                className="shrink-0"
+                              >
+                                <g clipPath="url(#clip0_time)">
+                                  <path
+                                    d="M7.96191 3.98096V7.96183L10.6158 9.28878"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.32696"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M7.96193 14.5967C11.6262 14.5967 14.5967 11.6262 14.5967 7.96193C14.5967 4.29764 11.6262 1.32715 7.96193 1.32715C4.29764 1.32715 1.32715 4.29764 1.32715 7.96193C1.32715 11.6262 4.29764 14.5967 7.96193 14.5967Z"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.32696"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                                <defs>
+                                  <clipPath id="clip0_time">
+                                    <rect
+                                      width="15.9235"
+                                      height="15.9235"
+                                      fill="white"
+                                    />
+                                  </clipPath>
+                                </defs>
+                              </svg>
+
+                              {/* Time Text */}
+                              <span
+                                className="text-sm"
+                                style={{
+                                  color: "#3C3333",
+                                  fontFamily: '"Genty Sans", sans-serif',
+                                }}
+                              >
+                                {formatTime(volunteerCalls[activeVolunteerIdx]?.call_starttime)}
+                                {volunteerCalls[activeVolunteerIdx]?.call_endtime ? (
+                                  <>
+                                    {' - '}
+                                    {formatTime(volunteerCalls[activeVolunteerIdx]?.call_endtime)}
+                                  </>
+                                ) : null}
+                              </span>
+                            </div>
+
+                            {/* Location Row */}
+                            <div className="flex items-center gap-3">
+                              {/* Location Icon */}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                className="shrink-0"
+                              >
+                                <g clipPath="url(#clip0_location)">
+                                  <path
+                                    d="M13.3245 6.66225C13.3245 9.98868 9.63433 13.453 8.39517 14.5229C8.27973 14.6098 8.13921 14.6567 7.99477 14.6567C7.85034 14.6567 7.70982 14.6098 7.59438 14.5229C6.35521 13.453 2.66504 9.98868 2.66504 6.66225C2.66504 5.24872 3.22656 3.89308 4.22608 2.89356C5.2256 1.89404 6.58124 1.33252 7.99477 1.33252C9.40831 1.33252 10.7639 1.89404 11.7635 2.89356C12.763 3.89308 13.3245 5.24872 13.3245 6.66225Z"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M7.99474 8.66088C9.09857 8.66088 9.99339 7.76605 9.99339 6.66222C9.99339 5.5584 9.09857 4.66357 7.99474 4.66357C6.89092 4.66357 5.99609 5.5584 5.99609 6.66222C5.99609 7.76605 6.89092 8.66088 7.99474 8.66088Z"
+                                    stroke="#8B5CA6"
+                                    strokeWidth="1.33243"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                                <defs>
+                                  <clipPath id="clip0_location">
+                                    <rect
+                                      width="15.9892"
+                                      height="15.9892"
+                                      fill="white"
+                                    />
+                                  </clipPath>
+                                </defs>
+                              </svg>
+                              <span
+                                className="text-sm"
+                                style={{
+                                  color: "#3C3333",
+                                  fontFamily: '"Genty Sans", sans-serif',
+                                }}>
+                                {volunteerCalls[activeVolunteerIdx]?.call_location}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* View Button */}
+                          <button
+                            className="w-full text-white text-lg rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                            style={{
+                              backgroundColor: "#8D52A7",
+                              padding: "12px 0",
+                              fontFamily: '"Genty Sans", sans-serif',
+                            }}
+                            onClick={() => router.push(`/volunteer/${volunteerCalls[activeVolunteerIdx]?.call_id}`)}
+                          >
+                            View
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M5 12h14" />
+                              <path d="M12 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          className="flex flex-col items-center justify-center w-full box-border"
+                          style={{
+                            height: "auto",
+                            padding: "25.044px 25.044px 25.044px",
+                            borderRadius: "14px",
+                            border: "1.052px solid #8D52A7",
+                            background: "#FFF",
+                            boxShadow:
+                              "0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10)",
+                            width: "100%"
+                          }}
+                        >
+                          <PawPrint className="text-[#8D52A7] w-[32px] h-[32px] mb-2" />
+                          <h2
+                            className="text-lg mb-1"
+                            style={{
+                              color: "#3C3333",
+                              fontFamily: '"Genty Sans", sans-serif',
+                            }}
+                          >
+                            My Volunteer Opportunities
+                          </h2>
+                          <div className="text-gray-500 text-center text-sm mb-3">
+                            No volunteer opportunities found.
+                          </div>
+                          <Link
+                            href="/volunteer"
+                            className="mt-1 px-4 py-2 rounded-lg bg-[#8D52A7] text-white font-semibold hover:bg-[#7B4692] transition"
+                          >
+                            Browse Opportunities
+                          </Link>
+                        </div>
+                      )
                     )}
                   
                 {/* Pagination Dots */}
@@ -1572,8 +1697,38 @@ export default function UserDashboard() {
                 <div className="flex flex-col gap-3 w-full">
                   {/* Recent Reports List */}
                   {recentReports.length === 0 ? (
-                    <div className="text-gray-500 text-center py-8">
-                      No recent reports found.
+                    <div
+                      className="flex flex-col items-center justify-center w-full box-border"
+                      style={{
+                        height: "auto",
+                        padding: "25.044px 25.044px 25.044px",
+                        borderRadius: "14px",
+                        border: "1.052px solid #5E9BBA",
+                        background: "#FFF",
+                        boxShadow:
+                          "0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10)",
+                      }}
+                    >
+                      <FileText className="text-[#5E9BBA] w-[32px] h-[32px] mb-2" />
+                      <h2
+                        className="text-lg mb-1"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        My Recent Reports
+                      </h2>
+                      <div className="text-gray-500 text-center text-sm mb-3">
+                        No recent reports found.
+                      </div>
+                      <Link
+                        href="/form"
+                        className="mt-1 px-4 py-2 rounded-lg bg-[#5E9BBA] text-white font-semibold hover:bg-[#4A7A97] transition"
+                        onClick={() => router.push('/form')}
+                      >
+                        File Report
+                      </Link>
                     </div>
                   ) : (
                     recentReports.slice(0, 3).map((report) => (

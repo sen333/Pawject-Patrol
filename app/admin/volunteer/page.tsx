@@ -5,8 +5,9 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail, } from "lucide-react";
+import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail, Calendar, Clock, MapPin, User, Search } from "lucide-react";
 import { listVolunteerCalls, deleteAction } from "@/actions/volunteer/admin";
+import { getSignupCount } from "@/actions/volunteer/admin";
 import { supabase } from "@/utils/supabase/client";
 
 // Define Volunteer type
@@ -20,31 +21,48 @@ type Volunteer = {
   capacity?: number | null;
   created_at?: string | null;
   call_status?: string | null;
+  joined_count?: number;
 };
 
 // Function to determine badge classes based on status
 function statusBadgeClasses(status?: string | null) {
   const s = (status || "").toLowerCase();
-  if (s.includes("active")) return "bg-blue-100 text-blue-800 border-blue-200";
-  if (s.includes("filled")) return "bg-green-100 text-green-800 border-green-200";
-  if (s.includes("ongoing")) return "bg-purple-100 text-purple-800 border-purple-200";
-  if (s.includes("cancel")) return "bg-red-100 text-red-800 border-red-200";
-  if (s.includes("completed")) return "bg-gray-100 text-gray-800 border-gray-200";
-  return "bg-amber-100 text-amber-800 border-amber-200";
+  if (s.includes("active")) {
+    return { background: "#E1E69D", color: "#3C3333", borderColor: "#C2C876" };
+  }
+  if (s.includes("filled")) {
+    return { background: "#C2C876", color: "#3C3333", borderColor: "#A3B18A" };
+  }
+  if (s.includes("ongoing")) {
+    return { background: "#D1C4E9", color: "#6C3483", borderColor: "#B39DDB" };
+  }
+  if (s.includes("cancel")) {
+    return { background: "#F8B4B4", color: "#B71C1C", borderColor: "#F44336" };
+  }
+  if (s.includes("completed")) {
+    return { background: "#E0E0E0", color: "#616161", borderColor: "#BDBDBD" };
+  }
+  return { background: "#FFE082", color: "#3C3333", borderColor: "#FFD54F" };
 }
 
-// Function to format date and time for display
-function formatDateTime(value?: string | null) {
-  // Handle empty values
+function formatDate(value?: string | null) {
   if (!value) return "";
-
-  // Attempt to format the date
   try {
     const d = new Date(value);
     if (isNaN(d.getTime())) return value;
-    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
   } catch {
-    // Fallback to returning the original value
+    return String(value);
+  }
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "";
+  try {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: true });
+  } catch {
     return String(value);
   }
 }
@@ -54,6 +72,7 @@ export default function AdminVolunteerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [items, setItems] = useState<Volunteer[]>([]);
+  const [joinedCounts, setJoinedCounts] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || '');
@@ -75,9 +94,7 @@ export default function AdminVolunteerPage() {
         data: { user },
         error: authError,
       } = await supabase.auth.getUser();
-      // Early return if component unmounted during async operation
       if (!mounted) return;
-
 
       if (authError || !user) {
         setIsAuthenticated(false);
@@ -88,7 +105,6 @@ export default function AdminVolunteerPage() {
 
       setIsAuthenticated(true);
       setUserEmail(user.email || "");
-      // Try to get name from user metadata, fallback to email username
       const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
       setUserName(nameFromMeta || user.email?.split("@")[0] || "");
 
@@ -104,6 +120,8 @@ export default function AdminVolunteerPage() {
         limit: 200
       });
       setItems(data as Volunteer[]);
+
+      // No need to fetch joined counts client-side; now included in backend response
       setLoading(false);
     };
 
@@ -181,12 +199,8 @@ export default function AdminVolunteerPage() {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>
-                    {isAuthenticated ? (userName || "Admin") : "You are not logged in"}
-                  </span>
-                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>
-                    {isAuthenticated ? (userEmail || "admin@pawjectpatrol.com") : ""}
-                  </span>
+                  <span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || "Admin"}</span>
+                  <span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || "admin@pawjectpatrol.com"}</span>
                 </div>
               </div>
             </div>
@@ -253,6 +267,21 @@ export default function AdminVolunteerPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("about-us");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Mission",
@@ -283,6 +312,21 @@ export default function AdminVolunteerPage() {
                       </g>
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("mission");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Vision",
@@ -306,6 +350,21 @@ export default function AdminVolunteerPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("vision");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
                 {
                   label: "Goals",
@@ -329,13 +388,28 @@ export default function AdminVolunteerPage() {
                       />
                     </svg>
                   ),
+                  onClick: () => {
+                    setSidebarOpen(false);
+                    router.push("/about-us");
+                    setTimeout(() => {
+                      if (typeof window !== 'undefined') {
+                        const scrollToSection = () => {
+                          const el = document.getElementById("goals");
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }
+                        };
+                        setTimeout(scrollToSection, 400);
+                      }
+                    }, 400);
+                  },
                 },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => {
+                  onClick={item.onClick ? item.onClick : () => {
                     setSidebarOpen(false);
-                    router.push("/admin"); // Redirect to landing page
+                    router.push("/admin");
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
                 >
@@ -465,7 +539,7 @@ export default function AdminVolunteerPage() {
 
         {/* Bottom Section – Social Links */}
         <div className="flex items-center gap-3 mt-6">
-          <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
+          <a href="https://www.facebook.com/YFAUPMin" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
             <Facebook size={18} />
           </a>
           <a
@@ -481,7 +555,7 @@ export default function AdminVolunteerPage() {
             <Twitter size={18} />
           </a>
           <a
-            href="#"
+            href="mailto:yfaupmindanao@gmail.com"
             className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80"
           >
             <Mail size={18} />
@@ -570,16 +644,19 @@ export default function AdminVolunteerPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 pb-6">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <form className="flex-1" onSubmit={handleSearchSubmit}>
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <form className="flex-1 relative" onSubmit={handleSearchSubmit}>
             <input
               name="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, details, or location..."
-              className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 text-sm"
+              className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 text-sm"
               style={{ fontFamily: 'Genty Sans' }}
             />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <Search className="w-5 h-5" aria-label="Search" />
+            </span>
           </form>
           <div className="flex-shrink-0">
             <label className="sr-only" htmlFor="vol-sort">Sort by</label>
@@ -607,45 +684,122 @@ export default function AdminVolunteerPage() {
         ) : null}
 
         {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {items.map((it) => (
-            <div key={it.call_id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold" style={{ color: '#3C3333', fontFamily: 'Genty Sans' }}>{it.call_title}</h3>
-                    <p className="text-sm mt-1" style={{ color: '#6B7280', fontFamily: 'Genty Sans' }}>{it.call_details || '—'}</p>
-                  </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusBadgeClasses(it.call_status)}`} style={{ fontFamily: 'Genty Sans' }}>
-                    {it.call_status || 'Pending'}
-                  </div>
-                </div>
-                <div className="mt-4 text-sm" style={{ color: '#6B7280', fontFamily: 'Genty Sans' }}>
-                  <div>{formatDateTime(it.call_starttime)}{it.call_endtime ? ` - ${formatDateTime(it.call_endtime)}` : ''}</div>
-                  <div className="mt-2">{it.call_location || ''}{it.capacity ? ` - Capacity: ${it.capacity}` : ''}</div>
-                </div>
-                <div className="mt-4 flex items-center justify-end gap-3">
-                  <Link 
-                    href={`/admin/volunteer/${it.call_id}`} 
-                    className="px-3 py-1 rounded text-xs font-medium hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: 'Genty Sans' }}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {items.map((it) => {
+            const hasCapacity = typeof it.capacity === 'number' && it.capacity !== null;
+            const capacity = hasCapacity ? it.capacity! : undefined;
+            const joined = typeof it.joined_count === 'number' ? it.joined_count : 0;
+            const spotsLeft = hasCapacity ? capacity! - joined : undefined;
+            let progressPercent;
+            if (hasCapacity && capacity! > 0) {
+              progressPercent = Math.round((joined / capacity!) * 100);
+            } else {
+              // No capacity: empty if 0 volunteers, full if 1 or more
+              progressPercent = joined > 0 ? 100 : 0;
+            }
+
+            // Date display logic: show only one date if start and end are the same
+            const startDateStr = formatDate(it.call_starttime);
+            const endDateStr = it.call_endtime ? formatDate(it.call_endtime) : '';
+            const showSingleDate = it.call_endtime && startDateStr === endDateStr;
+
+            return (
+              <div
+                key={it.call_id}
+                className="relative bg-[#F7F7E8] border-2 border-[#8D52A7] rounded-2xl shadow-lg hover:shadow-xl transition-shadow flex flex-col justify-between min-h-[260px]"
+                style={{ fontFamily: 'Genty Sans', padding: '0' }}
+              >
+                {/* Status badge */}
+                <div className="absolute top-6 left-5">
+                  <span
+                    className={`px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md`}
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                      ...statusBadgeClasses(it.call_status),
+                    }}
                   >
-                    View
+                    {it.call_status || 'Active'}
+                  </span>
+                </div>
+
+                {/* Card content */}
+                <div className="p-6 pt-12 flex-1 flex flex-col justify-between border-[#8D52A7]">
+                  <div>
+                    <h3 className="text-lg font-bold mt-8 mb-5" style={{ color: '#3C3333', fontFamily: 'Genty Sans' }}>
+                      {it.call_title}
+                    </h3>
+                    <div className="flex flex-col gap-2 text-xs" style={{ color: '#3C3333' }}>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {showSingleDate
+                          ? startDateStr
+                          : `${startDateStr}${it.call_endtime ? ` - ${endDateStr}` : ''}`}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {formatTime(it.call_starttime)}{it.call_endtime ? ` - ${formatTime(it.call_endtime)}` : ''}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {it.call_location || ''}
+                      </span>
+                      {/* Volunteer Capacity label and progress bar */}
+                      <span className="flex items-center gap-1">
+                        <User className="w-4 h-4 mr-1" />
+                        Volunteer Capacity
+                      </span>
+                      <span>
+                        <div className="w-full h-2 bg-[#E1E69D] rounded-full overflow-hidden" style={{ background: '#E5E7EB'}}>
+                          <div
+                            className="h-2 rounded-full"
+                            style={{ width: `${progressPercent}%`, background: '#689668', transition: 'width 0.3s' }}
+                          />
+                        </div>
+                      </span>
+                      <span className="flex items-center justify-between">
+                        {hasCapacity ? (
+                          <>
+                            <span className="text-xs text-gray-600">{joined}/{capacity} {joined === 1 ? 'volunteer' : 'volunteers'}</span>
+                            <span
+                              className={`text-xs ${spotsLeft === 0 ? 'text-red-500' : 'text-green-600'}`}
+                            >
+                              {spotsLeft} spots left
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-600">{joined} {joined === 1 ? 'volunteer' : 'volunteers'}</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card actions */}
+                <div className="flex gap-4 px-6 pb-6">
+                  <Link
+                    href={`/admin/volunteer/${it.call_id}`}
+                    className="flex-1 px-7 py-3 rounded-xl text-xs font-semibold border-2 border-[#8D52A7] text-[#8D52A7] bg-transparent text-center transition-all hover:bg-[#F7F7E8]"
+                    style={{ fontFamily: 'Genty Sans' }}
+                  >
+                    View Details
                   </Link>
-                  <form action={deleteAction} className="inline">
+                  <form action={deleteAction} className="flex-1">
                     <input type="hidden" name="id" value={it.call_id} />
-                    <button 
-                      type="submit" 
-                      className="text-xs px-3 py-1 rounded font-medium hover:opacity-90 transition-opacity"
-                      style={{ backgroundColor: '#DC2626', color: 'white', fontFamily: 'Genty Sans' }}
+                    <button
+                      type="submit"
+                      className="w-full px-7 py-3 rounded-xl text-xs font-semibold bg-[#8D52A7] text-white text-center transition-all hover:bg-[#A259A4]"
+                      style={{ fontFamily: 'Genty Sans' }}
                     >
                       Delete
                     </button>
                   </form>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         )}
       </div>

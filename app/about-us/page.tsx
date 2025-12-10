@@ -20,59 +20,28 @@ import { supabase } from "@/utils/supabase/client";
 
 export default function Home() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false); // Add mounted state
-  // State for user info
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // Fetch user info from Supabase on mount
   useEffect(() => {
-    setMounted(true); // Set mounted true after hydration
-
-    // Check if the user is authenticated
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      setLoading(false);
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@") [0] || "");
         setUserEmail(user.email || "");
-        // Try to get name from user metadata, fallback to email username
-        const nameFromMeta =
-          user.user_metadata?.full_name || user.user_metadata?.name || "";
-        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
-      } else {
-        setUserName("");
-        setUserEmail("");
+        // Check if user is admin by querying the admin table using auth_id
+        const { data: adminData, error } = await supabase
+          .from('admin')
+          .select('auth_id')
+          .eq('auth_id', user.id)
+          .single();
+        setIsAdmin(!!adminData && !error);
       }
     };
-
-    checkAuth();
-
-    // Listen for auth state changes (like logout)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session?.user);
-      if (session?.user) {
-        setUserEmail(session.user.email || "");
-        const nameFromMeta =
-          session.user.user_metadata?.full_name ||
-          session.user.user_metadata?.name ||
-          "";
-        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
-      } else {
-        setUserName("");
-        setUserEmail("");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    fetchUser();
   }, []);
 
   // Sidebar Component
@@ -220,6 +189,7 @@ export default function Home() {
                     </svg>
                   ),
                   target: "top",
+                  isHome: true,
                 },
                 {
                   label: "About Us",
@@ -328,7 +298,9 @@ export default function Home() {
                   onClick={() => {
                     setSidebarOpen(false);
                     setTimeout(() => {
-                      if (item.target === "top") {
+                      if (item.isHome) {
+                        router.push(isAdmin ? "/admin" : "/");
+                      } else if (item.target === "top") {
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       } else {
                         const el = document.getElementById(item.target);
@@ -369,111 +341,206 @@ export default function Home() {
             marginTop: "24px",
           }}
         >
-          <Link
-            href="/catalog"
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <div className="w-6 h-6 flex items-center justify-center">
-              {/* Home Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
+          {isAdmin ? (
+            <>
+              <Link
+                href="/admin/profiles"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={() => setSidebarOpen(false)}
               >
-                <path
-                  d="M3 9L12 2L21 9V20C21 20.53 20.79 21.04 20.41 21.41C20.04 21.79 19.53 22 19 22H5C4.47 22 3.96 21.79 3.59 21.41C3.21 21.04 3 20.53 3 20V9Z"
-                  stroke="#3C3333"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M9 22V12H15V22"
-                  stroke="#3C3333"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="font-semibold text-gray-800 text-sm">
-              Animal Catalogue
-            </span>
-          </Link>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* Admin Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <path
+                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      stroke="#3C3333"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Animal Profiles
+                </span>
+              </Link>
+              <Link
+                href="/admin/report"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* Report Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <path
+                      d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z"
+                      stroke="#8D52A7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Animal Reports
+                </span>
+              </Link>
+              <Link
+                href="/admin/volunteer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* Volunteer Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <g clipPath="url(#clip0)">
+                      <path
+                        d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                    </g>
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Volunteer Requests
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/catalog"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* Home Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <path
+                      d="M3 9L12 2L21 9V20C21 20.53 20.79 21.04 20.41 21.41C20.04 21.79 19.53 22 19 22H5C4.47 22 3.96 21.79 3.59 21.41C3.21 21.04 3 20.53 3 20V9Z"
+                      stroke="#3C3333"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 22V12H15V22"
+                      stroke="#3C3333"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Animal Catalogue
+                </span>
+              </Link>
 
-          <Link
-            href="/form"
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-            onClick={e => {
-              e.preventDefault();
-              setSidebarOpen(false);
-              router.push("/login");
-            }}
-          >
-            <div className="w-6 h-6 flex items-center justify-center">
-              {/* About Us Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
+              <Link
+                href="/form"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={e => {
+                  e.preventDefault();
+                  setSidebarOpen(false);
+                  router.push("/login");
+                }}
               >
-                <path
-                  d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z"
-                  stroke="#8D52A7"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="font-semibold text-gray-800 text-sm">
-              Report Animal
-            </span>
-          </Link>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* About Us Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <path
+                      d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z"
+                      stroke="#8D52A7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Report Animal
+                </span>
+              </Link>
 
-          <Link
-            href="/volunteer"
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-            onClick={e => {
-              e.preventDefault();
-              setSidebarOpen(false);
-              router.push("/login");
-            }}
-          >
-            <div className="w-6 h-6 flex items-center justify-center">
-              {/* Mission Icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
+              <Link
+                href="/volunteer"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
+                onClick={e => {
+                  e.preventDefault();
+                  setSidebarOpen(false);
+                  router.push("/login");
+                }}
               >
-                <g clipPath="url(#clip0)">
-                  <path
-                    d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z"
-                    stroke="#C575AD"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18Z"
-                    stroke="#C575AD"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z"
-                    stroke="#C575AD"
-                    strokeWidth="3"
-                  />
-                </g>
-              </svg>
-            </div>
-            <span className="font-semibold text-gray-800 text-sm">
-              Task Volunteer
-            </span>
-          </Link>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {/* Mission Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    fill="none"
+                  >
+                    <g clipPath="url(#clip0)">
+                      <path
+                        d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z"
+                        stroke="#C575AD"
+                        strokeWidth="3"
+                      />
+                    </g>
+                  </svg>
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Task Volunteer
+                </span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Bottom Section – Social Links */}
@@ -507,21 +574,6 @@ export default function Home() {
     </>
   );
 
-  // Return loading state
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#E1E69D] flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </main>
-    );
-  }
-
-  // If authenticated, show user dashboard instead
-  if (isAuthenticated) {
-    // Dynamically import the UserDashboard component
-    const UserDashboard = require("./(user)/page").default;
-    return <UserDashboard />;
-  }
 
   return (
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center overflow-hidden">
@@ -638,20 +690,16 @@ export default function Home() {
               priority
             />
           </div>
-
-          {/* Login Button */}
-          <Button
-            asChild
-            className="relative z-10 w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
-          >
-            <Link href="/login">Login</Link>
-          </Button>
-          {/* View Catalog Button */}
+          {/* Back to Home Button */}
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
-            <Button className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all">
-              <Link href="/catalog">View Catalog</Link>
+            <Button
+              className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all"
+              onClick={() => router.push(isAdmin ? "/admin" : "/")}
+            >
+              Back to Home
             </Button>
           </div>
+
         </div>
 
         {/* --- Navigation Section --- */}
