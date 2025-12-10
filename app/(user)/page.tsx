@@ -1159,7 +1159,7 @@ export default function UserDashboard() {
                       fontFamily: '"Genty Sans", sans-serif',
                     }}
                   >
-                    {stats?.totalReports || 0}
+                    {loading ? <span className="animate-pulse">...</span> : stats?.totalReports || 0}
                   </div>
                 </a>
                 {/* Reports Accepted Card */}
@@ -1203,7 +1203,7 @@ export default function UserDashboard() {
                       fontFamily: '"Genty Sans", sans-serif',
                     }}
                   >
-                    {stats?.acceptedReports || 0}
+                    {loading ? <span className="animate-pulse">...</span> : stats?.acceptedReports || 0}
                   </div>
                 </a>
                 {/* Volunteer Joined Card */}
@@ -1247,7 +1247,7 @@ export default function UserDashboard() {
                       fontFamily: '"Genty Sans", sans-serif',
                     }}
                   >
-                    {stats?.volunteersJoined || 0}
+                    {loading ? <span className="animate-pulse">...</span> : stats?.volunteersJoined || 0}
                   </div>
                 </a>
               </div>
@@ -1323,38 +1323,21 @@ export default function UserDashboard() {
 
                   {/* The Card Content */}
                     {loading ? (
-                      <div
-                        className="flex flex-col items-center justify-center w-full box-border"
+                      <div className="flex items-center justify-center w-full"
                         style={{
-                          height: "auto",
-                          padding: "25.044px 25.044px 25.044px",
+                          display: "flex",
+                          padding: "24px",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          gap: "24px",
                           borderRadius: "14px",
-                          border: "1.052px solid #8D52A7",
-                          background: "#FFF",
-                          boxShadow:
-                            "0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10)",
-                          width: "100%"
+                          border: "1px solid #8D52A7",
+                          background: "#E6E6E6",
+                          boxSizing: "border-box",
+                          width: "100%",
                         }}
                       >
-                        <PawPrint className="text-[#8D52A7] w-[32px] h-[32px] mb-2" />
-                        <h2
-                          className="text-lg mb-1"
-                          style={{
-                            color: "#3C3333",
-                            fontFamily: '"Genty Sans", sans-serif',
-                          }}
-                        >
-                          My Volunteer Opportunities
-                        </h2>
-                        <div className="text-gray-500 text-center text-sm mb-3">
-                          No volunteer opportunities found.
-                        </div>
-                        <button
-                          className="mt-1 px-4 py-2 rounded-lg bg-[#8D52A7] text-white font-semibold hover:bg-[#7B4692] transition"
-                          onClick={() => router.push('/volunteer')}
-                        >
-                          Browse Opportunities
-                        </button>
+                        <span className="animate-pulse text-lg text-gray-500">Loading opportunities...</span>
                       </div>
                     ) : (
                       volunteerCalls[activeVolunteerIdx] && volunteerCalls[activeVolunteerIdx].call_id ? (
@@ -1613,13 +1596,7 @@ export default function UserDashboard() {
                           }}
                         >
                           <PawPrint className="text-[#8D52A7] w-[32px] h-[32px] mb-2" />
-                          <h2
-                            className="text-lg mb-1"
-                            style={{
-                              color: "#3C3333",
-                              fontFamily: '"Genty Sans", sans-serif',
-                            }}
-                          >
+                          <h2 className="mb-1 text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-[#3C3333] break-words whitespace-normal">
                             My Volunteer Opportunities
                           </h2>
                           <div className="text-gray-500 text-center text-sm mb-3">
@@ -1696,7 +1673,21 @@ export default function UserDashboard() {
                 {/* Stacked List Container */}
                 <div className="flex flex-col gap-3 w-full">
                   {/* Recent Reports List */}
-                  {recentReports.length === 0 ? (
+                  { loading ? (
+                    <div
+                      className="flex items-center justify-center w-full box-border"
+                      style={{
+                        minHeight: "100px", // or match your card height
+                        padding: "25.044px",
+                        borderRadius: "14px",
+                        border: "1.052px solid #5E9BBA",
+                        background: "#FFF",
+                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10)",
+                      }}
+                    >
+                      <span className="animate-pulse text-lg text-gray-500">Loading reports...</span>
+                    </div>
+                  ) : recentReports.length === 0 ? (
                     <div
                       className="flex flex-col items-center justify-center w-full box-border"
                       style={{
