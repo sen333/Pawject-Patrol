@@ -8,7 +8,7 @@ type SidebarProps = {
 	setSidebarOpen: (open: boolean) => void;
 	userName?: string;
 	userEmail?: string;
-    variant?: "admin" | "user";
+    variant?: "admin" | "user" | "guest";
 	router: any;
 };
 
@@ -58,7 +58,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, userName, userEma
 					},
 					{
 						label: "Report Animal",
-						href: "/form",
+						href: variant === "guest" ? "/login" : "/form",
 						icon: (
 							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 								<path d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z" stroke="#8D52A7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -67,7 +67,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, userName, userEma
 					},
 					{
 						label: "Task Volunteer",
-						href: "/volunteer",
+						href: variant === "guest" ? "/login" : "/volunteer",
 						icon: (
 							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 								<g clipPath="url(#clip0)"><path d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z" stroke="#C575AD" strokeWidth="3" /><path d="M12 18C15.31 18 18 15.31 18 12C18 8.69 15.31 6 12 6C8.69 6 6 8.69 6 12C6 15.31 8.69 18 12 18Z" stroke="#C575AD" strokeWidth="3" /><path d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z" stroke="#C575AD" strokeWidth="3" /></g>
@@ -87,9 +87,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, userName, userEma
 
 			{/* Sidebar */}
 			<div
-				className={`fixed left-0 top-0 h-screen w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
+				className={`fixed left-0 top-0 h-screen w-full max-w-xs sm:max-w-sm md:max-w-md lg:w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
 					sidebarOpen ? "translate-x-0" : "-translate-x-full"
-				} overflow-y-auto`}
+				} min-w-0 overflow-y-auto`}
 				style={{
 					display: "flex",
 					padding: "24px",
@@ -132,17 +132,29 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, userName, userEma
 								padding: "12px",
 							}}
 						>
-							<div className="flex items-center gap-3 w-full">
-								<div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-									<span className="text-sm font-bold text-white">
-										{userName ? userName[0].toUpperCase() : "?"}
+							{variant === "guest" ? (
+								<div className="flex flex-col items-center justify-center w-full" style={{ minHeight: "56px" }}>
+									<span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "14px", fontStyle: "normal", fontWeight: 600, lineHeight: "normal" }}>
+										You are not logged in.
 									</span>
 								</div>
-								<div className="flex flex-col">
-									<span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>{userName || (variant === "admin" ? "Admin" : "User")}</span>
-									<span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>{userEmail || (variant === "admin" ? "admin@pawjectpatrol.com" : "user@pawjectpatrol.com")}</span>
+							) : (
+								<div className="flex items-center gap-3 w-full">
+									<div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
+										<span className="text-sm font-bold text-white">
+											{userName ? userName[0].toUpperCase() : "?"}
+										</span>
+									</div>
+									<div className="flex flex-col">
+										<span className="font-semibold text-gray-800 text-sm" style={{ color: "#3C3333", fontFamily: "Genty Sans", fontSize: "16px", fontStyle: "normal", fontWeight: 500, lineHeight: "normal" }}>
+											{userName || (variant === "admin" ? "Admin" : "User")}
+										</span>
+										<span className="text-xs text-gray-600" style={{ color: "#3C3333", fontSize: "12px", fontStyle: "normal", fontWeight: 400, lineHeight: "normal" }}>
+											{userEmail || (variant === "admin" ? "admin@pawjectpatrol.com" : "user@pawjectpatrol.com")}
+										</span>
+									</div>
 								</div>
-							</div>
+							)}
 						</div>
 
 						{/* Navigation */}
@@ -318,7 +330,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, userName, userEma
 							</span>
 						</Link>
 					))}
-					{variant === "user" && navLinks.map((item) => (
+					{(variant === "user" || variant === "guest") && navLinks.map((item) => (
 						<Link
 							key={item.label}
 							href={item.href}
