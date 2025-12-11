@@ -143,26 +143,6 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
-
-  // Restrict direct access to edit pages unless coming from the corresponding detail/view page
-  if (
-    request.nextUrl.pathname.match(/^\/admin\/profiles\/animal\/[\w-]+\/edit$/) ||
-    request.nextUrl.pathname.match(/^\/form\/volunteer\/[\w-]+\/edit$/) ||
-    request.nextUrl.pathname.match(/^\/form\/report\/[\w-]+\/edit$/)
-  ) {
-    // You may want to check for a session or a flag indicating a valid navigation here.
-    // For now, always redirect to the corresponding detail/view page if accessed directly.
-    const url = request.nextUrl.clone();
-    if (request.nextUrl.pathname.match(/^\/admin\/profiles\/animal\/[\w-]+\/edit$/)) {
-      url.pathname = request.nextUrl.pathname.replace(/\/edit$/, '');
-    } else if (request.nextUrl.pathname.match(/^\/form\/volunteer\/[\w-]+\/edit$/)) {
-      url.pathname = request.nextUrl.pathname.replace(/\/edit$/, '');
-    } else if (request.nextUrl.pathname.match(/^\/form\/report\/[\w-]+\/edit$/)) {
-      url.pathname = request.nextUrl.pathname.replace(/\/edit$/, '');
-    }
-    return NextResponse.redirect(url);
-  }
-
   // If user is logged in and on /admin/login without an error, redirect to /admin.
   // Allow staying on /admin/login when there's an error query (e.g., unauthorized, server_misconfig)
   // if (user && request.nextUrl.pathname === "/admin/login") {

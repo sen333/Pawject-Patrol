@@ -108,6 +108,22 @@ export default function AdminAnimalDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      if (user) {
+        setUserEmail(user.email || '');
+        const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        setUserName(nameFromMeta || user.email?.split('@')[0] || '');
+      } else {
+        setUserName('');
+        setUserEmail('');
+      }
+    };
+    checkAuth();
+  }, []);
+
   const handleDelete = async () => {
     if (!id) return;
 
@@ -166,6 +182,7 @@ export default function AdminAnimalDetailPage() {
         userName={userName}
         userEmail={userEmail}
         router={router}
+        variant="admin"
       />
       {/* Navigation header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
@@ -790,9 +807,9 @@ export default function AdminAnimalDetailPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-transparent bg-opacity-90 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transition-transform duration-300 ease-out transform animate-slide-down"
             style={{ fontFamily: '"Genty Sans", sans-serif' }}
           >
             <h3 className="text-lg mb-2" style={{ color: "#3C3333" }}>

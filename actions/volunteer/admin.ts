@@ -703,18 +703,15 @@ export async function deleteAction(formData: FormData): Promise<void> {
       if (error) console.error("deleteAction error:", error);
     }
 
-    // Revalidate the admin volunteer list so the UI updates immediately, then redirect
-    try { revalidatePath('/admin/volunteer'); } catch (_) {}
-    redirect("/admin/volunteer");
+      // Revalidate the admin volunteer list so the UI updates immediately
+      try { revalidatePath('/admin/volunteer'); } catch (_) {}
+      // Do not redirect; let client handle UI update
   } catch (e: any) {
     // If Next's redirect throws, rethrow so the runtime can handle navigation
     if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
       throw e;
     }
     
-    // Log unexpected errors
-    console.error(e?.message || "Unexpected error");
-
     // End function
     return;
   }

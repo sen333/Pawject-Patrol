@@ -177,11 +177,11 @@ export default function HeaderAndBackground() {
         .select("*", { count: "exact", head: true })
         .eq("report_status", "Pending");
 
-      // Count only active or filled volunteer requests
+      // Count only active, filled, or ongoing volunteer requests
       const { count: callCount } = await supabase
         .from("volunteer_call")
         .select("*", { count: "exact", head: true })
-        .in("call_status", ["Active", "Filled"]);
+        .in("call_status", ["Active", "Filled", "Ongoing"]);
 
       // Fetch recent entries for quick preview (latest 3)
       const { data: recentAnimalsData } = await supabase
@@ -458,7 +458,9 @@ export default function HeaderAndBackground() {
                 >
                   {/* Preview Items */}
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {recentAnimals.length === 0 ? (
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal profiles...</div>
+                  ) : recentAnimals.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent animals</div>
                   ) : (
                     recentAnimals.slice(0, 4).map((animal, idx) => (
@@ -593,7 +595,9 @@ export default function HeaderAndBackground() {
                 >
                   {/* Preview Items */}
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {recentReports.length === 0 ? (
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal reports...</div>
+                  ) : recentReports.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent reports</div>
                   ) : (
                     recentReports.slice(0, 3).map((report, idx) => {
@@ -850,7 +854,9 @@ export default function HeaderAndBackground() {
   "
                 >
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {recentVolunteers.length === 0 ? (
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading volunteer requests...</div>
+                  ) : recentVolunteers.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent requests</div>
                   ) : (
                     recentVolunteers.slice(0, 4).map((volunteer, idx) => (

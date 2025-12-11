@@ -91,6 +91,8 @@ export default function AdminVolunteerDetailPage(props: any) {
   const [volunteer, setVolunteer] = useState<any>(null);
   const [responses, setResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Get volunteer ID from params
   useEffect(() => {
@@ -306,10 +308,10 @@ export default function AdminVolunteerDetailPage(props: any) {
                                 }} />
                               </div>
                               <div className="text-[16px] text-[#101828]" style={{ fontFamily: 'Arial, sans-serif' }}>
-                                {typeof volunteer.capacity === 'number' ? `${responses.length}/${volunteer.capacity} volunteers` : `${responses.length} volunteers`}
+                                {typeof volunteer.capacity === 'number' ? `${responses.length}/${volunteer.capacity} ${responses.length === 1 ? 'volunteer' : 'volunteers'}` : `${responses.length} ${responses.length === 1 ? 'volunteer' : 'volunteers'}`}
                                 {typeof volunteer.capacity === 'number' && (
                                   <span style={{ color: (volunteer.capacity - responses.length) === 0 ? '#DC2626' : '#10B981', fontWeight: 500, marginLeft: '0.5rem' }}>
-                                    ({Math.max(0, volunteer.capacity - responses.length)} spots remaining)
+                                    ({Math.max(0, volunteer.capacity - responses.length)} {Math.max(0, volunteer.capacity - responses.length) === 1 ? 'spot' : 'spots'} remaining)
                                   </span>
                                 )}
                               </div>
@@ -497,10 +499,9 @@ export default function AdminVolunteerDetailPage(props: any) {
                             </button>
                           </form>
                         )}
-                        <form action={deleteAction} className="flex-1 min-w-0 flex">
-                          <input type="hidden" name="id" value={volunteer.call_id} />
-                          <button 
-                            type="submit" 
+                        <div className="flex-1 min-w-0 flex">
+                          <button
+                            type="button"
                             className="px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity w-full"
                             style={{
                               backgroundColor: '#6B4A6B',
@@ -513,10 +514,55 @@ export default function AdminVolunteerDetailPage(props: any) {
                               boxSizing: 'border-box',
                               minWidth: 0,
                             }}
+                            onClick={() => {
+                              setModalError(null);
+                              setShowDeleteModal(true);
+                            }}
                           >
                             Delete Request
                           </button>
-                        </form>
+                        </div>
+                            {/* Delete Confirmation Modal */}
+                            {showDeleteModal && (
+                              <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transition-transform duration-300 ease-out transform animate-slide-down" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
+                                  <h3 className="text-lg mb-2" style={{ color: '#3C3333' }}>
+                                    Delete Volunteer Request?
+                                  </h3>
+                                  <p className="text-sm mb-6" style={{ color: '#3C3333' }}>
+                                    Are you sure you want to delete <span style={{ fontWeight: 600 }}>{volunteer.call_title}</span>? This action cannot be undone.
+                                  </p>
+                                  {modalError && <p className="text-sm mb-2 text-red-600">{modalError}</p>}
+                                  <div className="flex gap-3 justify-end">
+                                    <button
+                                      onClick={() => setShowDeleteModal(false)}
+                                      className="px-6 py-2 rounded-lg text-sm transition-all"
+                                      style={{ backgroundColor: '#E6E6E6', color: '#3C3333' }}
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        setModalError(null);
+                                        try {
+                                          const formData = new FormData();
+                                          formData.append('id', volunteer.call_id);
+                                          await deleteAction(formData);
+                                          setShowDeleteModal(false);
+                                          router.push('/admin/volunteer');
+                                        } catch (err) {
+                                          setModalError('Failed to delete. Please try again.');
+                                        }
+                                      }}
+                                      className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-all"
+                                      style={{ backgroundColor: '#8D52A7' }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,9 @@
 // Import necessary modules and types
 "use client";
 
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, ReactNode, MouseEvent } from "react";
+// ...existing code...
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -70,6 +72,11 @@ function formatTime(value?: string | null) {
 
 // Main component for Admin Volunteer Page
 export default function AdminVolunteerPage() {
+    // Modal state for delete confirmation and feedback
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [modalError, setModalError] = useState<string | null>(null);
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+    const [pendingDeleteTitle, setPendingDeleteTitle] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [items, setItems] = useState<Volunteer[]>([]);
@@ -152,6 +159,40 @@ export default function AdminVolunteerPage() {
     setSortBy(e.target.value);
   };
 
+  // Handle delete button click: show confirmation modal
+  const handleDeleteClick = (id: string, title: string | null) => {
+    setPendingDeleteId(id);
+    setPendingDeleteTitle(title);
+    setModalError(null);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDeleteId) return;
+    setModalError(null);
+    try {
+      const formData = new FormData();
+      formData.append("id", pendingDeleteId);
+      await deleteAction(formData);
+      setShowDeleteModal(false);
+      setPendingDeleteId(null);
+      setPendingDeleteTitle(null);
+      setLoading(true);
+      const data = await listVolunteerCalls({
+        search: search || undefined,
+        sortBy: sortBy || 'created_at',
+        sortOrder: sortBy === 'call_title' || sortBy === 'call_starttime' ? 'asc' : 'desc',
+        limit: 200
+      });
+      setItems(data as Volunteer[]);
+      setLoading(false);
+    } catch (err: any) {
+      setModalError("Failed to delete. Please try again.");
+    }
+  };
+
+  // No success modal or refresh button needed; handled in handleDeleteConfirm
+
   // Render the admin volunteer page
   return (
     <>
@@ -175,6 +216,40 @@ export default function AdminVolunteerPage() {
         userEmail={userEmail}
         router={router}
       />
+
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transition-transform duration-300 ease-out transform animate-slide-down" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
+            <h3 className="text-lg mb-2" style={{ color: '#3C3333' }}>
+              Delete Volunteer Request?
+            </h3>
+            <p className="text-sm mb-6" style={{ color: '#3C3333' }}>
+              Are you sure you want to delete <span style={{ fontWeight: 600 }}>{pendingDeleteTitle}</span>? This action cannot be undone.
+            </p>
+            {modalError && <p className="text-sm mb-2 text-red-600">{modalError}</p>}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-6 py-2 rounded-lg text-sm transition-all"
+                style={{ backgroundColor: '#E6E6E6', color: '#3C3333' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-all"
+                style={{ backgroundColor: '#8D52A7' }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal removed: no box after delete */}
 
       <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
         {/* Navigation Header */}
@@ -262,23 +337,7 @@ export default function AdminVolunteerPage() {
           {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {items.map((it) => {
-              const hasCapacity = typeof it.capacity === 'number' && it.capacity !== null;
-              const capacity = hasCapacity ? it.capacity! : undefined;
-              const joined = typeof it.joined_count === 'number' ? it.joined_count : 0;
-              const spotsLeft = hasCapacity ? capacity! - joined : undefined;
-              let progressPercent;
-              if (hasCapacity && capacity! > 0) {
-                progressPercent = Math.round((joined / capacity!) * 100);
-              } else {
-                // No capacity: empty if 0 volunteers, full if 1 or more
-                progressPercent = joined > 0 ? 100 : 0;
-              }
-
-              // Date display logic: show only one date if start and end are the same
-              const startDateStr = formatDate(it.call_starttime);
-              const endDateStr = it.call_endtime ? formatDate(it.call_endtime) : '';
-              const showSingleDate = it.call_endtime && startDateStr === endDateStr;
-
+              // ...existing code...
               return (
                 <div
                   key={it.call_id}
@@ -310,9 +369,14 @@ export default function AdminVolunteerPage() {
                       <div className="flex flex-col gap-2 text-xs" style={{ color: '#3C3333' }}>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {showSingleDate
-                            ? startDateStr
-                            : `${startDateStr}${it.call_endtime ? ` - ${endDateStr}` : ''}`}
+                          {(() => {
+                            const startDateStr = formatDate(it.call_starttime);
+                            const endDateStr = it.call_endtime ? formatDate(it.call_endtime) : '';
+                            const showSingleDate = it.call_endtime && startDateStr === endDateStr;
+                            return showSingleDate
+                              ? startDateStr
+                              : `${startDateStr}${it.call_endtime ? ` - ${endDateStr}` : ''}`;
+                          })()}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4 mr-1" />
@@ -331,23 +395,42 @@ export default function AdminVolunteerPage() {
                           <div className="w-full h-2 bg-[#E1E69D] rounded-full overflow-hidden" style={{ background: '#E5E7EB'}}>
                             <div
                               className="h-2 rounded-full"
-                              style={{ width: `${progressPercent}%`, background: '#689668', transition: 'width 0.3s' }}
+                              style={{ width: `${(() => {
+                                const hasCapacity = typeof it.capacity === 'number' && it.capacity !== null;
+                                const capacity = hasCapacity ? it.capacity! : undefined;
+                                const joined = typeof it.joined_count === 'number' ? it.joined_count : 0;
+                                let progressPercent;
+                                if (hasCapacity && capacity! > 0) {
+                                  progressPercent = Math.round((joined / capacity!) * 100);
+                                } else {
+                                  progressPercent = joined > 0 ? 100 : 0;
+                                }
+                                return progressPercent;
+                              })()}%`, background: '#689668', transition: 'width 0.3s' }}
                             />
                           </div>
                         </span>
                         <span className="flex items-center justify-between">
-                          {hasCapacity ? (
-                            <>
-                              <span className="text-xs text-gray-600">{joined}/{capacity} {joined === 1 ? 'volunteer' : 'volunteers'}</span>
-                              <span
-                                className={`text-xs ${spotsLeft === 0 ? 'text-red-500' : 'text-green-600'}`}
-                              >
-                                {spotsLeft} spots left
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-xs text-gray-600">{joined} {joined === 1 ? 'volunteer' : 'volunteers'}</span>
-                          )}
+                          {(() => {
+                            const hasCapacity = typeof it.capacity === 'number' && it.capacity !== null;
+                            const capacity = hasCapacity ? it.capacity! : undefined;
+                            const joined = typeof it.joined_count === 'number' ? it.joined_count : 0;
+                            const spotsLeft = hasCapacity ? capacity! - joined : undefined;
+                            if (hasCapacity) {
+                              return (
+                                <>
+                                  <span className="text-xs text-gray-600">{joined}/{capacity} {joined === 1 ? 'volunteer' : 'volunteers'}</span>
+                                  <span
+                                    className={`text-xs ${spotsLeft === 0 ? 'text-red-500' : 'text-green-600'}`}
+                                  >
+                                    {spotsLeft} {spotsLeft === 1 ? 'spot' : 'spots'} left
+                                  </span>
+                                </>
+                              );
+                            } else {
+                              return <span className="text-xs text-gray-600">{joined} {joined === 1 ? 'volunteer' : 'volunteers'}</span>;
+                            }
+                          })()}
                         </span>
                       </div>
                     </div>
@@ -355,23 +438,24 @@ export default function AdminVolunteerPage() {
 
                   {/* Card actions */}
                   <div className="flex gap-4 px-6 pb-6">
-                    <Link
-                      href={`/admin/volunteer/${it.call_id}`}
-                      className="flex-1 px-7 py-3 rounded-xl text-xs font-semibold border-2 border-[#8D52A7] text-[#8D52A7] bg-transparent text-center transition-all hover:bg-[#F7F7E8]"
-                      style={{ fontFamily: 'Genty Sans' }}
-                    >
-                      View Details
-                    </Link>
-                    <form action={deleteAction} className="flex-1">
-                      <input type="hidden" name="id" value={it.call_id} />
+                    <div className="flex-1 min-w-0 flex">
+                      <Link
+                        href={`/admin/volunteer/${it.call_id}`}
+                        className="px-7 py-3 rounded-xl text-xs font-semibold border-2 border-[#8D52A7] text-[#8D52A7] bg-transparent text-center transition-all hover:bg-[#F7F7E8] w-full"
+                        style={{ fontFamily: 'Genty Sans', flex: 1, minWidth: 0 }}
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                    <div className="flex-1 min-w-0 flex">
                       <button
-                        type="submit"
-                        className="w-full px-7 py-3 rounded-xl text-xs font-semibold bg-[#8D52A7] text-white text-center transition-all hover:bg-[#A259A4]"
-                        style={{ fontFamily: 'Genty Sans' }}
+                        className="px-7 py-3 rounded-xl text-xs font-semibold bg-[#8D52A7] text-white text-center transition-all hover:bg-[#A259A4] w-full"
+                        style={{ fontFamily: 'Genty Sans', flex: 1, minWidth: 0 }}
+                        onClick={() => handleDeleteClick(it.call_id ?? "", it.call_title ?? "")}
                       >
                         Delete
                       </button>
-                    </form>
+                    </div>
                   </div>
                 </div>
               );

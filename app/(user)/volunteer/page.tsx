@@ -366,7 +366,7 @@ export default function UserVolunteerPage() {
                               <span
                                 className={`text-xs ${spotsLeft === 0 ? 'text-red-500' : 'text-green-600'}`}
                               >
-                                {spotsLeft} spots left
+                                {spotsLeft} {spotsLeft === 1 ? 'spot' : 'spots'} left
                               </span>
                             </>
                           ) : (
