@@ -151,9 +151,9 @@ export default function AdminReportsPage() {
 				userEmail={userEmail}
 				router={router}
 			/>
-			<main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
+			<main className="min-h-screen bg-[#E6E6E6]">
 				{/* Navigation Header */}
-				<div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+				<div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
 					<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
 						<button 
 							onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -161,7 +161,7 @@ export default function AdminReportsPage() {
 							<Menu className="w-6 h-6 text-gray-800" />
 						</button>
 						<div className="flex-1 flex justify-center items-center h-full">
-							<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
+							<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} className="w-16 h-auto sm:w-[77px]" />
 						</div>
 						<Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
 							<LogIn className="w-6 h-6 text-gray-800" />
@@ -170,10 +170,10 @@ export default function AdminReportsPage() {
 				</div>
 
 				{/* Page Header */}
-				<div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
-					<div className="max-w-5xl mx-auto px-6">
+				<div className="py-6 sm:py-8 bg-[#E6E6E6]">
+					<div className="max-w-5xl mx-auto px-2 sm:px-6">
 						<h2 
-							className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+							className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl mb-1 font-bold"
 							style={{
 								color: '#C2C876',
 								WebkitTextStrokeWidth: '.5px',
@@ -187,35 +187,35 @@ export default function AdminReportsPage() {
 						>
 							Animal Reports
 						</h2>
-						<p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+						<p className="text-xs sm:text-sm md:text-base" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
 							View and manage animal reports
 						</p>
 					</div>
 				</div>
 
-				<div className="max-w-5xl mx-auto px-6 pb-6">
-					<div className="mb-8 flex items-center justify-between gap-4">
-						<form className="flex-1 relative" onSubmit={e => { e.preventDefault(); }}>
+				<div className="max-w-5xl mx-auto px-2 sm:px-6 pb-6">
+					<div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4">
+						<form className="flex-1 relative min-w-0" onSubmit={e => { e.preventDefault(); }}>
 							<input
 								name="search"
 								value={search}
 								onChange={e => setSearch(e.target.value)}
 								placeholder="Search by title, type, area, or status..."
-								className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 text-sm"
+								className="w-full max-w-full sm:max-w-md pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 text-sm"
 								style={{ fontFamily: 'Genty Sans' }}
 							/>
 							<span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
 								<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
 							</span>
 						</form>
-						<div className="flex-shrink-0">
+						<div className="flex-shrink-0 w-full sm:w-auto">
 							<label className="sr-only" htmlFor="report-status-filter">Filter by Status</label>
 							<select
 								id="report-status-filter"
 								name="statusFilter"
 								value={statusFilter}
 								onChange={e => setStatusFilter(e.target.value)}
-								className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+								className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
 								style={{ fontFamily: 'Genty Sans' }}
 							>
 								<option value="">Filter By</option>
@@ -248,19 +248,19 @@ export default function AdminReportsPage() {
 									return matchesSearch && matchesStatus;
 								})
 								.map((r) => (
-									<li key={r.report_id} className="p-4 flex items-center gap-4">
-										<div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+									<li key={r.report_id} className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+										<div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center mb-2 sm:mb-0">
 											{r.photo_url ? (
-												<img src={r.photo_url} alt={r.animal_type ?? "Animal"} className="w-full h-full object-cover" />
+												<img src={r.photo_url} alt={r.animal_type ?? 'Animal'} className="w-full h-full object-cover" />
 											) : (
 												<span className="text-xs" style={{ color: '#6B7280', fontFamily: 'Genty Sans, sans-serif' }}>No photo</span>
 											)}
 										</div>
 										<div className="flex-1 min-w-0">
-											<p className="text-sm font-semibold truncate" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>
+											<p className="text-sm sm:text-base font-semibold truncate" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>
 												{r.report_title || 'Untitled Report'}
 											</p>
-											<p className="text-sm truncate flex items-center gap-1" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>
+											<p className="text-xs sm:text-sm truncate flex items-center gap-1" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>
 												<span className="inline-block align-middle"><PawPrint size={16} color="#6B7280" /></span>
 												{r.animal_type || 'animal'} ({r.animal_gender || 'unknown'})
 											</p>
@@ -285,7 +285,7 @@ export default function AdminReportsPage() {
 										{r.report_id ? (
 											<Link
 												href={`/admin/report/${r.report_id}`}
-												className="px-7 py-3 rounded-xl text-xs font-semibold border-2 border-[#8D52A7] bg-[#8D52A7] text-white shadow-md transition-all hover:bg-[#6D28D9] hover:border-[#6D28D9] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+												className="px-5 py-2 sm:px-7 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold border-2 border-[#8D52A7] bg-[#8D52A7] text-white shadow-md transition-all hover:bg-[#6D28D9] hover:border-[#6D28D9] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#7C3AED] w-full sm:w-auto text-center"
 												style={{ fontFamily: 'Genty Sans', minWidth: 0 }}
 											>
 												View Details
