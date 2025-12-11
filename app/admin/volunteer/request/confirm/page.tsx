@@ -1,7 +1,14 @@
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, LogIn } from "lucide-react";
 import { createAction } from "@/actions/volunteer/admin";
+import React, { useState, useEffect } from "react";
+import Sidebar from "@/components/Sidebar";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 // Function to format datetime string for display
 function formatDateTime(value?: string) {
@@ -31,9 +38,27 @@ function decodeData(s?: string) {
 
 // Main component for confirming volunteer request creation
 export default function ConfirmPage(props: any) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/admin/login');
+        return;
+      }
+      setUserName(user.user_metadata?.name || "Admin");
+      setUserEmail(user.email || "admin@pawjectpatrol.com");
+    };
+    checkAuth();
+  }, [router]);
+
   // Extract and decode data from search parameters
-  const searchParams = props.searchParams;
-  const encoded = searchParams?.data;
+  const searchParams = useSearchParams();
+  const encoded = searchParams.get('data') || undefined;
 
   // Load data from encoded parameter or directly from searchParams
   let data: any = decodeData(encoded);
@@ -42,19 +67,17 @@ export default function ConfirmPage(props: any) {
   if (!data && searchParams) {
     // Look for any known keys to determine if data is present
     const anyKeys = ['call_title', 'call_details', 'call_location', 'call_starttime', 'call_endtime', 'capacity', 'title'];
-    
     // Check if any known keys are present in searchParams
-    const hasAny = anyKeys.some((k) => typeof searchParams[k] !== 'undefined');
-
+    const hasAny = anyKeys.some((k) => searchParams.get(k) !== null);
     // If any known keys are found, construct the data object
     if (hasAny) {
       data = {
-        call_title: searchParams.call_title || searchParams.title || '',
-        call_details: searchParams.call_details || '',
-        call_location: searchParams.call_location || '',
-        call_starttime: searchParams.call_starttime || '',
-        call_endtime: searchParams.call_endtime || '',
-        capacity: typeof searchParams.capacity !== 'undefined' ? (searchParams.capacity as string) : undefined,
+        call_title: searchParams.get('call_title') || searchParams.get('title') || '',
+        call_details: searchParams.get('call_details') || '',
+        call_location: searchParams.get('call_location') || '',
+        call_starttime: searchParams.get('call_starttime') || '',
+        call_endtime: searchParams.get('call_endtime') || '',
+        capacity: searchParams.get('capacity') || undefined,
       };
     }
   }
@@ -74,12 +97,23 @@ export default function ConfirmPage(props: any) {
   // Render the confirmation page
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
+      {/* Sidebar */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+      />
       {/* Navigation Header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <Menu className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
           <div className="flex-1 flex justify-center items-center h-full">
             <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
           </div>
@@ -139,7 +173,7 @@ export default function ConfirmPage(props: any) {
           </div>
           <div>
             <h2 className="font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Capacity</h2>
-            <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.capacity ?? '-'}</p>
+            <p style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{data.capacity && data.capacity !== '' ? data.capacity : 'Unlimited'}</p>
           </div>
 
           <form action={createAction} className="flex gap-3 justify-end">

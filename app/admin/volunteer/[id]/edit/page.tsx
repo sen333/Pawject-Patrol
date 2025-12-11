@@ -1,11 +1,15 @@
+"use client";
+
 // Import necessary modules and actions
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import { getVolunteerCall } from "@/actions/volunteer/admin";
 import { updateAction } from "@/actions/volunteer/admin";
-import { useState } from "react";
+import Sidebar from "@/components/Sidebar";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
 
 // Convert a UTC datetime string to local datetime-local input format
 function toInputLocal(value?: string | null) {
@@ -21,11 +25,60 @@ function toInputLocal(value?: string | null) {
 }
 
 // Main component for Edit Volunteer Page
-export default async function EditVolunteerPage(props: any) {
-  // Extract volunteer ID from route parameters
-  const resolvedParams: any = await props.params;
-  const id = resolvedParams?.id;
-  const v: any = await getVolunteerCall(id);
+export default function EditVolunteerPage(props: any) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [id, setId] = useState<string | undefined>(undefined);
+  const [v, setV] = useState<any>(undefined);
+  const router = useRouter();
+
+  const resolvedParams: any = React.use(props.params);
+  const idValue = resolvedParams?.id;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setId(idValue);
+      const volunteerCall = await getVolunteerCall(idValue);
+      setV(volunteerCall);
+    };
+    fetchData();
+  }, [idValue]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/admin/login');
+        return;
+      }
+      setUserName(user.user_metadata?.name || "Admin");
+      setUserEmail(user.email || "admin@pawjectpatrol.com");
+    };
+    checkAuth();
+  }, [router]);
+
+  // Loading state
+  if (v === undefined) {
+    return (
+      <main className="min-h-screen bg-[#E6E6E6]">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+            Loading...
+          </div>
+        </div>
+      </main>
+    );
+  }
+  if (!v) {
+    return (
+      <main className="min-h-screen bg-[#E6E6E6]">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Volunteer request not found.</div>
+        </div>
+      </main>
+    );
+  }
 
   if (!v) {
     return (
@@ -39,12 +92,25 @@ export default async function EditVolunteerPage(props: any) {
 
   return (
     <main className="min-h-screen bg-[#E6E6E6]">
+      {/* Sidebar */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+      />
       {/* Navigation Header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
         <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
-          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+            type="button"
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
             <Menu className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
           <div className="flex-1 flex justify-center items-center h-full">
             <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
           </div>
