@@ -1,5 +1,3 @@
-// NOTE: This is only a temporarily prompted admin reports page to test backend, not yet the final version
-
 "use client";
 
 import { useEffect, useState } from "react";
