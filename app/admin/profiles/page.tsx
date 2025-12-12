@@ -173,7 +173,7 @@ export default function CatalogPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-0">
           {/* Navigation header */}
           <div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-            <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+            <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"

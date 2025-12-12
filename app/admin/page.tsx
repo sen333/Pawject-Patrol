@@ -265,7 +265,7 @@ export default function HeaderAndBackground() {
 
       <div className="relative z-10 w-full flex flex-col items-center flex-1">
         {/* Header */}
-        <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
+        <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
           <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}

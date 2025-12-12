@@ -223,7 +223,7 @@ function ConfirmationContent() {
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
-        <div className="w-full max-w-6xl mx-auto flex items-center justify-between pl-[24px] pr-[24px]">
+        <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between pl-[24px] pr-[24px]">
           <button
             type="button"
             className="p-2 rounded hover:bg-gray-200"
