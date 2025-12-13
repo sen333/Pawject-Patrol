@@ -105,7 +105,7 @@ export default function Home() {
       />
 
       {/* --- Hero Container--- */}
-      <div className="relative w-full flex flex-col items-center overflow-hidden">
+      <div className="relative w-full flex flex-col items-center overflow-hidden h-screen">
         {/* Ellipse Background */}
         <div className="relative w-full flex justify-center z-0">
           {/* Mobile SVG */}
@@ -124,27 +124,17 @@ export default function Home() {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 768 389"
-            className="absolute hidden sm:block lg:hidden w-[900px] h-auto top-[-8vh] z-0"
+            className="absolute hidden sm:block lg:hidden w-[900px] h-auto top-[1vh] z-0"
           >
-            <path
-              d="M974.403 187C974.403 298.562 705.745 389 374.339 389C42.9326 389 -225.725 298.562 -225.725 187C-225.725 75.4385 42.9326 -15 374.339 -15C705.745 -15 974.403 75.4385 974.403 187Z"
-              fill="#C2C876"
-            />
+            <ellipse cx="374.34" cy="200.5" rx="600" ry="202" fill="#C2C876" />
           </svg>
 
           {/* Desktop SVG */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1280 389"
-            fill="none"
-            preserveAspectRatio="none"
-            // Changed md:block to lg:block
-            className="absolute hidden lg:block w-full h-auto top-[-20vh]"
-          >
-            <path
-              d="M1624 187C1624 298.562 1176.24 389 623.898 389C71.5543 389 -376.209 298.562 -376.209 187C-376.209 75.4385 71.5543 -15 623.898 -15C1176.24 -15 1624 75.4385 1624 187Z"
-              fill="#C2C876"
-            />
+          <svg 
+            className="absolute hidden lg:block top-[-3vh] w-full scale-100"
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 1024 389">
+            <ellipse cx="511" cy="169.5" rx="800" ry="250" fill="#C2C876"/>
           </svg>
         </div>
 
@@ -174,6 +164,9 @@ export default function Home() {
 
         {/* --- Main Card --- */}
         <div
+          className="justify-center flex flex-col items-center w-full h-full"
+        >
+        <div
           className="
             relative 
             w-[90%] 
@@ -184,7 +177,7 @@ export default function Home() {
             shadow-lg 
             flex 
             flex-col 
-            justify-between 
+            justify-center 
             items-center 
             px-4 
             pt-6 pb-8 lg:pt-8 lg:pb-12 
@@ -208,8 +201,8 @@ export default function Home() {
             <Image
               src="/Moodboard2.png"
               alt="Pawject Patrol large logo"
-              width={321}
-              height={165}
+              width={481.5}
+              height={247.5}
               className="mx-auto object-contain -mt-2 scale-[1.8] sm:scale-[1.3] md:scale-[1.5]"
               priority
             />
@@ -274,6 +267,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Background Image Officers */}
@@ -340,7 +334,7 @@ export default function Home() {
               ABOUT US
             </h2>
             <p
-              className="text-sm sm:text-base leading-relaxed mt-2"
+              className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
               style={{
                 fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
               }}
@@ -389,7 +383,7 @@ export default function Home() {
                 OUR MISSION
               </h2>
               <p
-                className="text-sm sm:text-base leading-relaxed mt-2"
+                className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
                 style={{
                   fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
                 }}
@@ -438,7 +432,7 @@ export default function Home() {
                 OUR VISION
               </h2>
               <p
-                className="text-sm sm:text-base leading-relaxed mt-2"
+                className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
                 style={{
                   fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
                 }}
@@ -489,7 +483,7 @@ export default function Home() {
 
             <div className="flex flex-col gap-3 mt-2">
               <p
-                className="text-sm sm:text-base leading-relaxed p-3"
+                className="text-sm sm:text-base leading-relaxed p-3 lg:text-[24px] md:text-[20px]"
                 style={{
                   borderRadius: "16px",
                   opacity: "0.95",
@@ -503,7 +497,7 @@ export default function Home() {
               </p>
 
               <p
-                className="text-sm sm:text-base leading-relaxed p-3"
+                className="text-sm sm:text-base leading-relaxed p-3 lg:text-[24px] md:text-[20px]"
                 style={{
                   borderRadius: "16px",
                   opacity: "0.95",
@@ -517,7 +511,7 @@ export default function Home() {
               </p>
 
               <p
-                className="text-sm sm:text-base leading-relaxed p-3"
+                className="text-sm sm:text-base leading-relaxed p-3 lg:text-[24px] md:text-[20px]"
                 style={{
                   borderRadius: "16px",
                   opacity: "0.95",

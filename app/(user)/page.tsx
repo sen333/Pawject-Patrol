@@ -796,19 +796,48 @@ export default function UserDashboard() {
 
               {/* Volunteer Opportunities Card */}
               <div className="relative flex flex-col items-start gap-[15.989px] mt-8">
-                <h3
-                  style={{
-                    color: "#5D4037",
-                    fontFamily: '"Genty Sans", sans-serif',
-                    fontSize: "24px",
-                    fontStyle: "normal",
-                    fontWeight: 500,
-                    lineHeight: "32px",
-                    width: "327px",
-                  }}
-                >
-                  My Volunteer Opportunities
-                </h3>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                  <h3
+                    style={{
+                      color: "#5D4037",
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontSize: "24px",
+                      fontStyle: "normal",
+                      fontWeight: 500,
+                      lineHeight: "32px",
+                      width: "327px",
+                    }}
+                  >
+                    My Volunteer Opportunities
+                  </h3>
+                  <Link
+                      href="/volunteer"
+                      style={{
+                        display: "flex",
+                        width: "106px",
+                        height: "46px",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "10px",
+                        borderRadius: "16px",
+                        background: "#8D52A7",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "white",
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle cx="11" cy="11" r="8" stroke="white" strokeWidth="2" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </Link>
+                </div>
 
                 {/* Card Wrapper  */}
                 <div className="relative w-full">
@@ -1138,7 +1167,13 @@ export default function UserDashboard() {
                           }}
                         >
                           <PawPrint className="text-[#8D52A7] w-[32px] h-[32px] mb-2" />
-                          <h2 className="mb-1 text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-[#3C3333] break-words whitespace-normal">
+                          <h2
+                            className="text-lg mb-1"
+                            style={{
+                              color: "#3C3333",
+                              fontFamily: '"Genty Sans", sans-serif',
+                            }}
+                          >
                             My Volunteer Opportunities
                           </h2>
                           <div className="text-gray-500 text-center text-sm mb-3">

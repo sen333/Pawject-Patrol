@@ -199,7 +199,7 @@ export default function UserVolunteerPage() {
       />
       {/* Navigation Header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -275,7 +275,6 @@ export default function UserVolunteerPage() {
               <option value="">Sort By</option>
               <option value="call_title">Name</option>
               <option value="call_starttime">Start Time</option>
-              <option value="created_at">Created At</option>
               <option value="capacity">Capacity</option>
             </select>
           </div>

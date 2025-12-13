@@ -16,9 +16,9 @@ import {
   Twitter,
   Mail,
 } from "lucide-react";
+import { supabase } from "@/utils/supabase/client";
 import { FaMars, FaVenus } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabase/client";
 import Sidebar from "@/components/Sidebar";
 
 // Helper: convert animal_theme name to hex color
@@ -58,6 +58,12 @@ export default function CatalogPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const [animals, setAnimals] = useState<Animal[]>([]);
+
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // User info state for sidebar
@@ -173,7 +179,7 @@ export default function CatalogPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-0">
           {/* Navigation header */}
           <div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-            <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+            <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -188,7 +194,7 @@ export default function CatalogPage() {
                   height={36}
                 />
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition" onClick={handleLogout}>
                 <LogIn className="w-6 h-6 text-gray-800" />
               </button>
             </div>

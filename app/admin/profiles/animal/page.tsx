@@ -7,7 +7,6 @@ import type { ReportTheme } from "@/actions/profiles/admin";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { supabase } from "@/utils/supabase/client";
 import {
   Menu,
   LogIn,
@@ -17,6 +16,7 @@ import {
   Twitter,
   Mail,
 } from "lucide-react";
+import { supabase } from "@/utils/supabase/client";
 import Sidebar from "@/components/Sidebar";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
@@ -52,6 +52,12 @@ type TextAreaProps = {
 
 export default function ReportFormSample() {
   const router = useRouter();
+
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
 
   const [preview, setPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -321,7 +327,7 @@ export default function ReportFormSample() {
         router={router}
       />
       <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <button
             className="p-2 hover:bg-gray-100 rounded-lg transition"
             onClick={() => setSidebarOpen(true)}
@@ -337,12 +343,12 @@ export default function ReportFormSample() {
               className="flex-shrink-0"
             />
           </div>
-          <Link
-            href="/"
+          <button
             className="p-2 hover:bg-gray-100 rounded-lg transition"
+            onClick={handleLogout}
           >
             <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
         </div>
       </header>
 

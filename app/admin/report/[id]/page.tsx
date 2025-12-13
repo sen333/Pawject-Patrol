@@ -271,6 +271,12 @@ export default function AdminReportDetail({
     );
   }
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
+
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#E1E69D" }}>
       {/* Sidebar */}
@@ -283,7 +289,7 @@ export default function AdminReportDetail({
       />
       {/* Navigation Header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] sticky top-0 z-20">
-        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+        <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -298,12 +304,12 @@ export default function AdminReportDetail({
               height={36}
             />
           </div>
-          <Link
-            href="/admin/login"
+          <button
             className="p-2 hover:bg-gray-100 rounded-lg transition"
+            onClick={handleLogout}
           >
             <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
         </div>
       </div>
 

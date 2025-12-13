@@ -52,7 +52,7 @@ export default function LoginPage() {
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 768 388"
             fill="none"
-            className="absolute hidden sm:block lg:hidden w-[1200px] h-auto top-[-34vh] z-0"
+            className="absolute hidden sm:block lg:hidden w-[1200px] h-auto md:top-[-50vh] top-[-34vh] z-0"
           >
             <path
               d="M985.088 168.5C985.088 289.727 716.43 388 385.024 388C53.6178 388 -215.04 289.727 -215.04 168.5C-215.04 47.2735 53.6178 -51 385.024 -51C716.43 -51 985.088 47.2735 985.088 168.5Z"
