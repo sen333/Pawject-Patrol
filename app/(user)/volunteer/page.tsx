@@ -275,7 +275,6 @@ export default function UserVolunteerPage() {
               <option value="">Sort By</option>
               <option value="call_title">Name</option>
               <option value="call_starttime">Start Time</option>
-              <option value="created_at">Created At</option>
               <option value="capacity">Capacity</option>
             </select>
           </div>

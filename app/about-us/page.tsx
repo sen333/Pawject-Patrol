@@ -27,6 +27,19 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isGuest, setIsGuest] = useState(true);
 
+  // Handle logout and redirect based on role
+  const handleLogout = async () => {
+    if (isAdmin) {
+      await supabase.auth.signOut();
+      router.replace("/admin/login");
+    } else if (!isGuest) {
+      await supabase.auth.signOut();
+      router.replace("/login");
+    } else {
+      router.replace("/login");
+    }
+  };
+
   // Fetch user info from Supabase on mount
   useEffect(() => {
     const fetchUser = async () => {
@@ -123,9 +136,13 @@ export default function Home() {
                 className="flex-shrink-0"
               />
             </div>
-            <Link href="/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              onClick={handleLogout}
+              aria-label="Login or Logout"
+            >
               <LogIn className="w-6 h-6 text-gray-800" />
-            </Link>
+            </button>
           </div>
         </header>
 
@@ -171,11 +188,19 @@ export default function Home() {
               priority
             />
           </div>
-          {/* Back to Home Button */}
+
+          {/* Login Button */}
+          <Button
+            className="relative z-10 w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
+            onClick={() => router.back()}
+          >
+            Back to Previous
+          </Button>
+
+          {/* View Catalog Button */}
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
-            <Button
-              className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all"
-              onClick={() => router.push(isAdmin ? "/admin" : "/")}
+            <Button className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all"
+              onClick={() => router.push('/')}
             >
               Back to Home
             </Button>
@@ -293,7 +318,7 @@ export default function Home() {
               ABOUT US
             </h2>
             <p
-              className="text-sm sm:text-base leading-relaxed mt-2"
+              className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
               style={{
                 fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
               }}
@@ -342,7 +367,7 @@ export default function Home() {
                 OUR MISSION
               </h2>
               <p
-                className="text-sm sm:text-base leading-relaxed mt-2"
+                className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
                 style={{
                   fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
                 }}
@@ -391,7 +416,7 @@ export default function Home() {
                 OUR VISION
               </h2>
               <p
-                className="text-sm sm:text-base leading-relaxed mt-2"
+                className="text-sm sm:text-base leading-relaxed mt-2 lg:text-[24px] md:text-[20px]"
                 style={{
                   fontFamily: 'Help_Loyola Round, "Kawaii RT", sans-serif',
                 }}

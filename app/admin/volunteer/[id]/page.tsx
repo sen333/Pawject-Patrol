@@ -391,7 +391,7 @@ export default function AdminVolunteerDetailPage(props: any) {
                             Back
                           </Link>
                         </div>
-                        {volunteer.call_status?.toLowerCase() !== 'cancelled' && volunteer.call_status?.toLowerCase() !== 'completed' && (
+                        {volunteer.call_status?.toLowerCase() !== 'cancelled' && (
                           <div className="flex-1 min-w-0 flex">
                             <Link 
                               href={`/admin/volunteer/${volunteer.call_id}/edit`} 

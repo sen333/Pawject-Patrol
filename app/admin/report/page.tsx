@@ -49,6 +49,12 @@ export default function AdminReportsPage() {
 		}
 	// State for reports and loading
 	const router = useRouter();
+
+	// Handle user logout and redirect to login page
+	const handleLogout = async () => {
+		await supabase.auth.signOut();
+		router.replace("/admin/login");
+	};
 	const [reports, setReports] = useState<Report[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [fetchError, setFetchError] = useState<string | null>(null);
@@ -161,9 +167,9 @@ export default function AdminReportsPage() {
 						<div className="flex-1 flex justify-center items-center h-full">
 							<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} className="w-16 h-auto sm:w-[77px]" />
 						</div>
-						<Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+						<button className="p-2 hover:bg-gray-100 rounded-lg transition" onClick={handleLogout}>
 							<LogIn className="w-6 h-6 text-gray-800" />
-						</Link>
+						</button>
 					</div>
 				</div>
 

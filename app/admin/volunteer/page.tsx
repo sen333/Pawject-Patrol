@@ -92,6 +92,12 @@ export default function AdminVolunteerPage() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
+
   // Fetch volunteer calls when search or sortBy changes
   useEffect(() => {
     let mounted = true;
@@ -264,9 +270,9 @@ export default function AdminVolunteerPage() {
             <div className="flex-1 flex justify-center items-center h-full">
               <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
             </div>
-            <Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition" onClick={handleLogout}>
               <LogIn className="w-6 h-6 text-gray-800" />
-            </Link>
+            </button>
           </div>
         </div>
 
