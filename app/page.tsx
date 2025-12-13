@@ -215,7 +215,7 @@ export default function Home() {
             />
           </div>
 
-          {/* Login Button */}
+        {/* Login Button */}
           <Button
             asChild
             className="relative z-10 w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
@@ -445,7 +445,8 @@ export default function Home() {
               >
                 A compassionate and informed community committed to fostering
                 kindness, empathy, and respect for all animals through
-                education, responsible pet ownership, and collaborative efforts.
+                education, responsible pet ownership, and collaborative
+                efforts.
               </p>
             </div>
           </div>
@@ -649,7 +650,7 @@ export default function Home() {
                   Our Mission
                 </button>
               </li>
-              <li>
+<li>
                 <a href="#" className="hover:underline">
                   Programs
                 </a>
