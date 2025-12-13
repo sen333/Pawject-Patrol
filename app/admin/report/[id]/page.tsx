@@ -194,6 +194,10 @@ export default function AdminReportDetail({
 
   // Handle report status updates (Accept/Reject)
   const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected' | 'Pending') => {
+    // Prevent redundant status updates
+    if (status === newStatus) {
+      return;
+    }
     // Validate data presence
     if (!data) return;
 
