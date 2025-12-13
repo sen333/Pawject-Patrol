@@ -5,6 +5,8 @@ import { createClient } from "@/utils/supabase/server";
 // Define the structure of an admin animal report summary
 export interface AdminAnimalReportSummary {
 	report_id: string; // UUID
+	report_title: string | null;
+	reporter_name: string | null;
 	animal_name: string | null;
 	animal_type: string | null;
 	animal_gender: string | null;
@@ -16,7 +18,6 @@ export interface AdminAnimalReportSummary {
 	latitude: number | null;
 	longitude: number | null;
 	report_status: string | null; // 'Pending' | 'Accepted' | 'Rejected'
-	report_theme?: string | null; // 'blue' | 'green' | 'orange' | 'purple'
 	health_issues?: string | null;
 	animal_collar?: string | null;
 	other_information?: string | null;
@@ -33,7 +34,7 @@ export async function getRecentAnimalReports(limit = 50): Promise<AdminAnimalRep
 	const { data, error } = await supabase
 		.from("animal_report")
 		.select(
-			"report_id, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, report_theme, health_issues, animal_collar, other_information"
+			"report_id, report_title, reporter_name, animal_name, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
 		)
 		.order("created_at", { ascending: false })
 		.limit(limit * 3); // Fetch more to sort by status
@@ -73,7 +74,7 @@ export async function getAnimalReportById(id: string) {
 }
 
 // Update report status (Accept or Reject)
-export async function updateReportStatus(reportId: string, status: 'Accepted' | 'Rejected') {
+export async function updateReportStatus(reportId: string, status: 'Accepted' | 'Rejected' | 'Pending') {
 	const supabase = await createClient();
 	
 	// Verify admin authentication
@@ -110,7 +111,6 @@ export async function updateReportStatus(reportId: string, status: 'Accepted' | 
 	}
 	
 	// Successfully updated
-	console.log('Report status updated successfully:', data);
 	return { success: true };
 }
 

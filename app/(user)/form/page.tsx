@@ -1,447 +1,899 @@
-// NOTE: This is a temporarily prompted report form page to test backend, not yet the final version
-
 "use client";
 
-// Import necessary modules
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { ReportTheme } from "@/actions/form/user";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import {
+  Menu,
+  LogIn,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+} from "lucide-react";
+import Sidebar from "@/components/Sidebar";
 
-// Dynamically import MapView with no SSR
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+import { supabase } from "@/utils/supabase/client";
 
-// Desktop-responsive sample of the mobile form UI
-// - On mobile: single column (similar to provided screenshot)
-// - On md/lg screens: two columns with clear grouping
+// Global storage for photo file during form navigation
+let globalPhotoFile: File | null = null;
+
+export function setGlobalPhotoFile(file: File | null) {
+  globalPhotoFile = file;
+}
+
+export function getGlobalPhotoFile() {
+  return globalPhotoFile;
+}
+
+// Event type aliases
+type InputChange = React.ChangeEvent<HTMLInputElement>;
+type TextareaChange = React.ChangeEvent<HTMLTextAreaElement>;
+type SelectChange = React.ChangeEvent<HTMLSelectElement>;
+
+interface FieldProps {
+  label: string;
+  placeholder?: string;
+  type?: string;
+  value: string;
+  onChange: (e: InputChange) => void;
+  required?: boolean;
+}
+
+interface SelectFieldProps {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (e: SelectChange) => void;
+  required?: boolean;
+}
+
+interface TextAreaProps {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (e: TextareaChange) => void;
+  required?: boolean;
+}
+
 export default function ReportFormSample() {
-	// Router for navigation
-	const router = useRouter();
+  const router = useRouter();
 
-	// Photo preview and file state
-	const [preview, setPreview] = useState<string | null>(null);
-	const [photoFile, setPhotoFile] = useState<File | null>(null);
-	
-	// Location state
-	const [lat, setLat] = useState<number | null>(7.0858); // UP Mindanao Oblation as default
-	const [lng, setLng] = useState<number | null>(125.4853);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
-	// Submission state
-	const [submitting, setSubmitting] = useState(false);
-	const [resultMsg, setResultMsg] = useState<string | null>(null);
-	
-	// Form field states
-	const [recorderName, setRecorderName] = useState("");
-	const [animalName, setAnimalName] = useState("");
-	const [animalType, setAnimalType] = useState("");
-	const [gender, setGender] = useState("Unknown");
-	const [dateSeen, setDateSeen] = useState("");
-	const [physicalDescription, setPhysicalDescription] = useState("");
-	const [otherInfo, setOtherInfo] = useState("");
-	const [area, setArea] = useState("");
-	const [landmark, setLandmark] = useState("");
-	const [road, setRoad] = useState("");
-	const [theme, setTheme] = useState<ReportTheme>('blue');
-	const [hasHealthIssues, setHasHealthIssues] = useState<boolean>(false);
-	const [healthDetails, setHealthDetails] = useState<string>("");
-	const [hasCollar, setHasCollar] = useState<boolean>(false);
-	const [collarDetails, setCollarDetails] = useState<string>("");
+  const [lat, setLat] = useState<number | null>(7.0858);
+  const [lng, setLng] = useState<number | null>(125.4853);
 
-	// Restore form state from sessionStorage on mount
-	useEffect(() => {
-		const savedData = sessionStorage.getItem('animalReportFormData');
+  const [submitting, setSubmitting] = useState(false);
+  const [resultMsg, setResultMsg] = useState<string | null>(null);
 
-		// If data exists, parse and restore form state
-		if (savedData) {
-			try {
-				const data = JSON.parse(savedData);
-				setRecorderName(data.recorderName || "");
-				setAnimalName(data.animalName || "");
-				setAnimalType(data.animalType || "");
-				setGender(data.gender || "Unknown");
-				setDateSeen(data.dateSeen || "");
-				setPhysicalDescription(data.physicalDescription || "");
-				setOtherInfo(data.otherInfo || "");
-				setArea(data.area || "");
-				setLandmark(data.landmark || "");
-				setRoad(data.road || "");
-				setTheme(data.theme || 'blue');
-				setHasHealthIssues(data.hasHealthIssues || false);
-				setHealthDetails(data.healthDetails || "");
-				setHasCollar(data.hasCollar || false);
-				setCollarDetails(data.collarDetails || "");
-				setLat(data.lat || 7.0858);
-				setLng(data.lng || 125.4853);
+  const [reportTitle, setReportTitle] = useState("");
+  const [reporterName, setReporterName] = useState("");
+  const [animalType, setAnimalType] = useState("");
+  const [gender, setGender] = useState("Unknown");
+  const [dateSeen, setDateSeen] = useState("");
+  const [physicalDescription, setPhysicalDescription] = useState("");
+  const [otherInfo, setOtherInfo] = useState("");
+  const [area, setArea] = useState("");
+  const [landmark, setLandmark] = useState("");
+  const [road, setRoad] = useState("");
+  const [hasHealthIssues, setHasHealthIssues] = useState<boolean>(false);
+  const [healthDetails, setHealthDetails] = useState<string>("");
+  const [hasCollar, setHasCollar] = useState<boolean>(false);
+  const [collarDetails, setCollarDetails] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"basic" | "location" | "health">(
+    "basic"
+  );
 
-				// Restore photo preview and file if available
-				if (data.photoPreview) {
-					setPreview(data.photoPreview);
-					// Convert base64 back to File if needed
-					if (data.photoBase64 && data.photoName && data.photoType) {
-						fetch(data.photoBase64)
-							.then(res => res.blob())
-							.then(blob => {
-								const file = new File([blob], data.photoName, { type: data.photoType });
-								setPhotoFile(file);
-							});
-					}
-				}
-				// Clear sessionStorage after restoring
-				sessionStorage.removeItem('animalReportFormData');
-			} catch (error) {
-				// Log any errors during restoration
-				console.error('Failed to restore form data:', error);
-			}
-		}
-	}, []);
+  // Auth-connected sidebar state
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-	// Function to grab current location using Geolocation API
-	function grabCurrentLocation() {
+  useEffect(() => {
+    const savedData = sessionStorage.getItem("animalReportFormData");
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        setReportTitle(data.reportTitle || "");
+        setReporterName(data.reporterName || "");
+        setAnimalType(data.animalType || "");
+        setGender(data.gender || "Unknown");
+        setDateSeen(data.dateSeen || "");
+        setPhysicalDescription(data.physicalDescription || "");
+        setOtherInfo(data.otherInfo || "");
+        setArea(data.area || "");
+        setLandmark(data.landmark || "");
+        setRoad(data.road || "");
+        setHasHealthIssues(data.hasHealthIssues || false);
+        setHealthDetails(data.healthDetails || "");
+        setHasCollar(data.hasCollar || false);
+        setCollarDetails(data.collarDetails || "");
+        setLat(data.lat || 7.0858);
+        setLng(data.lng || 125.4853);
 
-		// Check if geolocation is supported
-		if (!navigator.geolocation) {
-			setResultMsg("Geolocation unsupported.");
-			return;
-		}
+        if (data.photoPreview) {
+          setPreview(data.photoPreview);
+        }
+        sessionStorage.removeItem("animalReportFormData");
+      } catch (error) {
+        console.error("Failed to restore form data:", error);
+      }
+    }
+  }, []);
 
-		// Use Geolocation API to get current position
-		navigator.geolocation.getCurrentPosition(
-			// Success callback
-			(pos) => {
-				setLat(pos.coords.latitude);
-				setLng(pos.coords.longitude);
-			},
+  // Fetch current user and keep sidebar info in sync
+  useEffect(() => {
+    const setupAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      if (user) {
+        const nameFromMeta =
+          (user.user_metadata?.full_name as string) ||
+          (user.user_metadata?.name as string) ||
+          "";
+        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+        setUserEmail(user.email || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    };
+    setupAuth();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        const nameFromMeta =
+          (session.user.user_metadata?.full_name as string) ||
+          (session.user.user_metadata?.name as string) ||
+          "";
+        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
+        setUserEmail(session.user.email || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    });
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
-			// Handle location error
-			(err) => setResultMsg(`Location error: ${err.message}`),
-			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-				maximumAge: 0
-			}
-		);
-	}
+  function grabCurrentLocation() {
+    if (!navigator.geolocation) {
+      setResultMsg("Geolocation unsupported.");
+      return;
+    }
 
-	// Handle map click to set location
-	function handleMapClick(newLat: number, newLng: number) {
-		setLat(newLat);
-		setLng(newLng);
-		setResultMsg(null);
-	}
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude);
+        setLng(pos.coords.longitude);
+      },
+      (err) => setResultMsg(`Location error: ${err.message}`),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
 
-	// Handle form confirmation
-	async function handleConfirm() {
-		// Clear previous messages
-		setResultMsg(null);
+  function handleMapClick(newLat: number, newLng: number) {
+    setLat(newLat);
+    setLng(newLng);
+    setResultMsg(null);
+  }
 
-		// Ensure location is set
-		if (lat == null || lng == null) {
-			setResultMsg("Please capture location before proceeding.");
-			return;
-		}
+  async function handleConfirm() {
+    setResultMsg(null);
 
-		// Save form state to sessionStorage
-		const formData: any = {
-			recorderName,
-			animalName,
-			animalType,
-			gender,
-			dateSeen,
-			physicalDescription,
-			otherInfo,
-			area,
-			landmark,
-			road,
-			theme,
-			hasHealthIssues,
-			healthDetails,
-			hasCollar,
-			collarDetails,
-			lat,
-			lng,
-			photoPreview: preview
-		};
+    if (!reportTitle.trim()) {
+      setResultMsg("Please enter a report title before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
 
-		// Convert photo File to base64 for storage
-		if (photoFile) {
-			try {
-				// Make FileReader to read file
-				const reader = new FileReader();
+    if (!reporterName.trim()) {
+      setResultMsg("Please enter your name before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
 
-				// Convert File to base64 string
-				const base64Promise = new Promise<string>((resolve) => {
-					reader.onloadend = () => resolve(reader.result as string);
-					reader.readAsDataURL(photoFile);
-				});
+    if (!animalType.trim()) {
+      setResultMsg("Please enter the type of animal before proceeding.");
+      setActiveTab("basic");
+      return;
+    }
 
-				// Await base64 conversion
-				const base64 = await base64Promise;
+    if (!dateSeen) {
+      setResultMsg("Please select the date the animal was seen.");
+      setActiveTab("basic");
+      return;
+    }
 
-				// Store base64 and file info in formData
-				formData.photoBase64 = base64;
-				formData.photoName = photoFile.name;
-				formData.photoType = photoFile.type;
-			} catch (error) {
-				console.error('Failed to convert photo to base64:', error);
-			}
-		}
+    if (!physicalDescription.trim()) {
+      setResultMsg("Please enter a physical description of the animal.");
+      setActiveTab("basic");
+      return;
+    }
 
-		// Save to sessionStorage
-		sessionStorage.setItem('animalReportFormData', JSON.stringify(formData));
+    if (!area.trim()) {
+      setResultMsg("Please enter the area where the animal was seen.");
+      setActiveTab("location");
+      return;
+    }
 
-		// Build URL params for confirmation page
-		const params = new URLSearchParams({
-			recorderName: recorderName || '',
-			animalName: animalName || '',
-			animalType: animalType || '',
-			gender: gender || 'Unknown',
-			dateSeen: dateSeen || '',
-			physicalDescription: physicalDescription || '',
-			area: area || '',
-			landmark: landmark || '',
-			road: road || '',
-			healthIssues: hasHealthIssues ? (healthDetails || 'Yes') : 'None',
-			animalCollar: hasCollar ? (collarDetails || 'Has collar') : 'None',
-			otherInfo: otherInfo || 'None',
-			theme: theme,
-			lat: lat.toString(),
-			lng: lng.toString(),
-			photoUrl: preview || ''
-		});
+    if (!landmark.trim()) {
+      setResultMsg("Please enter a landmark near the location.");
+      setActiveTab("location");
+      return;
+    }
 
-		// Navigate to confirmation page with params
-		router.push(`/form/confirm?${params.toString()}`);
-	}
+    if (!road.trim()) {
+      setResultMsg("Please enter the road name.");
+      setActiveTab("location");
+      return;
+    }
 
-	return (
-		<main className="min-h-screen bg-[#E1E69D]">
-			{/* Header matching screenshot */}
-			<header className="w-full h-[52px] bg-[#E6E6E6] flex items-center">
-				<div className="w-full max-w-6xl mx-auto flex items-center justify-between px-4">
-					<button type="button" className="p-2 rounded hover:bg-gray-200" aria-label="Menu">
-						<span className="block w-6 h-0.5 bg-gray-800 mb-1" />
-						<span className="block w-6 h-0.5 bg-gray-800 mb-1" />
-						<span className="block w-6 h-0.5 bg-gray-800" />
-					</button>
-					<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
-					<Link href="/" className="px-4 py-1.5 rounded-md text-sm bg-[#8D52A7] text-white hover:bg-[#7B4692]">Dashboard</Link>
-				</div>
-			</header>
+    if (lat == null || lng == null) {
+      setResultMsg("Please capture location before proceeding.");
+      return;
+    }
 
-			<section className="max-w-6xl mx-auto px-4 py-6">
-				<div className="rounded-xl border border-gray-300 bg-[#E6E6E6]/40 backdrop-blur-sm p-5 md:p-6 space-y-5">
-					{/* Top two-column: picture left, fields right */}
-					<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-stretch">
-						{/* Picture panel */}
-						<div className="rounded-xl bg-[#CFC9C9] p-4 flex flex-col">
-							<div
-								className="w-full h-[300px] rounded-lg bg-[#DED8D8] border border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer"
-								onClick={() => document.getElementById('photo-input')?.click()}
-							>
-								{preview ? (
-									// eslint-disable-next-line @next/next/no-img-element
-									<img src={preview} alt="Animal photo" className="w-full h-full object-cover" />
-								) : (
-									<div className="flex flex-col items-center text-gray-600 text-sm gap-2">
-										<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-											<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z" />
-											<circle cx="12" cy="13" r="4" />
-										</svg>
-										<span>Picture</span>
-									</div>
-								)}
-							</div>
-							<input
-								id="photo-input"
-								type="file"
-								accept="image/*"
-								className="hidden"
-								onChange={(e) => {
-									const file = e.target.files?.[0];
-									if (!file) {
-										setPreview(null);
-										setPhotoFile(null);
-										return;
-									}
-									const url = URL.createObjectURL(file);
-									setPreview(url);
-									setPhotoFile(file);
-								}}
-							/>
-							<p className="mt-3 text-xs text-gray-700">Tap to upload (optional)</p>
-						</div>
+    const formData: any = {
+      reportTitle,
+      reporterName,
+      animalType,
+      gender,
+      dateSeen,
+      physicalDescription,
+      otherInfo,
+      area,
+      landmark,
+      road,
+      hasHealthIssues,
+      healthDetails,
+      hasCollar,
+      collarDetails,
+      lat,
+      lng,
+      photoPreview: preview,
+    };
 
-						{/* Fields panel */}
-						<div className="space-y-3">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<Field label="Recorder Name" placeholder="Your name" value={recorderName} onChange={(e) => setRecorderName(e.target.value)} />
-								<Field label="Animal Name (Optional)" placeholder="Animal's name" value={animalName} onChange={(e) => setAnimalName(e.target.value)} />
-							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<Field label="Type of animal" placeholder="Dog, Cat, etc." value={animalType} onChange={(e) => setAnimalType(e.target.value)} />
-								<div className="grid grid-cols-2 gap-3">
-									<SelectField label="Gender" options={["Unknown", "Male", "Female"]} value={gender} onChange={(e) => setGender(e.target.value)} />
-									<Field label="Date Seen" type="date" value={dateSeen} onChange={(e) => setDateSeen(e.target.value)} />
-								</div>
-							</div>
-							<TextArea label="Physical Description" placeholder="Color, size, markings, etc." value={physicalDescription} onChange={(e) => setPhysicalDescription(e.target.value)} />
-						</div>
-					</div>
+    sessionStorage.setItem("animalReportFormData", JSON.stringify(formData));
 
-					{/* Location fields full width BELOW picture & description */}
-					<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-						<Field label="Area Seen (Location)" placeholder="General area" value={area} onChange={(e) => setArea(e.target.value)} />
-						<Field label="Landmark Near Location" placeholder="Known landmark" value={landmark} onChange={(e) => setLandmark(e.target.value)} />
-						<Field label="What Road?" placeholder="Street / road name" value={road} onChange={(e) => setRoad(e.target.value)} />
-					</div>
+    // Store photo file globally for access on confirm page
+    setGlobalPhotoFile(photoFile);
 
-					{/* Map full width */}
-					<div className="rounded-xl bg-[#CFC9C9] p-4 mt-6">
-						<div className="rounded-lg h-72 md:h-80 bg-[#DED8D8] overflow-hidden relative">
-							<div className="absolute inset-0 z-10">
-								<MapView latitude={lat!} longitude={lng!} onLocationSelect={handleMapClick} />
-							</div>
-							<button
-								type="button"
-								onClick={grabCurrentLocation}
-								className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
-							>
-								Use My Location
-							</button>
-						</div>
-					</div>
+    // Set confirm_access cookie before redirecting to confirm page
+    document.cookie = "confirm_access=true; path=/; max-age=300";
 
-					{/* Health issues & Collar inline */}
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div className="rounded-xl bg-[#CFC9C9] p-4">
-							<label className="block text-sm font-medium mb-2 text-gray-800">Health Issues?</label>
-							<div className="flex flex-wrap items-center gap-4 text-sm">
-								<label className="inline-flex items-center gap-1">
-									<input type="radio" name="health" className="accent-[#8D52A7]" checked={!hasHealthIssues} onChange={() => setHasHealthIssues(false)} /> No
-								</label>
-								<label className="inline-flex items-center gap-1">
-									<input type="radio" name="health" className="accent-[#8D52A7]" checked={hasHealthIssues} onChange={() => setHasHealthIssues(true)} /> Yes
-								</label>
-								{hasHealthIssues && (
-									<input
-										className="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm"
-										placeholder="Describe issues"
-										value={healthDetails}
-										onChange={(e) => setHealthDetails(e.target.value)}
-									/>
-								)}
-							</div>
-						</div>
-						<div className="rounded-xl bg-[#CFC9C9] p-4">
-							<label className="block text-sm font-medium mb-2 text-gray-800">Has Collar?</label>
-							<div className="flex flex-wrap items-center gap-4 text-sm">
-								<label className="inline-flex items-center gap-1">
-									<input type="radio" name="collar" className="accent-[#8D52A7]" checked={!hasCollar} onChange={() => setHasCollar(false)} /> No
-								</label>
-								<label className="inline-flex items-center gap-1">
-									<input type="radio" name="collar" className="accent-[#8D52A7]" checked={hasCollar} onChange={() => setHasCollar(true)} /> Yes
-								</label>
-								{hasCollar && (
-									<input
-										className="flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm"
-										placeholder="Describe collar"
-										value={collarDetails}
-										onChange={(e) => setCollarDetails(e.target.value)}
-									/>
-								)}
-							</div>
-						</div>
-					</div>
+    const params = new URLSearchParams({
+      reportTitle: reportTitle || "",
+      reporterName: reporterName || "",
+      animalType: animalType || "",
+      gender: gender || "Unknown",
+      dateSeen: dateSeen || "",
+      physicalDescription: physicalDescription || "",
+      area: area || "",
+      landmark: landmark || "",
+      road: road || "",
+      healthIssues: hasHealthIssues ? healthDetails || "Yes" : "None",
+      animalCollar: hasCollar ? collarDetails || "Has collar" : "None",
+      otherInfo: otherInfo || "None",
+      lat: lat.toString(),
+      lng: lng.toString(),
+      photoUrl: preview || "",
+    });
 
-					{/* Other Information */}
-					<TextArea label="Any Other Information" placeholder="Any additional details..." value={otherInfo} onChange={(e) => setOtherInfo(e.target.value)} />
+    router.push(`/form/confirm?${params.toString()}`);
+  }
 
-					{/* Theme selection */}
-					<div className="rounded-xl bg-[#CFC9C9] p-4">
-						<label className="block text-sm font-medium mb-3 text-gray-800">Theme</label>
-						<div className="grid grid-cols-4 gap-3">
-							{[
-								{ key: 'blue' as ReportTheme, color: 'bg-[#5E9BBA]' },
-								{ key: 'green' as ReportTheme, color: 'bg-[#689668]' },
-								{ key: 'orange' as ReportTheme, color: 'bg-[#DCB57E]' },
-								{ key: 'purple' as ReportTheme, color: 'bg-[#C575AD]' }
-							].map(t => (
-								<button
-									key={t.key}
-									type="button"
-									onClick={() => setTheme(t.key)}
-									aria-label={`${t.key} theme`}
-									className={`h-10 rounded-md ${t.color} transition outline outline-2 ${theme === t.key ? 'outline-black' : 'outline-transparent'} hover:brightness-110`}
-								/>
-							))}
-						</div>
-					</div>
+  return (
+    <main className="min-h-screen bg-[#E6E6E6]">
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+        variant="user"
+      />
+      <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+          <button
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6 text-gray-800" />
+          </button>
+          <div className="flex-1 flex justify-center items-center h-full">
+            <Image
+              src="/Moodboard2.png"
+              alt="Pawject Patrol Logo"
+              width={77}
+              height={36}
+              className="flex-shrink-0"
+            />
+          </div>
+          <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/");
+              }}
+            >
+              <LogIn className="w-6 h-6 text-gray-800" />
+            </button>
+          </Link>
+        </div>
+      </header>
 
-					{/* Submit */}
-					<div className="pt-2">
-						<button
-							onClick={handleConfirm}
-							type="button"
-							className="w-full rounded-md bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692]"
-						>
-							Confirm Report
-						</button>
-						{resultMsg && <p className="mt-2 text-xs text-gray-800 text-center">{resultMsg}</p>}
-					</div>
-				</div>
-			</section>
-		</main>
-	);
+      <section className="max-w-6xl mx-auto px-4 py-6 pl-[24px] pr-[24px]">
+        {/* Header Text */}
+        <div className="mb-6">
+          <h1
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+            style={{
+              color: "#C2C876",
+              WebkitTextStrokeWidth: ".5px",
+              WebkitTextStrokeColor: "#3C3333",
+              fontFamily: '"Kawaii RT", sans-serif',
+              fontStyle: "normal",
+              fontWeight: 400,
+              lineHeight: "normal",
+              outlineColor: "#3C3333",
+            }}
+          >
+            Report Animal Form
+          </h1>
+
+          <p
+            className="text-xs sm:text-sm md:text-md"
+            style={{ color: "#3C3333", fontFamily: '"Genty Sans", sans-serif' }}
+          >
+            Fill up the details in the form to catalog another animal
+          </p>
+        </div>
+
+        {/* Form Container */}
+        <div
+          className="rounded-xl bg-[#E1E69D] border-radius-[26px] border-1 border-[#3C3333] p-6"
+          style={{
+            display: "flex",
+            minWidth: "327px",
+            padding: "20px",
+            flexDirection: "column",
+            gap: "15px",
+            alignSelf: "stretch",
+          }}
+        >
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setActiveTab("basic")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                activeTab === "basic"
+                  ? "bg-[#8D52A7] text-white"
+                  : "bg-[#C2C876] text-[#3C3333] hover:bg-[#b5bb6a]"
+              }`}
+            >
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21"
+                    stroke={activeTab === "basic" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+                    stroke={activeTab === "basic" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden md:inline">Basic Info</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("location")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                activeTab === "location"
+                  ? "bg-[#8D52A7] text-white"
+                  : "bg-[#C2C876] text-[#3C3333] hover:bg-[#b5bb6a]"
+              }`}
+            >
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M3 6L9 3L15 6L21 3V18L15 21L9 18L3 21V6Z"
+                    stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 3V18"
+                    stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M15 6V21"
+                    stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden md:inline">Location</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("health")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                activeTab === "health"
+                  ? "bg-[#8D52A7] text-white"
+                  : "bg-[#C2C876] text-[#3C3333] hover:bg-[#b5bb6a]"
+              }`}
+            >
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M11 2C10.4696 2 9.96086 2.21071 9.58579 2.58579C9.21071 2.96086 9 3.46957 9 4V9H4C3.46957 9 2.96086 9.21071 2.58579 9.58579C2.21071 9.96086 2 10.4696 2 11V13C2 14.1 2.9 15 4 15H9V20C9 21.1 9.9 22 11 22H13C13.5304 22 14.0391 21.7893 14.4142 21.4142C14.7893 21.0391 15 20.5304 15 20V15H20C20.5304 15 21.0391 14.7893 21.4142 14.4142C21.7893 14.0391 22 13.5304 22 13V11C22 10.4696 21.7893 9.96086 21.4142 9.58579C21.0391 9.21071 20.5304 9 20 9H15V4C15 3.46957 14.7893 2.96086 14.4142 2.58579C14.0391 2.21071 13.5304 2 13 2H11Z"
+                    stroke={activeTab === "health" ? "#FFFFFF" : "#3C3333"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden md:inline">Health & Details</span>
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="space-y-4">
+            {/* Basic Info Tab  */}
+            {activeTab === "basic" && (
+              <div className="space-y-4">
+                <Field
+                  label="Report Title *"
+                  placeholder="Brief title for this report"
+                  value={reportTitle}
+                  onChange={(e: InputChange) => setReportTitle(e.target.value)}
+                  required
+                />
+                <Field
+                  label="Reporter Name *"
+                  placeholder="Your name"
+                  value={reporterName}
+                  onChange={(e: InputChange) => setReporterName(e.target.value)}
+                  required
+                />
+                <Field
+                  label="Type of animal *"
+                  placeholder="Dog, Cat, etc."
+                  value={animalType}
+                  onChange={(e: InputChange) => setAnimalType(e.target.value)}
+                  required
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectField
+                    label="Gender *"
+                    options={["Unknown", "Male", "Female"]}
+                    value={gender}
+                    onChange={(e: SelectChange) => setGender(e.target.value)}
+                    required
+                  />
+                  <Field
+                    label="Date Seen *"
+                    type="date"
+                    value={dateSeen}
+                    onChange={(e: InputChange) => setDateSeen(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <TextArea
+                  label="Physical Description *"
+                  placeholder="Color, size, markings, etc."
+                  value={physicalDescription}
+                  onChange={(e: TextareaChange) => setPhysicalDescription(e.target.value)}
+                  required
+                />
+                <div className="rounded-xl bg-[#E6E6E6] p-4 flex flex-col items-center justify-center">
+                  <div
+                    className="w-full h-[280px] rounded-lg bg-white flex items-center justify-center overflow-hidden cursor-pointer border-2 border-[#3C3333]"
+                    onClick={() =>
+                      document.getElementById("photo-input")?.click()
+                    }
+                  >
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt="Animal photo"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center text-gray-600 text-sm gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="48"
+                          height="48"
+                          viewBox="0 0 48 48"
+                          fill="none"
+                        >
+                          <path
+                            d="M29 8H19L14 14H8C6.93913 14 5.92172 14.4214 5.17157 15.1716C4.42143 15.9217 4 16.9391 4 18V36C4 37.0609 4.42143 38.0783 5.17157 38.8284C5.92172 39.5786 6.93913 40 8 40H40C41.0609 40 42.0783 39.5786 42.8284 38.8284C43.5786 38.0783 44 37.0609 44 36V18C44 16.9391 43.5786 15.9217 42.8284 15.1716C42.0783 14.4214 41.0609 14 40 14H34L29 8Z"
+                            stroke="#3C3333"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M24 32C27.3137 32 30 29.3137 30 26C30 22.6863 27.3137 20 24 20C20.6863 20 18 22.6863 18 26C18 29.3137 20.6863 32 24 32Z"
+                            stroke="#3C3333"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <span
+                          style={{
+                            color: "#3C3333",
+                            fontFamily: '"Genty Sans", sans-serif',
+                            fontSize: "16px",
+                            fontWeight: 500,
+                          }}
+                        >
+                          Picture
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    id="photo-input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.svg"
+                    className="hidden"
+                    onChange={(e: InputChange) => {
+                      const file = e.target.files?.[0];
+                      if (!file) {
+                        setPreview(null);
+                        setPhotoFile(null);
+                        return;
+                      }
+                      const url = URL.createObjectURL(file);
+                      setPreview(url);
+                      setPhotoFile(file);
+                    }}
+                  />
+                  <p className="mt-3 text-xs text-[#000]">
+                    Tap to upload (optional)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Location Tab - Details */}
+            {activeTab === "location" && (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <Field
+                      label="Area Seen *"
+                      placeholder="General area"
+                      value={area}
+                      onChange={(e: InputChange) => setArea(e.target.value)}
+                      required
+                    />
+                    <Field
+                      label="Landmark Near Location *"
+                      placeholder="Known landmark"
+                      value={landmark}
+                      onChange={(e: InputChange) => setLandmark(e.target.value)}
+                      required
+                    />
+                    <Field
+                      label="What Road? *"
+                      placeholder="Street / road name"
+                      value={road}
+                      onChange={(e: InputChange) => setRoad(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Map */}
+                <div className="rounded-xl bg-[#E6E6E6] p-4 mt-2">
+                  <div className="rounded-lg h-64 bg-[#E1E69D] overflow-hidden relative">
+                    <div className="absolute inset-0 z-10">
+                      <MapView
+                        latitude={lat!}
+                        longitude={lng!}
+                        onLocationSelect={handleMapClick}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={grabCurrentLocation}
+                      className="absolute bottom-14 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+                    >
+                      Use My Location
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLat(7.0858);
+                        setLng(125.4853);
+                      }}
+                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+                    >
+                      Return to UP Oblation
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Health & Details Tab */}
+            {activeTab === "health" && (
+              <div className="space-y-4">
+                {/* Health Issues */}
+                <div className="rounded-xl bg-[#E1E69D] p-4">
+                  <label
+                    className="block mb-3"
+                    style={{
+                      color: "#3C3333",
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontSize: "14px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Health Issues?
+                  </label>
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="health"
+                        className="accent-[#8D52A7] outline-none"
+                        checked={!hasHealthIssues}
+                        onChange={() => setHasHealthIssues(false)}
+                      />
+                      <span>No</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="health"
+                        className="accent-[#8D52A7] outline-none"
+                        checked={hasHealthIssues}
+                        onChange={() => setHasHealthIssues(true)}
+                      />
+                      <span>Yes</span>
+                    </label>
+                    {hasHealthIssues && (
+                      <input
+                        className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
+                        style={{ backgroundColor: "#C2C876" }}
+                        placeholder="Describe"
+                        value={healthDetails}
+                        onChange={(e: InputChange) => setHealthDetails(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Collar */}
+                <div className="rounded-xl bg-[#E1E69D] p-4">
+                  <label
+                    className="block mb-3"
+                    style={{
+                      color: "#3C3333",
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontSize: "14px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Has Collar?
+                  </label>
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="collar"
+                        className="accent-[#8D52A7] outline-none"
+                        checked={!hasCollar}
+                        onChange={() => setHasCollar(false)}
+                      />
+                      <span>No</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="collar"
+                        className="accent-[#8D52A7] outline-none"
+                        checked={hasCollar}
+                        onChange={() => setHasCollar(true)}
+                      />
+                      <span>Yes</span>
+                    </label>
+                    {hasCollar && (
+                      <input
+                        className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
+                        style={{ backgroundColor: "#C2C876" }}
+                        placeholder="Describe"
+                        value={collarDetails}
+                        onChange={(e: InputChange) => setCollarDetails(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <TextArea
+                  label="Any Other Information"
+                  placeholder="Any additional details..."
+                  value={otherInfo}
+                  onChange={(e: TextareaChange) => setOtherInfo(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-3 mt-6">
+            {activeTab !== "basic" && (
+              <button
+                onClick={() => {
+                  if (activeTab === "location") setActiveTab("basic");
+                  if (activeTab === "health") setActiveTab("location");
+                }}
+                type="button"
+                className="flex-1 rounded-lg bg-[#E6E6E6] py-3 text-sm font-semibold text-[#3C3333] hover:bg-gray-300 transition"
+              >
+                Previous
+              </button>
+            )}
+            <button
+              onClick={
+                activeTab === "health"
+                  ? handleConfirm
+                  : () =>
+                      setActiveTab(
+                        activeTab === "basic" ? "location" : "health"
+                      )
+              }
+              type="button"
+              className="flex-1 rounded-lg bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692] transition"
+            >
+              {activeTab === "health" ? "Confirm" : "Next"}
+            </button>
+          </div>
+          {resultMsg && (
+            <p className="mt-3 text-xs text-[#3C3333] text-center px-4">
+              {resultMsg}
+            </p>
+          )}
+        </div>
+      </section>
+    </main>
+  );
 }
 
-function Field({ label, placeholder, type = "text", value, onChange }: { label: string; placeholder?: string; type?: string; value?: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
-	return (
-		<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-			<label className="block text-sm font-medium text-[#3C3333] mb-2">{label}</label>
-			<input
-				type={type}
-				placeholder={placeholder}
-				value={value}
-				onChange={onChange}
-				className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#3C3333] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
-			/>
-		</div>
-	);
+function Field({ label, placeholder, type = "text", value, onChange, required }: FieldProps) {
+  return (
+    <div className="rounded-xl bg-[#E1E69D] p-4">
+      <label
+        className="block mb-1"
+        style={{
+          color: "#3C3333",
+          fontFamily: '"Genty Sans", sans-serif',
+          fontSize: "14px",
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        style={{ backgroundColor: "#C2C876" }}
+      />
+    </div>
+  );
 }
 
-function SelectField({ label, options, value, onChange }: { label: string; options: string[]; value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) {
-	return (
-		<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-			<label className="block text-sm font-medium text-[#3C3333] mb-2">{label}</label>
-			<select 
-				className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
-				value={value}
-				onChange={onChange}
-			>
-				{options.map((o) => (
-					<option key={o} value={o}>
-						{o}
-					</option>
-				))}
-			</select>
-		</div>
-	);
+function SelectField({ label, options, value, onChange, required }: SelectFieldProps) {
+  return (
+    <div className="rounded-xl bg-[#E1E69D] p-4">
+      <label
+        className="block mb-1"
+        style={{
+          color: "#3C3333",
+          fontFamily: '"Genty Sans", sans-serif',
+          fontSize: "14px",
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        style={{ backgroundColor: "#C2C876" }}
+      >
+        {options.map((o: string) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
-function TextArea({ label, placeholder, value, onChange }: { label: string; placeholder?: string; value?: string; onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void }) {
-	return (
-		<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-			<label className="block text-sm font-medium text-[#3C3333] mb-2">{label}</label>
-			<textarea
-				rows={4}
-				placeholder={placeholder}
-				value={value}
-				onChange={onChange}
-				className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#3C3333] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8D52A7]"
-			/>
-		</div>
-	);
+function TextArea({ label, placeholder, value, onChange, required }: TextAreaProps) {
+  return (
+    <div className="rounded-xl bg-[#E1E69D] p-4">
+      <label
+        className="block mb-1"
+        style={{
+          color: "#3C3333",
+          fontFamily: '"Genty Sans", sans-serif',
+          fontSize: "14px",
+          fontWeight: 500,
+          lineHeight: "14px",
+        }}
+      >
+        {label}
+      </label>
+      <textarea
+        rows={4}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        style={{ backgroundColor: "#C2C876" }}
+      />
+    </div>
+  );
 }
-

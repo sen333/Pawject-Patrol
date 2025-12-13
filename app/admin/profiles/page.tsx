@@ -1,0 +1,405 @@
+'use client'
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Menu,
+  LogIn,
+  MapPin,
+  PawPrint,
+  Unlink2,
+  ArrowRight,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+} from "lucide-react";
+import { FaMars, FaVenus } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
+import Sidebar from "@/components/Sidebar";
+
+// Helper: convert animal_theme name to hex color
+function getThemeColor(theme: string | null): string {
+  if (!theme) return "#689668"; // default green
+  const themeMap: Record<string, string> = {
+    blue: "#5E9BBA",
+    green: "#689668",
+    orange: "#DCB57E",
+    pink: "#C575AD",
+    purple: "#8D52A7",
+  };
+  return themeMap[theme.toLowerCase()] || "#689668";
+}
+
+// Animal type definition
+interface Animal {
+  animal_id: string;
+  animal_name: string | null;
+  animal_species: string | null;
+  animal_breed: string | null;
+  animal_age: string | null;
+  animal_gender: string | null;
+  animal_description: string | null;
+  animal_status: string | null;
+  animal_photo: string | null;
+  animal_affiliation: string | null;
+  animal_collar: string | null;
+  animal_theme: string | null;
+  created_at: string | null;
+}
+
+// Catalog Page Component
+export default function CatalogPage() {
+  // State variables
+  const [filter, setFilter] = useState<"all" | "cat" | "dog">("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // User info state for sidebar
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Search state
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    // Check if the user is authenticated
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+      if (user) {
+        setUserEmail(user.email || "");
+        const nameFromMeta =
+          user.user_metadata?.full_name || user.user_metadata?.name || "";
+        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    };
+    checkAuth();
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        setUserEmail(session.user.email || "");
+        const nameFromMeta =
+          session.user.user_metadata?.full_name ||
+          session.user.user_metadata?.name ||
+          "";
+        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
+      } else {
+        setUserName("");
+        setUserEmail("");
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Fetch animals on mount
+  useEffect(() => {
+    // Make API call to fetch animals
+    const fetchAnimals = async () => {
+      // Set loading and error states
+      setLoading(true);
+      setError(null);
+
+      // Fetch animals from Supabase (animal table only, not join)
+      const { data, error } = await supabase
+        .from("animal")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      // Handle errors or set animals
+      if (error) {
+        setError(error.message);
+        setAnimals([]);
+      } else {
+        setAnimals((data || []) as Animal[]);
+      }
+
+      // Finalize loading state
+      setLoading(false);
+    };
+    // Start fetching animals
+    fetchAnimals();
+  }, []);
+
+  // Filter animals based on selected filter and search
+  const filteredAnimals = animals.filter((animal) => {
+    // Filter by species
+    if (filter !== "all") {
+      const species = (animal.animal_species || "").toLowerCase();
+      if (species !== filter) return false;
+    }
+    // Filter by search (name, breed, species, gender)
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      if (
+        !(animal.animal_name || "").toLowerCase().includes(q) &&
+        !(animal.animal_breed || "").toLowerCase().includes(q) &&
+        !(animal.animal_species || "").toLowerCase().includes(q) &&
+        !(animal.animal_gender || "").toLowerCase().includes(q)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  return (
+    <>
+      <main className="min-h-screen bg-[#E6E6E6]">
+        {/* Sidebar */}
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          userName={userName}
+          userEmail={userEmail}
+          router={router}
+          variant="admin"
+        />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-0">
+          {/* Navigation header */}
+          <div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+            <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <Menu className="w-6 h-6 text-gray-800" />
+              </button>
+              <div className="flex-1 flex justify-center items-center h-full">
+                <Image
+                  src="/Moodboard2.png"
+                  alt="Pawject Patrol Logo"
+                  width={77}
+                  height={36}
+                />
+              </div>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                <LogIn className="w-6 h-6 text-gray-800" />
+              </button>
+            </div>
+          </div>
+          {/* Page header below navigation*/}
+          <header className="flex flex-col items-start justify-center py-6 mb-6">
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              style={{
+                color: "#C2C876",
+                WebkitTextStrokeWidth: ".5px",
+                WebkitTextStrokeColor: "#3C3333",
+                fontFamily: '"Kawaii RT", sans-serif',
+                fontStyle: "normal",
+                fontWeight: 400,
+                lineHeight: "normal",
+                outlineColor: "#3C3333",
+              }}
+            >
+              Animal Catalog
+            </h1>
+            <p
+              className="text-xs sm:text-sm md:text-md"
+              style={{
+                color: "#3C3333",
+                fontFamily: '"Genty Sans", sans-serif',
+              }}
+            >
+              Browse all animals and manage their profiles.
+            </p>
+          </header>
+
+          {/* Filter Buttons and Search input in one row */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 items-stretch sm:items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                  filter === "all"
+                    ? "bg-purple-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
+                }`}
+              >
+                All Animals
+              </button>
+              <button
+                onClick={() => setFilter("cat")}
+                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                  filter === "cat"
+                    ? "bg-purple-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
+                }`}
+              >
+                🐱 Cats
+              </button>
+              <button
+                onClick={() => setFilter("dog")}
+                className={`px-3 sm:px-4 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                  filter === "dog"
+                    ? "bg-purple-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
+                }`}
+              >
+                🐶 Dogs
+              </button>
+            </div>
+            <div className="flex-1 flex justify-end min-w-full sm:min-w-[250px] md:min-w-[300px]">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, breed, or species..."
+                className="w-full max-w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Pet Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {filteredAnimals.map((pet: Animal) => {
+              // Convert animal_theme name to hex color
+              const color = getThemeColor(pet.animal_theme);
+              return (
+                <div
+                  key={pet.animal_id}
+                  className="shadow-lg hover:shadow-xl transition rounded-2xl overflow-hidden flex flex-col h-full bg-transparent"
+                >
+                  {/* Image Section */}
+                  <div className="relative h-64 w-full bg-white">
+                    <Image
+                      src={pet.animal_photo || "/default-animal.jpg"}
+                      alt={pet.animal_name || "Animal"}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute bottom-3 left-3 text-white">
+                      <h3
+                        className="text-xl font-extrabold drop-shadow"
+                        style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                      >
+                        {pet.animal_name}
+                      </h3>
+                      <p className="text-sm font-medium drop-shadow">
+                        {pet.animal_breed}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Colored Panel - fills bottom, no white space */}
+                  <div
+                    className="flex-1 flex flex-col justify-between p-5 rounded-b-2xl"
+                    style={{
+                      backgroundColor: color,
+                      color: "#E6E6E6",
+                      fontFamily: '"Genty Sans", sans-serif',
+                      fontSize: "15px",
+                      fontStyle: "normal",
+                      fontWeight: 500,
+                      lineHeight: "20px",
+                      minHeight: "180px",
+                      marginTop: "-1px",
+                    }}
+                  >
+                    <p className="mb-3 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />{" "}
+                      {pet.animal_affiliation || "CSM"}
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-3 mb-4 text-center">
+                      {[
+                        {
+                          icon: <PawPrint className="w-5 h-5 mx-auto" />,
+                          label: pet.animal_species,
+                        },
+                        {
+                          icon:
+                            pet.animal_gender === "Male" ? (
+                              <FaMars className="w-5 h-5 mx-auto" />
+                            ) : (
+                              <FaVenus className="w-5 h-5 mx-auto" />
+                            ),
+                          label: pet.animal_gender,
+                        },
+                        {
+                          icon: <Unlink2 className="w-5 h-5 mx-auto" />,
+                          label:
+                            pet.animal_collar &&
+                            pet.animal_collar.toLowerCase() !== "none"
+                              ? "Has Collar"
+                              : "Has No Collar",
+                        },
+                      ].map((pill, i) => (
+                        <div
+                          key={i}
+                          className="
+                            flex flex-col justify-between items-center 
+                            flex-[1_0_0] 
+                            rounded-[10px] 
+                            border border-white/60 
+                            backdrop-blur-md 
+                            text-center
+                            "
+                          style={{
+                            height: "53.999px",
+                            padding: "5px 9px",
+                            backgroundColor: "rgba(0,0,0,0.15)",
+                            color: "#E6E6E6",
+                          }}
+                        >
+                          {pill.icon}
+                          <span className="text-xs">{pill.label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Link
+                      href={`/admin/profiles/animal/${pet.animal_id}`}
+                      className="flex items-center gap-2 font-semibold hover:opacity-80 transition"
+                    >
+                      View Details <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredAnimals.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-gray-500 text-lg">
+                No animals found in this category.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Floating Action Button */}
+        <Link
+          href="/admin/profiles/animal"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 w-12 h-12 sm:w-14 sm:h-14 bg-[#C2C876] text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50"
+          title="Add New Animal"
+          style={{
+            backgroundColor: '#C2C876',
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </Link>
+      </main>
+    </>
+  );
+}

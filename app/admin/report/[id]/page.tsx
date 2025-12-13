@@ -1,19 +1,24 @@
-// NOTE: This is a temporarily prompted admin report detail page to test backend, not yet the final version
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { Menu, LogIn, ChevronLeft, ChevronRight, X, Facebook, Instagram, Twitter, Mail} from "lucide-react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/utils/supabase/client";
 import { updateReportStatus } from "@/actions/form/admin";
+import Sidebar from "@/components/Sidebar";
 
 // Dynamically import the AdminMapView component for client-side rendering only
-const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
+const AdminMapView = dynamic(() => import("@/components/AdminMapView"), {
+  ssr: false,
+});
 
 // Define the ReportData type to match the database schema
 type ReportData = {
   report_id: string;
+  report_title: string | null;
   animal_name: string | null;
   animal_type: string | null;
   animal_gender: string | null;
@@ -30,46 +35,78 @@ type ReportData = {
   animal_collar?: string | null;
   other_information?: string | null;
   report_theme?: string | null;
+  reporter_name?: string | null;
 };
 
 // Admin report detail page component - displays full report information and allows status updates
-export default function AdminReportDetail({ params }: { params: Promise<{ id: string }> }) {
+export default function AdminReportDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
-  
+
   // State management for report data and UI states
   const [id, setId] = useState<string | null>(null);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
-  const [status, setStatus] = useState<string>('Pending');
+  const [status, setStatus] = useState<string>("Pending");
+  const [activeTab, setActiveTab] = useState<"overview" | "animalinfo" | "location" | "health">("overview");
+  const [allReportIds, setAllReportIds] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [totalReports, setTotalReports] = useState<number>(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+   // User info state for sidebar
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Fetch report data on component mount
   useEffect(() => {
+    // Mounting flag to prevent state updates after unmount
     let mounted = true;
 
     // Fetch data with authentication and authorization checks
     const fetchData = async () => {
-      // Await params
-      const resolvedParams = await params;
-      const reportId = resolvedParams.id;
-      
-      if (!mounted) return;
-      setId(reportId);
+        // Await params
+        const resolvedParams = await params;
+        const reportId = resolvedParams.id;
 
-      // Validate report ID
-      if (!reportId || reportId.trim() === '') {
-        setError('Invalid report ID');
+        const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (!mounted) return;
+
+      // Handle authentication errors
+      if (authError || !user) {
+        setError("Not authenticated");
         setLoading(false);
         return;
       }
 
-      // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      setUserEmail(user.email || "");
+      const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+
+      // Set report ID in state
       if (!mounted) return;
-      
+      setId(reportId);
+
+      // Validate report ID
+      if (!reportId || reportId.trim() === "") {
+        setError("Invalid report ID");
+        setLoading(false);
+        return;
+      }
+
+      // Handle authentication errors
       if (authError || !user) {
-        setError('Not authenticated');
+        setError("Not authenticated");
         setLoading(false);
         return;
       }
@@ -81,12 +118,30 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
         .eq("auth_id", user.id)
         .maybeSingle();
 
+      // Check if component is still mounted
       if (!mounted) return;
 
+      // Handle admin check errors
       if (adminError || !admin) {
-        setError('Unauthorized');
+        setError("Unauthorized");
         setLoading(false);
         return;
+      }
+
+      // Fetch all report IDs first to enable navigation
+      const { data: allReports, error: allReportsError } = await supabase
+        .from("animal_report")
+        .select("report_id")
+        .order("created_at", { ascending: false });
+
+      if (!mounted) return;
+
+      if (!allReportsError && allReports) {
+        const reportIds = allReports.map(r => r.report_id);
+        setAllReportIds(reportIds);
+        setTotalReports(reportIds.length);
+        const index = reportIds.indexOf(reportId);
+        setCurrentIndex(index >= 0 ? index : 0);
       }
 
       // Fetch complete report data from database
@@ -108,7 +163,7 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
 
       // Set report data and status in state
       setData(reportData);
-      setStatus(reportData.report_status || 'Pending');
+      setStatus(reportData.report_status || "Pending");
       setLoading(false);
     };
 
@@ -121,26 +176,65 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     };
   }, [params]);
 
+  // Navigate to previous report
+  const goToPrevious = () => {
+    if (currentIndex > 0 && allReportIds.length > 0) {
+      const prevId = allReportIds[currentIndex - 1];
+      router.push(`/admin/report/${prevId}`);
+    }
+  };
+
+  // Navigate to next report
+  const goToNext = () => {
+    if (currentIndex < allReportIds.length - 1 && allReportIds.length > 0) {
+      const nextId = allReportIds[currentIndex + 1];
+      router.push(`/admin/report/${nextId}`);
+    }
+  };
+
   // Handle report status updates (Accept/Reject)
-  const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected') => {
+  const handleStatusUpdate = async (newStatus: 'Accepted' | 'Rejected' | 'Pending') => {
+    // Prevent redundant status updates
+    if (status === newStatus) {
+      return;
+    }
+    // Validate data presence
     if (!data) return;
-    
+
+    // Update status in backend
     setUpdating(true);
+
+    // Call the updateReportStatus action
     const result = await updateReportStatus(data.report_id, newStatus);
+
+    // Handle result
     if (result.success) {
       setStatus(newStatus);
       router.refresh();
     } else {
+      // Show error alert on failure
       alert(`Failed to update status: ${result.error}`);
     }
+    // Finalize updating state
     setUpdating(false);
   };
 
   // Show loading state while fetching data
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-sm">Loading...</p>
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#E1E69D" }}
+      >
+        <p
+          className="text-sm"
+          style={{
+            color: "#3C3333",
+            fontFamily: '"Genty Sans", sans-serif',
+          }}
+        >
+          Loading...
+        </p>
       </main>
     );
   }
@@ -148,10 +242,28 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
   // Show error state if data fetch failed
   if (error || !data) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#E1E69D" }}
+      >
         <div className="text-center">
-          <p className="text-sm">{error || 'Report not found'}</p>
-          <Link href="/admin/form" className="text-xs text-purple-700 hover:underline mt-2 inline-block">
+          <p
+            className="text-sm"
+            style={{
+              color: "#3C3333",
+              fontFamily: '"Genty Sans", sans-serif',
+            }}
+          >
+            {error || "Report not found"}
+          </p>
+          <Link
+            href="/admin/report"
+            className="text-xs mt-2 inline-block hover:opacity-90"
+            style={{
+              color: "#8D52A7",
+              fontFamily: '"Genty Sans", sans-serif',
+            }}
+          >
             ← Back to reports
           </Link>
         </div>
@@ -159,149 +271,794 @@ export default function AdminReportDetail({ params }: { params: Promise<{ id: st
     );
   }
 
-  // Determine border/shadow color based on report theme
-  const themeAccent = data.report_theme === 'blue'
-    ? 'border-[#1F4E79] shadow-[0_0_0_3px_rgba(31,78,121,0.15)]'
-    : data.report_theme === 'green'
-      ? 'border-[#2F5E4E] shadow-[0_0_0_3px_rgba(47,94,78,0.15)]'
-      : data.report_theme === 'orange'
-        ? 'border-[#C26437] shadow-[0_0_0_3px_rgba(194,100,55,0.15)]'
-        : data.report_theme === 'purple'
-          ? 'border-[#5C2F74] shadow-[0_0_0_3px_rgba(92,47,116,0.15)]'
-          : 'border-gray-200';
-
   return (
-    <main className="min-h-screen bg-yellow-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Back navigation link */}
-        <Link href="/admin/form" className="text-sm text-purple-700 hover:underline">← Back to reports</Link>
-        
-        {/* Header with status badge and action buttons */}
-        <div className="flex items-center justify-between mt-4">
-          <h1 className="text-2xl font-semibold">Report Details</h1>
-          <div className="flex items-center gap-3">
-            <span className={`text-sm px-3 py-1 rounded-full font-medium ${
-              status === 'Accepted' ? 'bg-green-100 text-green-700' :
-              status === 'Rejected' ? 'bg-red-100 text-red-700' :
-              'bg-yellow-100 text-yellow-700'
-            }`}>
-              {status}
-            </span>
-            {status === 'Pending' && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleStatusUpdate('Accepted')}
-                  disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-                >
-                  {updating ? 'Updating...' : 'Accept'}
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate('Rejected')}
-                  disabled={updating}
-                  className="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                >
-                  {updating ? 'Updating...' : 'Reject'}
-                </button>
-              </div>
-            )}
+    <main className="min-h-screen" style={{ backgroundColor: "#E1E69D" }}>
+      {/* Sidebar */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+      />
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] sticky top-0 z-20">
+        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <Menu className="w-6 h-6 text-gray-800" />
+          </button>
+          <div className="flex-1 flex justify-center items-center h-full">
+            <Image
+              src="/Moodboard2.png"
+              alt="Pawject Patrol Logo"
+              width={77}
+              height={36}
+            />
           </div>
+          <Link
+            href="/admin/login"
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <LogIn className="w-6 h-6 text-gray-800" />
+          </Link>
         </div>
+      </div>
 
-        {/* Main report card with theme-based border */}
-        <div className={`mt-6 bg-white rounded-xl p-6 border-2 transition-colors ${themeAccent}`}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Animal photo */}
-            <div className="md:col-span-1">
-              <div className="w-full aspect-square bg-gray-100 rounded-lg border overflow-hidden flex items-center justify-center">
-                {data.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.photo_url} alt={data.animal_name ?? 'Animal'} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xs text-gray-400">No photo</span>
-                )}
-              </div>
-            </div>
+      {/* Content Container */}
+      <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
+        <div className="flex flex-col items-center mt-8">
+          {/* Navigation arrows and Main Card Container */}
+          <div className="relative w-full flex flex-col items-center">
+          {/* Left arrow */}
+          {currentIndex > 0 && (
+            <button
+              onClick={goToPrevious}
+              className="absolute left-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+              aria-label="Previous report"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
 
-            {/* Animal details */}
-            <div className="md:col-span-2 space-y-3">
-              <div>
-                <label className="text-xs font-medium text-gray-500">Animal Name</label>
-                <p className="text-sm">{data.animal_name ?? 'Unnamed'}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-gray-500">Type</label>
-                  <p className="text-sm">{data.animal_type ?? '—'}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500">Gender</label>
-                  <p className="text-sm">{data.animal_gender ?? 'unknown'}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Date Seen</label>
-                <p className="text-sm">{data.date_seen ? new Date(data.date_seen).toLocaleString() : '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Physical Description</label>
-                <p className="text-sm">{data.animal_description ?? '—'}</p>
-              </div>
-            </div>
-          </div>
+          {/* Right arrow */}
+          {currentIndex < allReportIds.length - 1 && (
+            <button
+              onClick={goToNext}
+              className="absolute right-[-60px] top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors z-10"
+              aria-label="Next report"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
 
-          {/* Location Section */}
-          <div className="mt-6 pt-6 border-t">
-            <h2 className="text-lg font-semibold mb-4">Location Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-medium text-gray-500">Area</label>
-                <p className="text-sm">{data.area ?? '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Landmark</label>
-                <p className="text-sm">{data.landmark ?? '—'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Road</label>
-                <p className="text-sm">{data.road ?? '—'}</p>
-              </div>
-            </div>
-            {/* Optional additional information (health, collar, other) */}
-            {(data.health_issues || data.animal_collar || data.other_information) && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold mb-2">Additional Details</h3>
-                <div className="space-y-2 text-sm">
-                  {data.health_issues && (
-                    <p><span className="font-medium text-gray-600">Health Issues:</span> {data.health_issues}</p>
-                  )}
-                  {data.animal_collar && (
-                    <p><span className="font-medium text-gray-600">Collar:</span> {data.animal_collar}</p>
-                  )}
-                  {data.other_information && (
-                    <p><span className="font-medium text-gray-600">Other Info:</span> {data.other_information}</p>
-                  )}
-                </div>
-              </div>
-            )}
-            {/* Interactive map view if coordinates are available */}
-            {data.latitude && data.longitude && (
-              <div className="mt-4" id="map-section">
-                <label className="text-xs font-medium text-gray-500 block mb-2">Map View</label>
-                <AdminMapView latitude={data.latitude} longitude={data.longitude} />
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-purple-700 hover:underline mt-2 inline-block"
+          {/* Main Card Container */}
+          <div
+            className="flex flex-col items-center w-full overflow-hidden bg-white rounded-2xl"
+          >
+            {/* Report Header - Purple Section */}
+            <div
+              className="flex flex-col items-start gap-[10px] w-full p-6"
+              style={{ backgroundColor: "#8D52A7" }}
+            >
+              <div className="flex w-full justify-between items-center">
+                <p
+                  className="text-xs text-white opacity-80"
+                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
                 >
-                  View on OpenStreetMap →
-                </a>
+                  Report ID: {data.report_id}
+                </p>
+                <span
+                  className="text-sm font-semibold px-3 py-1 rounded-full"
+                  style={{
+                    backgroundColor: status === "Accepted" ? "#9BBF94" : status === "Rejected" ? "#FCA5A5" : "#FDE68A",
+                    color: status === "Accepted" ? "#166534" : status === "Rejected" ? "#991B1B" : "#92400E",
+                    fontFamily: '"Genty Sans", sans-serif',
+                  }}
+                >
+                  {status}
+                </span>
               </div>
-            )}
+
+              <h2
+                className="text-2xl font-bold text-white"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                {data.report_title || "Untitled Report"}
+              </h2>
+
+              <p
+                className="text-sm text-white opacity-90"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                {data.animal_type || "Animal"} • {data.animal_gender || "Unknown"}
+              </p>
+            </div>
+
+           {/* Icon Navigation */}
+<div className="flex flex-wrap md:flex-nowrap w-full items-start bg-[#E6E6E6] p-2 gap-2">
+  {/* Overview Tab */}
+  <button
+    onClick={() => setActiveTab("overview")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "overview" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 16V12"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 8H12.01"
+        stroke={activeTab === "overview" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+
+  {/* Animal Information Tab */}
+  <button
+    onClick={() => setActiveTab("animalinfo")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "animalinfo" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21"
+        stroke={activeTab === "animalinfo" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+        stroke={activeTab === "animalinfo" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+
+  {/* Location Tab */}
+  <button
+    onClick={() => setActiveTab("location")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "location" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M3 6L9 3L15 6L21 3V18L15 21L9 18L3 21V6Z"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 3V18"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 6V21"
+        stroke={activeTab === "location" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+
+  {/* Health Tab */}
+  <button
+    onClick={() => setActiveTab("health")}
+    className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+    style={{
+      backgroundColor: activeTab === "health" ? "#8D52A7" : "#E6E6E6",
+      height: "42px",
+      padding: "10px",
+    }}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M11 2C10.4696 2 9.96086 2.21071 9.58579 2.58579C9.21071 2.96086 9 3.46957 9 4V9H4C3.46957 9 2.96086 9.21071 2.58579 9.58579C2.21071 9.96086 2 10.4696 2 11V13C2 14.1 2.9 15 4 15H9V20C9 21.1 9.9 22 11 22H13C13.5304 22 14.0391 21.7893 14.4142 21.4142C14.7893 21.0391 15 20.5304 15 20V15H20C20.5304 15 21.0391 14.7893 21.4142 14.4142C21.7893 14.0391 22 13.5304 22 13V11C22 10.4696 21.7893 9.96086 21.4142 9.58579C21.0391 9.21071 20.5304 9 20 9H15V4C15 3.46957 14.7893 2.96086 14.4142 2.58579C14.0391 2.21071 13.5304 2 13 2H11Z"
+        stroke={activeTab === "health" ? "#FFFFFF" : "#3C3333"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </button>
+</div>
+
+            {/* Body Content Container */}
+            <div className="flex flex-col w-full p-6 gap-[24px]">
+              {/* Photo Section */}
+              {activeTab === "overview" && (
+                <>
+                  <div className="flex h-[298px] pl-0 justify-center items-center self-stretch">
+                    <div
+                      className="w-full h-full rounded-2xl flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
+                      style={{
+                        backgroundColor: "#8D52A7",
+                        aspectRatio: "1",
+                      }}
+                      onClick={() => data.photo_url && setShowImageModal(true)}
+                    >
+                      {data.photo_url ? (
+                        <img
+                          src={data.photo_url}
+                          alt={data.report_title || "Report"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg
+                          className="w-16 h-16 text-white opacity-80"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reporter Name */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Recorded By
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.reporter_name}
+                    </p>
+                  </div>
+
+                  {/* Date Seen */}
+                  {data.date_seen && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Date Seen
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {new Date(data.date_seen).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Location */}
+                  {data.area && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Location
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {data.area}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Summary
+                    </p>
+                    <p
+                      className="text-sm leading-relaxed"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description ||
+                        data.other_information ||
+                        "No summary provided"}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Animal Information Tab */}
+              {activeTab === "animalinfo" && (
+                <>
+                  <div className="w-full gap-[24px]">
+                    {data.reporter_name && (
+                      <div className="w-full ">
+                        <p
+                          className="text-sm mb-1"
+                          style={{
+                            color: "#4A5565",
+                            fontFamily: '"Genty Sans", sans-serif',
+                          }}
+                        >
+                          Type of Animal
+                        </p>
+                        <p
+                          className="text-sm font-medium"
+                          style={{
+                            color: "#3C3333",
+                            fontFamily: '"Genty Sans", sans-serif',
+                          }}
+                        >
+                          {data.animal_type}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Animal Gender */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Gender
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_gender}
+                    </p>
+                  </div>
+
+                  {/* Physical Description */}
+                  <div className="w-full">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Physical Description
+                    </p>
+                    <p
+                      className="text-sm leading-relaxed"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description ||
+                        data.other_information ||
+                        "No Description provided"}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Location Tab */}
+              {activeTab === "location" && (
+                <div className="w-full space-y-4">
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Area Seen
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.area || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Nearby Landmarks
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.landmark || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Road/Street
+                    </p>
+                    <p
+                      className="text-sm font-medium"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.road || "—"}
+                    </p>
+                  </div>
+                  {data.latitude && data.longitude && (
+                    <div className="mt-4">
+                      <p
+                        className="text-sm mb-2"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Map View
+                      </p>
+                      <div className="rounded-lg h-48 overflow-hidden">
+                        <AdminMapView
+                          latitude={data.latitude}
+                          longitude={data.longitude}
+                        />
+                      </div>
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${data.latitude}&mlon=${data.longitude}#map=16/${data.latitude}/${data.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs mt-2 inline-block hover:opacity-90"
+                        style={{
+                          color: "#8D52A7",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        View on OpenStreetMap →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Health Tab */}
+              {activeTab === "health" && (
+                <div className="w-full space-y-4">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Health Issues
+                    </p>
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        backgroundColor: data.health_issues && data.health_issues !== "None" && data.health_issues !== "" ? "#DBEAFE" : "#F3F4F6",
+                        color: data.health_issues && data.health_issues !== "None" && data.health_issues !== "" ? "#1E40AF" : "#6B7280",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.health_issues && data.health_issues !== "None" && data.health_issues !== "" ? "Yes" : "No"}
+                    </span>
+                  </div>
+
+                  {data.health_issues && (
+                    <div className="pl-4">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Health Issues
+                      </p>
+                      <p
+                        className="text-sm font-medium"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {data.health_issues || "Not specified"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Has Collar
+                    </p>
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        backgroundColor: data.animal_collar && data.animal_collar !== "None" && data.animal_collar !== "" ? "#DBEAFE" : "#F3F4F6",
+                        color: data.animal_collar && data.animal_collar !== "None" && data.animal_collar !== "" ? "#1E40AF" : "#6B7280",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_collar && data.animal_collar !== "None" && data.animal_collar !== "" ? "Yes" : "No"}
+                    </span>
+                  </div>
+
+                  {data.animal_collar && (
+                    <div className="pl-4">
+                      <p
+                        className="text-sm mb-1"
+                        style={{
+                          color: "#4A5565",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        Collar Details
+                      </p>
+                      <p
+                        className="text-sm"
+                        style={{
+                          color: "#3C3333",
+                          fontFamily: '"Genty Sans", sans-serif',
+                        }}
+                      >
+                        {data.animal_collar || "Not specified"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <p
+                      className="text-sm mb-1"
+                      style={{
+                        color: "#4A5565",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Physical Description
+                    </p>
+                    <p
+                      className="text-sm"
+                      style={{
+                        color: "#3C3333",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      {data.animal_description || "No description provided"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {status === "Pending" && (
+                <div className="w-full space-y-3">
+                  <button
+                    onClick={() => handleStatusUpdate("Accepted")}
+                    disabled={updating}
+                    className="w-full py-3 rounded-xl text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:opacity-90"
+                    style={{
+                      backgroundColor: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {updating ? "Updating..." : "Accept Report"}
+                  </button>
+
+                  <button
+                    onClick={() => handleStatusUpdate("Rejected")}
+                    disabled={updating}
+                    className="w-full py-3 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-gray-50 disabled:opacity-50"
+                    style={{
+                      backgroundColor: "transparent",
+                      border: "2px solid #8D52A7",
+                      color: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    Deny Report
+                  </button>
+                </div>
+              )}
+
+              {status !== "Pending" && (
+                <div className="w-full flex flex-col gap-3">
+                  <button
+                    onClick={() => handleStatusUpdate("Pending")}
+                    disabled={updating}
+                    className="w-full py-3 rounded-xl text-[#8D52A7] bg-white border-2 border-[#8D52A7] transition-all flex items-center justify-center gap-2 hover:bg-gray-50 disabled:opacity-50"
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    {updating ? "Updating..." : " ⟲ Reset to Pending"}
+                  </button>
+                  <button
+                    onClick={() => router.back()}
+                    className="w-full py-3 rounded-xl text-white transition-all hover:opacity-90"
+                    style={{
+                      backgroundColor: "#8D52A7",
+                      fontFamily: '"Genty Sans", sans-serif',
+                    }}
+                  >
+                    ← Back to Reports
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+    </div>
+
+      {/* Image Modal */}
+      {showImageModal && data.photo_url && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <button
+            onClick={() => setShowImageModal(false)}
+            className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={data.photo_url}
+            alt={data.report_title || "Report"}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </main>
   );
 }

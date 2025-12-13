@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, LogIn } from "lucide-react";
+import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/utils/supabase/client";
+import Sidebar from "@/components/Sidebar";
 
 // Admin dashboard page component - displays stats and navigation cards
 export default function HeaderAndBackground() {
   const router = useRouter();
-  
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // State management for paw decorations, dog image, and dashboard stats
   const [paws, setPaws] = useState<
     { src: string; top: string; left: string; rotate: number }[]
@@ -20,6 +22,61 @@ export default function HeaderAndBackground() {
   const [animalReports, setAnimalReports] = useState(0);
   const [volunteerRequests, setVolunteerRequests] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Recent items (for dashboard previews)
+  const [recentAnimals, setRecentAnimals] = useState<any[]>([]);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [recentVolunteers, setRecentVolunteers] = useState<any[]>([]);
+
+  // State for user info
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+
+  // Sample data for animal profiles, reports, and volunteer requests
+  const animalProfiles = [
+    {
+      name: "Rona",
+      type: "Golden Retriever",
+      image:
+        "https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop",
+    },
+    {
+      name: "Choco",
+      type: "Mixed Stray",
+      image:
+        "https://images.unsplash.com/photo-1568572933382-74d440642117?w=400&h=400&fit=crop",
+    },
+    {
+      name: "Julius",
+      type: "Mixed Stray",
+      image:
+        "https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400&h=400&fit=crop",
+    },
+  ];
+
+  const animalReportsData = [
+    {
+      title: "Lost Dog Near CSM",
+      location: "CSM Canteen Entrance",
+      time: "2 hrs",
+    },
+    {
+      title: "Dog Bite Incident",
+      location: "Relocation, Sto. Nino",
+      time: "16 hrs",
+    },
+    {
+      title: "Cat Stuck Inside Car Engine",
+      location: "Sitio Basak, Mintal",
+      time: "2 days",
+    },
+  ];
+
+  const volunteerRequestsData = [
+    { name: "Mark", task: "Active Volunteer", image: "/api/placeholder/50/50" },
+    { name: "Deniel", task: "Walking", image: "/api/placeholder/50/50" },
+    { name: "Carl", task: "Admin Assistance", image: "/api/placeholder/50/50" },
+  ];
 
   // Handle responsive layout changes for paw decorations and dog image
   useEffect(() => {
@@ -76,7 +133,10 @@ export default function HeaderAndBackground() {
 
     const checkAdminAndFetchData = async () => {
       // Check authentication status
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       // Early return if component unmounted during async operation
       if (!mounted) return;
 
@@ -84,6 +144,12 @@ export default function HeaderAndBackground() {
         router.replace("/admin/login");
         return;
       }
+
+      // Set user info from Supabase user object
+      setUserEmail(user.email || "");
+      // Try to get name from user metadata, fallback to email username
+      const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      setUserName(nameFromMeta || user.email?.split("@")[0] || "");
 
       // Verify user has admin privileges
       const { data: adminData, error: adminError } = await supabase
@@ -105,19 +171,46 @@ export default function HeaderAndBackground() {
         .from("animal")
         .select("*", { count: "exact", head: true });
 
+      // Count only pending animal reports
       const { count: reportsCount } = await supabase
         .from("animal_report")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("report_status", "Pending");
 
+      // Count only active, filled, or ongoing volunteer requests
       const { count: callCount } = await supabase
         .from("volunteer_call")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .in("call_status", ["Active", "Filled", "Ongoing"]);
 
-      // Update state with fetched counts if component still mounted
+      // Fetch recent entries for quick preview (latest 3)
+      const { data: recentAnimalsData } = await supabase
+        .from("animal")
+        .select("animal_id, animal_name, animal_breed, animal_photo, animal_status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      const { data: recentReportsData } = await supabase
+        .from("animal_report")
+        .select("report_id, report_title, animal_description, photo_url, report_status, created_at, landmark")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      const { data: recentVolunteersData } = await supabase
+        .from("volunteer_call")
+        // select all columns to avoid missing fields if schema differs
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      // Update state with fetched counts and recent items if component still mounted
       if (mounted) {
         setTotalAnimals(animalsCount || 0);
         setAnimalReports(reportsCount || 0);
         setVolunteerRequests(callCount || 0);
+        setRecentAnimals(recentAnimalsData || []);
+        setRecentReports(recentReportsData || []);
+        setRecentVolunteers(recentVolunteersData || []);
         setLoading(false);
       }
     };
@@ -139,6 +232,15 @@ export default function HeaderAndBackground() {
 
   return (
     <main className="relative min-h-screen flex flex-col items-center overflow-hidden bg-[#E1E69D]">
+      {/* Sidebar */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+        variant="admin"
+      />
       {/* --- Paw Background Decorations --- */}
       <div className="absolute inset-0 opacity-50 pointer-events-none">
         {paws.map((paw, index) => (
@@ -162,12 +264,15 @@ export default function HeaderAndBackground() {
       </div>
 
       <div className="relative z-10 w-full flex flex-col items-center flex-1">
-        {/* Header with menu, logo, and logout button */}
+        {/* Header */}
         <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
           <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
-            <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
               <Menu className="w-6 h-6 text-gray-800" />
-            </Link>
+            </button>
 
             <div className="flex-1 flex justify-center items-center h-full">
               <img
@@ -179,159 +284,636 @@ export default function HeaderAndBackground() {
               />
             </div>
 
-            <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
               <LogIn className="w-6 h-6 text-gray-800" />
             </button>
           </div>
         </header>
 
-        <div className="flex-1 w-full flex flex-col items-center lg:justify-center">
-          {/* --- Dashboard Statistics --- */}
-          <section className="w-full max-w-lg md:max-w-2xl lg:max-w-[1400px] mx-auto px-6 mt-8">
-            <div
-              className="flex flex-col gap-4"
-              style={{ fontFamily: '"Genty Sans", sans-serif' }}
-            >
-              {/* Total Animals */}
-              <div className="flex flex-col leading-tight">
-                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#DCB57E]">
-                  {loading ? "..." : totalAnimals}
-                </span>
-                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
-                  Total Animals
-                </span>
+        <div className="max-w-6xl mx-auto px-4 py-6 w-full">
+          {/* Wrapper Container */}
+          <div className="bg-[#E1E69D] rounded-2xl p-2 md:p-5 lg:p-8 pl-[24px] pr-[24px]">
+            <div className="flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-between">
+              {/* Welcome Message */}
+              <div className="flex-1 flex flex-col gap-4">
+                <p
+                  className="text-[10px] sm:text-xs md:text-xs"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                  }}
+                >
+                  Welcome back Admin!
+                </p>
+
+                <h1
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+                  style={{
+                    color: "#E6E6E6",
+                    WebkitTextStrokeWidth: ".5px",
+                    WebkitTextStrokeColor: "#000",
+                    fontFamily: '"Kawaii RT", sans-serif',
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                    lineHeight: "normal",
+                    outlineColor: "#3C3333",
+                  }}
+                >
+                  Pawject Patrol Admin Dashboard
+                </h1>
+
+                <p
+                  className="text-[12px] sm:text-[12px] md:text-[14px]"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                  }}
+                >
+                  Manage your animal patrol operations, track reports,
+                  coordinate volunteers, and monitor all activities in
+                  real-time.
+                </p>
+
+                {/* --- Dashboard Statistics --- */}
+                <section
+                  className="flex gap-4 lg:flex-row lg:flex-wrap mt-4"
+                  style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                >
+                  {/* Total Animals */}
+                  <div
+                    className="
+        flex flex-col justify-center items-center text-center
+        h-[108px] flex-1 md:flex-[1_0_calc(33.333%-11px)]
+        p-[10px] gap-[4px]
+        rounded-[16px] bg-[#DCB57E]
+      "
+                  >
+                    <span className="text-xl md:text-2xl lg:text-2xl font-medium text-[#E6E6E6]">
+                      {loading ? "..." : totalAnimals}
+                    </span>
+                    <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
+                      Total Animals
+                    </span>
+                  </div>
+
+                  {/* Animal Reports */}
+                  <div
+                    className="
+        flex flex-col justify-center items-center text-center
+        h-[108px] flex-1 md:flex-[1_0_calc(33.333%-11px)]
+        p-[10px] gap-[4px]
+        rounded-[16px] bg-[#5E9BBA]
+      "
+                  >
+                    <span className="text-xl md:text-xl lg:text-2xl font-medium text-[#E6E6E6]">
+                      {loading ? "..." : animalReports}
+                    </span>
+                    <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
+                      Animal Reports
+                    </span>
+                  </div>
+
+                  {/* Volunteer Requests */}
+                  <div
+                    className="
+        flex flex-col justify-center items-center text-center
+        h-[108px] flex-1 md:flex-[1_0_calc(33.333%-11px)]
+        p-[10px] gap-[4px]
+        rounded-[16px] bg-[#C575AD]
+      "
+                  >
+                    <span className="text-xl md:text-2xl lg:text-2xl font-medium text-[#E6E6E6]">
+                      {loading ? "..." : volunteerRequests}
+                    </span>
+                    <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
+                      Volunteer Task
+                    </span>
+                  </div>
+                </section>
               </div>
 
-              {/* Animal Reports */}
-              <div className="flex flex-col leading-tight">
-                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#5E9BBA]">
-                  {loading ? "..." : animalReports}
-                </span>
-                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
-                  Animal Reports
-                </span>
+              {/* Dog Image */}
+              <div className="w-full lg:w-auto lg:flex-shrink-0">
+                <img
+                  src="/dog_admin.jpg"
+                  alt="Dog"
+                  className="w-full md:h-[290px] lg:w-[520px] lg:h-[340px] rounded-[12px] object-cover"
+                />
               </div>
-
-              {/* Volunteer Requests */}
-              <div className="flex flex-col leading-tight">
-                <span className="text-3xl md:text-4xl lg:text-6xl font-medium text-[#8D52A7]">
-                  {loading ? "..." : volunteerRequests}
-                </span>
-                <span className="text-sm md:text-base lg:text-3xl text-gray-600">
-                  Volunteer Requests
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* --- Decorative Dog Image --- */}
-          <div className="w-full max-w-[1300px] mx-auto px-6 flex justify-end">
-            <div
-              className="relative w-[400px] h-[400px] -mt-72 mr-0 ml-2 
-                               md:w-[500px] md:h-[440px] md:-mt-84 md:mr-4 
-                               lg:w-[800px] lg:h-[700px] lg:-mt-[34rem] lg:mr-6"
-            >
-              <Image
-                src={dogSrc}
-                alt="Golden Retriever puppy"
-                layout="fill"
-                objectFit="contain"
-              />
             </div>
           </div>
+        </div>
 
-          {/* --- Admin Navigation Cards --- */}
-          <section className="w-full max-w-[1400px] mx-auto px-6 -mt-23 md:-mt-12 lg:-mt-24 pb-12">
-            <div className="flex flex-col gap-5 lg:gap-6 self-stretch rounded-2xl bg-[#E6E6E6] py-5 px-5 lg:py-8 lg:px-8 shadow-[0_4px_6px_0_rgba(0,0,0,0.09)]">
-              <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
-                
-                {/* Card 1: Animal Profiles - View and manage animal database */}
-
-                <Link href="/admin/profiles" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#C575AD] bg-[#fcfcfc]">
-                  <div className="flex-1 px-4 py-5">
+        {/* --- Dashboard Cards --- */}
+        <div className="w-full flex-1 bg-[#E6E6E6]">
+          <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col gap-6">
+            <div className=" md:pr-10 md:pl-10 flex flex-col lg:flex-row flex-wrap gap-6 justify-center">
+              {/* Animal Profiles Card */}
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#DCB57E] flex flex-col">
+                {/* Header */}
+                <a
+                  href="/admin/profiles"
+                  className="
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    justify-between items-center self-stretch
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E] p-[]
+  "
+                >
+                  <div className="flex-1 px-1">
                     <h2
-                      className="text-md lg:text-xl font-medium mb-0.5"
+                      className="text-lg lg:text-lg font-medium mb-0.5"
                       style={{
-                        color: "#C575AD",
+                        color: "#DCB57E",
                         fontFamily: '"Genty Sans", sans-serif',
                       }}
                     >
                       Animal Profiles
                     </h2>
                     <p
-                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                      className="text-[10px] md:text-xs lg:text-xs text-[#3C3333]"
                       style={{ fontFamily: '"Genty Sans", sans-serif' }}
                     >
                       View and Manage Animal Database
                     </p>
                   </div>
-                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#C575AD]">
+
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#DCB57E] h-full rounded-tr-[12px]">
                     <img
                       src="/paws/paws1.png"
                       alt="Animal Profiles"
-                      className="w-10 h-10 lg:w-12 lg-h-12"
+                      className="w-10 h-10 lg:w-12 lg:h-12"
                     />
                   </div>
-                </Link>
+                </a>
 
-                {/* Card 2: Volunteer Requests - Manage volunteer tasks and requests */}
-                <Link href="/admin/volunteers" className="flex w-full lg:flex-1 min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#5E9BBA] bg-[#fcfcfc]">
-                  <div className="flex-1 px-4 py-5">
+                {/* Preview and Button Container */}
+                <div
+                  className="
+    flex flex-col items-start self-stretch
+    px-[10px] pb-[20px] pt-[20px] h-full
+  "
+                >
+                  {/* Preview Items */}
+                  <div className="flex flex-col gap-[10px] flex-1 w-full">
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal profiles...</div>
+                  ) : recentAnimals.length === 0 ? (
+                    <div className="text-sm text-gray-500">No recent animals</div>
+                  ) : (
+                    recentAnimals.slice(0, 4).map((animal, idx) => (
+                      <div
+                        key={animal.animal_id || idx}
+                        className="
+        flex h-[55px] pl-[6px] pr-[10px] py-[4px]
+        justify-between items-center self-stretch
+        rounded-[6px] border-1 border-[#DCB57E] bg-[#F4E8D7]
+        cursor-pointer
+      "
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-300 rounded-lg overflow-hidden">
+                            {animal.animal_photo ? (
+                              <img
+                                src={animal.animal_photo}
+                                alt={animal.animal_name || 'Animal'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                No photo
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p
+                              className="font-medium text-xs text-[#4D3F2C]"
+                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                            >
+                              {animal.animal_name || 'Unnamed'}
+                            </p>
+                            <p className="text-[10px] text-[#846D4C]">
+                              {animal.animal_breed || animal.animal_species || 'Unknown'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M5 12H19"
+                            stroke="#3C3333"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M12 5L19 12L12 19"
+                            stroke="#3C3333"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    ))
+                  )}
+                  </div>
+
+                  {/* View All Button */}
+                <Link href="/admin/profiles" className="
+                      flex h-[33px] px-[16px] py-[8px]
+                      items-start gap-[10px] self-stretch
+                      rounded-lg bg-[#DCB57E]
+                      text-xs font-medium
+                      hover:bg-[#d4a86b] transition-colors mt-[10px]
+                      justify-center
+                    ">
+                  <button
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                      color: "#FFF",
+                    }}
+                  >
+                    View All Animals
+                  </button>
+                </Link>
+                </div>
+              </div>
+
+              {/* Animal Reports Card */}
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#5E9BBA] flex flex-col">
+                {/* Header */}
+                <a
+                  href="/admin/report"
+                  className="
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    justify-between items-center self-stretch
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]
+  "
+                >
+                  <div className="flex-1 px-1">
                     <h2
-                      className="text-md lg:text-xl font-medium mb-0.5"
+                      className="text-lg lg:text-lg font-medium mb-0.5"
                       style={{
                         color: "#5E9BBA",
+                        fontFamily: '"Genty Sans", sans-serif',
+                      }}
+                    >
+                      Animal Reports
+                    </h2>
+                    <p
+                      className="text-[10px] md:text-xs lg:text-xs text-[#3C3333]"
+                      style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                    >
+                      Track Stray Findings and Reports
+                    </p>
+                  </div>
+
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA] h-full rounded-tr-[12px]">
+                    <img
+                      src="/nav/report.png"
+                      alt="Animal Reports"
+                      className="w-10 h-10 lg:w-12 lg:h-12"
+                    />
+                  </div>
+                </a>
+
+                {/* Preview and Button Container */}
+                <div
+                  className="
+    flex flex-col items-start self-stretch
+    px-[10px] pb-[20px] pt-[20px] h-full
+  "
+                >
+                  {/* Preview Items */}
+                  <div className="flex flex-col gap-[10px] flex-1 w-full">
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal reports...</div>
+                  ) : recentReports.length === 0 ? (
+                    <div className="text-sm text-gray-500">No recent reports</div>
+                  ) : (
+                    recentReports.slice(0, 3).map((report, idx) => {
+                      const isResolved = report.report_status === 'Resolved' || report.report_status === 'Accepted';
+                      const isRejected = report.report_status === 'Rejected';
+                      const timeAgo = (() => {
+                        if (!report.created_at) return 'Unknown';
+                        const now = new Date();
+                        const created = new Date(report.created_at);
+                        const diffMs = now.getTime() - created.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+                        if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+                        if (diffHours < 24) return `${diffHours} hr${diffHours !== 1 ? 's' : ''}`;
+                        return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+                      })();
+                      
+                      return (
+                        <div
+                          key={report.report_id || idx}
+                          onClick={() => router.push(`/admin/report/${report.report_id}`)}
+                          className={`flex flex-col p-4 rounded-lg border cursor-pointer w-full ${
+                            isResolved
+                              ? "border-[#689668] bg-[#CDE0EA]"
+                              : "border-[#DC2626] bg-[#CDE0EA]"
+                          }`}
+                        >
+                          {/* Title with icon */}
+                          <div className="flex items-center gap-3 mb-1">
+                            {isResolved ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                              >
+                                <g clipPath="url(#clip0_723_2224)">
+                                  <path
+                                    d="M12.8334 6.46309V6.99976C12.8327 8.25767 12.4254 9.48165 11.6722 10.4892C10.919 11.4967 9.86033 12.2337 8.65404 12.5904C7.44775 12.947 6.15848 12.9042 4.97852 12.4683C3.79856 12.0323 2.79113 11.2266 2.10647 10.1714C1.42182 9.11611 1.09663 7.8678 1.17939 6.61261C1.26216 5.35742 1.74845 4.16262 2.56574 3.20638C3.38304 2.25015 4.48754 1.58373 5.71452 1.30651C6.94151 1.02929 8.22524 1.15612 9.37425 1.66809"
+                                    stroke="#689668"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M12.8333 2.3335L7 8.17266L5.25 6.42266"
+                                    stroke="#689668"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                              </svg>
+                            ) : isRejected ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                              >
+                                <g>
+                                  <circle cx="7" cy="7" r="6" stroke="#DC2626" strokeWidth="2" fill="none" />
+                                  <line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+                                  <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+                                </g>
+                              </svg>
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 14 14"
+                                fill="none"
+                              >
+                                <g clipPath="url(#clip0_722_2774)">
+                                  <path
+                                    d="M7.00008 12.8332C10.2217 12.8332 12.8334 10.2215 12.8334 6.99984C12.8334 3.77818 10.2217 1.1665 7.00008 1.1665C3.77842 1.1665 1.16675 3.77818 1.16675 6.99984C1.16675 10.2215 3.77842 12.8332 7.00008 12.8332Z"
+                                    stroke="#DC2626"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M7 4.6665V6.99984"
+                                    stroke="#DC2626"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M7 9.3335H7.00583"
+                                    stroke="#DC2626"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </g>
+                              </svg>
+                            )}
+                            <p
+                              className="text-xs"
+                              style={{
+                                color: "#213641",
+                                fontFamily: '"Genty Sans", sans-serif',
+                              }}
+                            >
+                              {report.report_title || 'Untitled Report'}
+                            </p>
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-[10px]" style={{ color: "#385D70" }}>
+                            {report.animal_description || 'No description'}
+                          </p>
+
+                          {/* Location and Time Info */}
+                          <div className="flex gap-3">
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="text-[10px] font-medium"
+                                style={{ color: "#3C3333" }}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 10 10"
+                                  fill="none"
+                                >
+                                  <path
+                                    d="M5.00008 5.00016C5.22925 5.00016 5.42543 4.91857 5.58862 4.75537C5.75182 4.59218 5.83341 4.396 5.83341 4.16683C5.83341 3.93766 5.75182 3.74148 5.58862 3.57829C5.42543 3.41509 5.22925 3.3335 5.00008 3.3335C4.77091 3.3335 4.57473 3.41509 4.41154 3.57829C4.24835 3.74148 4.16675 3.93766 4.16675 4.16683C4.16675 4.396 4.24835 4.59218 4.41154 4.75537C4.57473 4.91857 4.77091 5.00016 5.00008 5.00016ZM5.00008 8.06266C5.8473 7.28488 6.47578 6.57829 6.8855 5.94287C7.29522 5.30745 7.50008 4.74322 7.50008 4.25016C7.50008 3.49322 7.25876 2.87343 6.77612 2.39079C6.29348 1.90815 5.70147 1.66683 5.00008 1.66683C4.29869 1.66683 3.70668 1.90815 3.22404 2.39079C2.7414 2.87343 2.50008 3.49322 2.50008 4.25016C2.50008 4.74322 2.70494 5.30745 3.11466 5.94287C3.52439 6.57829 4.15286 7.28488 5.00008 8.06266ZM5.00008 9.16683C3.88203 8.21544 3.04696 7.33176 2.49487 6.51579C1.94279 5.69982 1.66675 4.94461 1.66675 4.25016C1.66675 3.2085 2.00182 2.37864 2.67196 1.76058C3.3421 1.14252 4.11814 0.833496 5.00008 0.833496C5.88203 0.833496 6.65807 1.14252 7.32821 1.76058C7.99835 2.37864 8.33341 3.2085 8.33341 4.25016C8.33341 4.94461 8.05737 5.69982 7.50529 6.51579C6.95321 7.33176 6.11814 8.21544 5.00008 9.16683Z"
+                                    fill="#47748C"
+                                  />
+                                </svg>
+                              </span>
+                              <span
+                                className="text-[10px] font-medium"
+                                style={{ color: "#385D70" }}
+                              >
+                                {report.landmark ? report.landmark.substring(0, 20) : 'Unknown'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="9"
+                                  height="9"
+                                  viewBox="0 0 9 9"
+                                  fill="none"
+                                >
+                                  <g clipPath="url(#clip0_723_2172)">
+                                    <path
+                                      d="M4.5 8.25C6.57107 8.25 8.25 6.57107 8.25 4.5C8.25 2.42893 6.57107 0.75 4.5 0.75C2.42893 0.75 0.75 2.42893 0.75 4.5C0.75 6.57107 2.42893 8.25 4.5 8.25Z"
+                                      stroke="#47748C"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                    <path
+                                      d="M4.5 2.25V4.5H6.1875"
+                                      stroke="#47748C"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </g>
+                                  <defs>
+                                    <clipPath id="clip0_723_2172">
+                                      <rect width="9" height="9" fill="white" />
+                                    </clipPath>
+                                  </defs>
+                                </svg>
+                              </span>
+                              <span
+                                className="text-[10px] font-medium"
+                                style={{ color: "#385D70" }}
+                              >
+                                {timeAgo}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  </div>
+
+                  {/* View All Button */}
+                  <button
+                    onClick={() => router.push('/admin/report')}
+                    className="
+    flex h-[33px] px-[16px] py-[8px]
+    items-center gap-[10px] self-stretch
+    rounded-lg bg-[#5E9BBA]
+    text-xs font-medium
+    hover:bg-[#4f8aa8] transition-colors mt-[10px]
+    justify-center
+  "
+                    style={{
+                      fontFamily: '"Genty Sans", sans-serif',
+                      color: "#FFF",
+                    }}
+                  >
+                    View All Reports
+                  </button>
+                </div>
+              </div>
+
+              {/* Volunteer Requests Card */}
+              <div className="w-full lg:w-[calc(33.333%-16px)] bg-[#FFFFFF] rounded-2xl shadow-lg overflow-hidden border-2 border-[#C575AD] flex flex-col">
+                {/* Header */}
+                <a
+                  href="/admin/volunteer"
+                  className="
+    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    justify-between items-center self-stretch
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#C575AD]
+  "
+                >
+                  <div className="flex-1 px-1">
+                    <h2
+                      className="text-lg lg:text-lg font-medium mb-0.5"
+                      style={{
+                        color: "#C575AD",
                         fontFamily: '"Genty Sans", sans-serif',
                       }}
                     >
                       Volunteer Requests
                     </h2>
                     <p
-                      className="text-[10px] md:text-xs lg:text-base text-gray-600"
+                      className="text-[10px] md:text-xs lg:text-xs text-[#3C3333]"
                       style={{ fontFamily: '"Genty Sans", sans-serif' }}
                     >
-                      View and Manage Volunteer Tasks and Requests
+                      View and Manage Volunteer Tasks
                     </p>
                   </div>
-                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#5E9BBA]">
+
+                  <div className="w-24 lg:w-32 flex items-center justify-center bg-[#C575AD] h-full rounded-tr-[12px]">
                     <img
                       src="/nav/user.png"
                       alt="Volunteer Requests"
-                      className="w-10 h-10 lg:w-12 lg-h-12"
+                      className="w-10 h-10 lg:w-12 lg:h-12"
                     />
                   </div>
-                </Link>
-              </div>
+                </a>
 
-              {/* Card 3: Animal Reports - Track stray findings and reports */}
-              <Link href="/admin/form" className="flex w-full min-h-[86px] lg:min-h-[110px] rounded-xl overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 text-left border-2 border-[#DCB57E] bg-[#fcfcfc]">
-                <div className="flex-1 px-4 py-5">
-                  <h2
-                    className="text-md lg:text-xl font-medium mb-0.5"
+                {/* Preview and Button Container */}
+                <div
+                  className="
+    flex flex-col items-start self-stretch
+    px-[10px] pb-[20px] pt-[20px] h-full
+  "
+                >
+                  <div className="flex flex-col gap-[10px] flex-1 w-full">
+                  {loading ? (
+                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading volunteer requests...</div>
+                  ) : recentVolunteers.length === 0 ? (
+                    <div className="text-sm text-gray-500">No recent requests</div>
+                  ) : (
+                    recentVolunteers.slice(0, 4).map((volunteer, idx) => (
+                      <div
+                        key={volunteer.id || idx}
+                        onClick={() => router.push('/admin/volunteer')}
+                        className="
+        flex h-[55px] pl-[6px] pr-[10px] py-[4px]
+        justify-between items-center self-stretch
+        rounded-[6px] border-1 border-[#C575AD] bg-[#EDD4E6]
+        cursor-pointer
+      "
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-300 rounded-lg overflow-hidden flex items-center justify-center">
+                            <span className="text-xs font-semibold text-gray-600">
+                              {volunteer.call_title && volunteer.call_title.length > 0 ? volunteer.call_title[0].toUpperCase() : 'V'}
+                            </span>
+                          </div>
+                          <div>
+                            <p
+                              className="font-medium text-xs text-[#45293D]"
+                              style={{ fontFamily: '"Genty Sans", sans-serif' }}
+                            >
+                              {volunteer.call_title || 'Volunteer Request'}
+                            </p>
+                            <p className="text-[10px] text-[#45293D]">
+                              {volunteer.call_status || 'Pending'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  </div>
+
+                  {/* View All Button */}
+                  <button
+                    onClick={() => router.push('/admin/volunteer')}
+                    className="
+                      flex h-[33px] px-[16px] py-[8px]
+                      items-center gap-[10px] self-stretch
+                      rounded-lg bg-[#C575AD]
+                      text-xs font-medium
+                      hover:bg-[#b05a9a] transition-colors mt-[10px]
+                      justify-center"
                     style={{
-                      color: "#DCB57E",
                       fontFamily: '"Genty Sans", sans-serif',
+                      color: "#FFF",
                     }}
                   >
-                    Animal Reports
-                  </h2>
-                  <p
-                    className="text-[10px] md:text-xs lg:text-base text-gray-600"
-                    style={{ fontFamily: '"Genty Sans", sans-serif' }}
-                  >
-                    Track Stray Findings and Reports
-                  </p>
+                    View All Volunteers
+                  </button>
                 </div>
-                <div className="w-24 lg:w-32 flex items-center justify-center bg-[#DCB57E]">
-                  <img
-                    src="/nav/report.png"
-                    alt="Animal Reports"
-                    className="w-10 h-10 lg:w-12 lg-h-12"
-                  />
-                </div>
-              </Link>
+              </div>
             </div>
-          </section>
+          </div>
         </div>
       </div>
     </main>

@@ -1,5 +1,4 @@
 // NOTE: This is only a prompted confirmation page used to test backend, not yet the final version
-
 "use client";
 
 // Import necessary modules
@@ -8,7 +7,11 @@ import { Suspense, useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createAnimalReport } from "@/actions/form/user";
-import type { ReportTheme } from "@/actions/form/user";
+import { getGlobalPhotoFile } from "@/app/(user)/form/page";
+import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
+import Link from "next/link";
+import { supabase } from "@/utils/supabase/client";
+import Sidebar from "@/components/Sidebar";
 
 // Dynamically import AdminMapView with no SSR
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
@@ -22,10 +25,16 @@ function ConfirmationContent() {
 	const [submitting, setSubmitting] = useState(false);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
+	const [showImageModal, setShowImageModal] = useState(false);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	// State for user info
+	const [userName, setUserName] = useState<string>("");
+	const [userEmail, setUserEmail] = useState<string>("");
 
 	// Extract all data from URL params
-	const recorderName = searchParams.get("recorderName") || "";
-	const animalName = searchParams.get("animalName") || "";
+	const reportTitle = searchParams.get("reportTitle") || "";
+	const reporterName = searchParams.get("reporterName") || "";
 	const animalType = searchParams.get("animalType") || "";
 	const gender = searchParams.get("gender") || "Unknown";
 	const dateSeen = searchParams.get("dateSeen") || "";
@@ -36,39 +45,41 @@ function ConfirmationContent() {
 	const healthIssues = searchParams.get("healthIssues") || "";
 	const animalCollar = searchParams.get("animalCollar") || "";
 	const otherInfo = searchParams.get("otherInfo") || "";
-	const theme = (searchParams.get("theme") || "blue") as ReportTheme;
+	// report_theme removed from user forms; no theme handling here
 	const lat = parseFloat(searchParams.get("lat") || "0");
 	const lng = parseFloat(searchParams.get("lng") || "0");
 	const photoUrl = searchParams.get("photoUrl") || "";
 
-	// Restore photo File from sessionStorage on mount
+	// Restore photo File from global storage on mount
 	useEffect(() => {
-		const savedData = sessionStorage.getItem('animalReportFormData');
-
-		// If saved data exists, try to reconstruct the File object
-		if (savedData) {
-			try {
-				const data = JSON.parse(savedData);
-				if (data.photoBase64 && data.photoName && data.photoType) {
-					fetch(data.photoBase64)
-						.then(res => res.blob())
-						.then(blob => {
-							const file = new File([blob], data.photoName, { type: data.photoType });
-							setPhotoFile(file);
-						});
-				}
-			} catch (error) {
-				console.error('Failed to restore photo:', error);
-			}
+		const file = getGlobalPhotoFile();
+		if (file) {
+			setPhotoFile(file);
 		}
 	}, []);
 
-	const themeColors = {
-		blue: 'bg-[#5E9BBA]',
-		green: 'bg-[#689668]',
-		orange: 'bg-[#DCB57E]',
-		purple: 'bg-[#C575AD]'
-	};
+	useEffect(() => {
+		let isMounted = true;
+		async function fetchUser() {
+			const {
+				data: { user },
+				error: authError,
+			} = await supabase.auth.getUser();
+			if (!isMounted) return;
+			if (authError || !user) {
+				router.replace("/login");
+				return;
+			}
+			setUserEmail(user.email || "");
+			const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+			setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+		}
+		fetchUser();
+		return () => {
+			isMounted = false;
+		};
+	}, [router]);
+
 
 	async function handleConfirmSubmit() {
 		// Submit the report
@@ -86,8 +97,8 @@ function ConfirmationContent() {
 
 		// Submit the report
 		const res = await createAnimalReport({
-			recorder_name: recorderName || undefined,
-			animal_name: animalName || undefined,
+			report_title: reportTitle || undefined,
+			reporter_name: reporterName || undefined,
 			animal_type: animalType || "other",
 			animal_gender: gender as string,
 			date_seen: dateSeenWithTime,
@@ -98,7 +109,7 @@ function ConfirmationContent() {
 			health_issues: healthIssues || undefined,
 			animal_collar: animalCollar || undefined,
 			other_information: otherInfo || undefined,
-			report_theme: theme || undefined,
+			// report_theme removed
 			latitude: lat,
 			longitude: lng,
 			photo: photoFile || undefined,
@@ -109,6 +120,8 @@ function ConfirmationContent() {
 				setResultMsg(res.error ?? "Failed to submit");
 			} else {
 				setResultMsg("Report submitted successfully!");
+					// Clear the saved snapshot now that submission succeeded
+					sessionStorage.removeItem('animalReportFormData');
 				// Redirect to home after 2 seconds
 				setTimeout(() => router.push("/"), 2000);
 			}
@@ -120,46 +133,124 @@ function ConfirmationContent() {
 	}
 
 	return (
-		<main className="min-h-screen bg-[#E1E69D]">
-			{/* Header matching form */}
-			<header className="w-full h-[52px] bg-[#E6E6E6] flex items-center">
-				<div className="w-full max-w-6xl mx-auto flex items-center justify-between px-4">
-					<button type="button" className="p-2 rounded hover:bg-gray-200" aria-label="Menu">
-						<span className="block w-6 h-0.5 bg-gray-800 mb-1" />
-						<span className="block w-6 h-0.5 bg-gray-800 mb-1" />
-						<span className="block w-6 h-0.5 bg-gray-800" />
-					</button>
-				<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
-				<button
-					onClick={() => router.push("/")}
-					className="px-4 py-1.5 rounded-md text-sm bg-[#8D52A7] text-white hover:bg-[#7B4692]"
+		<main className="min-h-screen bg-[#E6E6E6]">
+			{sidebarOpen && <Sidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen} 
+        userName={userName} 
+        userEmail={userEmail} 
+        router={router} 
+        variant="user" 
+      />}
+			{/* Image Modal */}
+			{showImageModal && photoUrl && (
+				<div
+					className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+					onClick={() => setShowImageModal(false)}
 				>
-					Dashboard
-				</button>
+					<div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+						<img
+							src={photoUrl}
+							alt="Animal photo full view"
+							className="max-w-full max-h-full object-contain"
+						/>
+						<button
+							onClick={() => setShowImageModal(false)}
+							className="absolute top-4 right-4 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+					</div>
+				</div>
+			)}
+			{/* Header matching form */}
+			<header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
+					<button 
+						type="button" 
+						className="p-2 hover:bg-gray-100 rounded-lg transition" 
+						aria-label="Menu"
+						onClick={() => setSidebarOpen(true)}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+							<line x1="3" y1="12" x2="21" y2="12"></line>
+							<line x1="3" y1="6" x2="21" y2="6"></line>
+							<line x1="3" y1="18" x2="21" y2="18"></line>
+						</svg>
+					</button>
+					<div className="flex-1 flex justify-center items-center h-full">
+						<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} className="flex-shrink-0" />
+					</div>
+					<Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
+						<button
+						className="p-2 hover:bg-gray-100 rounded-lg transition"
+						onClick={async () => {
+							await supabase.auth.signOut();
+							router.replace("/");
+						}}
+						>
+							<LogIn className="w-6 h-6 text-gray-800" />
+						</button>
+					</Link>
 				</div>
 			</header>
 
 			<section className="max-w-6xl mx-auto px-4 py-6">
-				<div className="mb-4">
-					<button
-						onClick={() => router.back()}
-						className="text-sm text-purple-700 hover:underline"
+				<div className="mb-6">
+					<h1
+						className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+						style={{
+							color: '#C2C876',
+							WebkitTextStrokeWidth: '.5px',
+							WebkitTextStrokeColor: '#3C3333',
+							fontFamily: '"Kawaii RT", sans-serif',
+							fontStyle: 'normal',
+							fontWeight: 400,
+							lineHeight: 'normal',
+							outlineColor: '#3C3333',
+						}}
 					>
-						← Back to Form
-					</button>
+						Confirm Your Report
+					</h1>
+					<p
+						className="text-xs sm:text-sm md:text-md"
+						style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
+					>
+						Review your report details before submitting
+					</p>
 				</div>
 
-				<h1 className="text-2xl font-semibold text-gray-900 mb-4">Confirm Your Report</h1>
-
-				<div className="rounded-xl border border-gray-300 bg-[#E6E6E6]/40 backdrop-blur-sm p-5 md:p-6 space-y-5">
+				<div 
+					className="rounded-xl bg-[#E1E69D] p-6"
+					style={{
+						display: 'flex',
+						minWidth: '327px',
+						padding: '20px',
+						flexDirection: 'column',
+						gap: '15px',
+						alignSelf: 'stretch',
+						border: '1px solid #3C3333',
+					}}
+				>
 					{/* Top two-column: picture left, fields right */}
 					<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-stretch">
 						{/* Picture panel */}
-						<div className="rounded-xl bg-[#CFC9C9] p-4 flex flex-col">
-							<div className="w-full h-[300px] rounded-lg bg-[#DED8D8] border border-gray-300 flex items-center justify-center overflow-hidden">
+						<div className="rounded-xl bg-[#E1E69D] p-4 flex flex-col">
+							<div 
+								className="w-full h-[300px] rounded-lg bg-white flex items-center justify-center overflow-hidden cursor-pointer transition relative group border-2 border-[#3C3333]"
+								onClick={() => photoUrl && setShowImageModal(true)}
+							>
 								{photoUrl ? (
-									// eslint-disable-next-line @next/next/no-img-element
-									<img src={photoUrl} alt="Animal photo" className="w-full h-full object-cover" />
+									<>
+										{/* eslint-disable-next-line @next/next/no-img-element */}
+										<img src={photoUrl} alt="Animal photo" className="w-full h-full object-cover" />
+										<div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+											<span className="text-white text-sm font-semibold">Click to View Photo</span>
+										</div>
+									</>
 								) : (
 									<div className="flex flex-col items-center text-gray-600 text-sm gap-2">
 										<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -170,28 +261,27 @@ function ConfirmationContent() {
 									</div>
 								)}
 							</div>
-							<p className="mt-3 text-xs text-gray-700">Photo Preview</p>
+							<p className="mt-3 text-xs" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Photo Preview {photoUrl && "(Click to enlarge)"}</p>
 						</div>
 
-						{/* Fields panel - Read-only display */}
-						<div className="space-y-3">
+					{/* Fields panel - Read-only display */}
+					<div className="space-y-3">
+						<DisplayField label="Report Title" value={reportTitle.trim() ? reportTitle : "—"} />
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<DisplayField label="Reporter Name" value={reporterName.trim() ? reporterName : "—"} />
+						<DisplayField label="Type of animal" value={animalType || "—"} />
+					</div>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<DisplayField label="Recorder Name" value={recorderName || "—"} />
-								<DisplayField label="Animal Name" value={animalName || "—"} />
-							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-								<DisplayField label="Type of animal" value={animalType || "—"} />
-								<div className="grid grid-cols-2 gap-3">
-									<DisplayField label="Gender" value={gender} />
-									<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
-								</div>
+
+								<DisplayField label="Gender" value={gender} />
+								<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
 							</div>
 							<DisplayTextArea label="Physical Description" value={physicalDescription || "—"} />
 						</div>
 					</div>
 
 					{/* Location fields */}
-					<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 						<DisplayField label="Area Seen (Location)" value={area || "—"} />
 						<DisplayField label="Landmark Near Location" value={landmark || "—"} />
 						<DisplayField label="What Road?" value={road || "—"} />
@@ -199,9 +289,21 @@ function ConfirmationContent() {
 
 					{/* Map display */}
 					{lat && lng && (
-						<div className="rounded-xl bg-[#CFC9C9] p-4 mt-6">
-							<label className="block text-sm font-medium mb-2 text-gray-800">Location on Map</label>
-							<div className="rounded-lg h-72 md:h-80 bg-[#DED8D8] overflow-hidden">
+						<div className="rounded-xl bg-[#E1E69D] p-4 mt-2">
+							<label 
+								className="block mb-2" 
+								style={{
+									color: '#3C3333',
+									fontFamily: '"Genty Sans", sans-serif',
+									fontSize: '13px',
+									fontWeight: 600,
+									textTransform: 'uppercase' as const,
+									letterSpacing: '0.5px',
+								}}
+							>
+								Location on Map
+							</label>
+							<div className="rounded-lg h-72 md:h-80 bg-[#E1E69D] overflow-hidden">
 								<AdminMapView latitude={lat} longitude={lng} />
 							</div>
 						</div>
@@ -216,19 +318,12 @@ function ConfirmationContent() {
 					{/* Other Info */}
 					<DisplayTextArea label="Any Other Information" value={otherInfo || "None"} />
 
-					{/* Theme display */}
-					<div className="rounded-xl bg-[#CFC9C9] p-4">
-						<label className="block text-sm font-medium mb-3 text-gray-800">Selected Theme</label>
-						<div className="flex items-center gap-3">
-							<div className={`w-12 h-12 rounded-md ${themeColors[theme]}`}></div>
-							<span className="text-sm font-medium capitalize">{theme}</span>
-						</div>
-					</div>
+					{/* Theme removed from confirmation display */}
 
 					{/* Action buttons */}
 					<div className="pt-4 flex gap-3">
 						<button
-							onClick={() => router.back()}
+							onClick={() => router.push('/form')}
 							className="flex-1 rounded-md border-2 border-gray-400 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
 						>
 							Edit Report
@@ -236,12 +331,17 @@ function ConfirmationContent() {
 						<button
 							onClick={handleConfirmSubmit}
 							disabled={submitting}
-							className="flex-1 rounded-md bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692] disabled:opacity-50"
+							className="flex-1 rounded-lg py-3 text-sm font-semibold transition disabled:opacity-50"
+							style={{ 
+								backgroundColor: '#8D52A7', 
+								color: 'white', 
+								fontFamily: '"Genty Sans", sans-serif' 
+							}}
 						>
 							{submitting ? 'Submitting...' : 'Confirm & Submit'}
 						</button>
 					</div>
-					{resultMsg && <p className="mt-2 text-sm text-gray-800 text-center font-medium">{resultMsg}</p>}
+					{resultMsg && <p className="mt-2 text-sm text-center font-medium" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>{resultMsg}</p>}
 				</div>
 			</section>
 		</main>
@@ -250,18 +350,42 @@ function ConfirmationContent() {
 
 function DisplayField({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-			<label className="block text-sm font-medium text-[#3C3333] mb-2">{label}</label>
-			<p className="text-sm text-[#3C3333]">{value}</p>
+		<div className="rounded-xl bg-[#E1E69D] p-4">
+			<label 
+				className="block mb-2" 
+				style={{
+					color: '#3C3333',
+					fontFamily: '"Genty Sans", sans-serif',
+					fontSize: '13px',
+					fontWeight: 600,
+					textTransform: 'uppercase' as const,
+					letterSpacing: '0.5px',
+				}}
+			>
+				{label}
+			</label>
+			<p className="text-base" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', fontWeight: 400 }}>{value}</p>
 		</div>
 	);
 }
 
 function DisplayTextArea({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-			<label className="block text-sm font-medium text-[#3C3333] mb-2">{label}</label>
-			<p className="text-sm text-[#3C3333] whitespace-pre-wrap">{value}</p>
+		<div className="rounded-xl bg-[#E1E69D] p-4">
+			<label 
+				className="block mb-2" 
+				style={{
+					color: '#3C3333',
+					fontFamily: '"Genty Sans", sans-serif',
+					fontSize: '13px',
+					fontWeight: 600,
+					textTransform: 'uppercase' as const,
+					letterSpacing: '0.5px',
+				}}
+			>
+				{label}
+			</label>
+			<p className="text-base whitespace-pre-wrap min-h-[100px]" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif', fontWeight: 400 }}>{value}</p>
 		</div>
 	);
 }
@@ -269,7 +393,7 @@ function DisplayTextArea({ label, value }: { label: string; value: string }) {
 export default function ConfirmPage() {
 	return (
 		<Suspense fallback={
-			<main className="min-h-screen bg-[#E1E69D] flex items-center justify-center">
+			<main className="min-h-screen bg-[#E6E6E6] flex items-center justify-center">
 				<p className="text-sm">Loading confirmation...</p>
 			</main>
 		}>

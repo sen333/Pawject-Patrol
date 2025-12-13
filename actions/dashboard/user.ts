@@ -1,0 +1,165 @@
+"use server";
+
+import { createClient } from "@/utils/supabase/server";
+
+// Get user's dashboard statistics
+export async function getUserDashboardStats() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return null;
+  
+  // Reports stats
+  const { count: totalReports } = await supabase
+    .from('animal_report')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+    
+  const { count: acceptedReports } = await supabase
+    .from('animal_report')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('report_status', 'Accepted');
+    
+  // Volunteer stats: count responses for this user where the related call is Active, Ongoing, or Filled
+  const { count: volunteersJoined } = await supabase
+    .from('volunteer_response')
+    .select('response_id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .in('call_id',
+      (
+        (await supabase
+          .from('volunteer_call')
+          .select('call_id')
+          .in('call_status', ['Active', 'Ongoing', 'Filled'])
+        ).data?.map(c => c.call_id) || []
+      )
+    );
+    
+  return {
+    totalReports: totalReports || 0,
+    acceptedReports: acceptedReports || 0,
+    volunteersJoined: volunteersJoined || 0,
+  };
+}
+
+// Get community-wide statistics
+export async function getCommunityStats() {
+  const supabase = await createClient();
+  
+  const { count: totalAnimals } = await supabase
+    .from('animal_report')
+    .select('*', { count: 'exact', head: true })
+    .eq('report_status', 'Accepted');
+    
+  // Get distinct volunteer count
+  const { data: uniqueVolunteers } = await supabase
+    .from('volunteer_response')
+    .select('user_id')
+    .limit(1000);
+    
+  const uniqueCount = uniqueVolunteers ? new Set(uniqueVolunteers.map(v => v.user_id)).size : 0;
+    
+  return {
+    totalAnimalsHelped: totalAnimals || 0,
+    activeVolunteers: uniqueCount || 0
+  };
+}
+
+// Get user's recent animal reports
+export async function getUserRecentReports(limit: number = 5) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return { success: false, error: "Not authenticated", data: [] };
+  
+  const { data, error } = await supabase
+    .from('animal_report')
+    .select('report_id, report_title, reporter_name, animal_name, animal_type, animal_gender, date_seen, animal_description, area, landmark, road, health_issues, animal_collar, other_information, latitude, longitude, report_status, photo_url, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+    
+  return { success: !error, data: data || [], error: error?.message };
+}
+
+// Get upcoming volunteer calls that the user has joined
+export async function getUpcomingVolunteerCalls(limit: number = 3) {
+  const supabase = await createClient();
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return { data: [], userJoined: [] };
+  
+  // Get user's joined call IDs first
+  const { data: joined } = await supabase
+    .from('volunteer_response')
+    .select('call_id')
+    .eq('user_id', user.id);
+    
+  const joinedCallIds = joined?.map(j => j.call_id) || [];
+  
+  if (joinedCallIds.length === 0) {
+    return { data: [], userJoined: [] };
+  }
+  
+  // Fetch only the calls the user has joined
+  const { data, error } = await supabase
+    .from('volunteer_call')
+    .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
+    .in('call_id', joinedCallIds)
+    .order('call_starttime', { ascending: true })
+    .limit(limit * 3); // Fetch more to account for filtering
+  
+  // Sync statuses and filter out completed/cancelled
+  const now = new Date();
+  const syncedData = (data || [])
+    .map(call => {
+      const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
+      const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
+      const currentStatus = (call.call_status || '').toLowerCase();
+      
+      // Status priority: Cancelled > Completed > Ongoing (time-based) > others
+      if (currentStatus === 'cancelled') {
+        return { ...call, call_status: 'Cancelled' };
+      } else if (currentStatus === 'completed') {
+        return { ...call, call_status: 'Completed' };
+      } else if (startTime && endTime && now >= startTime && now <= endTime) {
+        // Ongoing (between start and end time)
+        return { ...call, call_status: 'Ongoing' };
+      } else if (endTime && now > endTime) {
+        // Past end time - mark as completed
+        return { ...call, call_status: 'Completed' };
+      }
+      
+      return call;
+    })
+    .filter(call => {
+      const status = (call.call_status || '').toLowerCase();
+      // Only show active, filled, or ongoing - hide completed and cancelled
+      return status !== 'completed' && status !== 'cancelled';
+    })
+    .slice(0, limit); // Apply limit after filtering
+    
+  return { 
+    data: syncedData, 
+    userJoined: joinedCallIds
+  };
+}
+
+// Get recent catalog animals (from animal profiles)
+export async function getRecentCatalogAnimals(limit: number = 6) {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('animal')
+    .select('animal_id, animal_name, animal_species, animal_breed, animal_gender, animal_description, animal_status, animal_photo, area, animal_collar, animal_theme, vaccination_status, health_issues, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  
+  if (error) {
+    console.error('Error fetching catalog animals:', error);
+  }
+    
+  return { success: !error, data: data || [], error: error?.message };
+}
