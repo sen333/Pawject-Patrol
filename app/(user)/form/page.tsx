@@ -117,6 +117,27 @@ export default function ReportFormSample() {
         if (data.photoPreview) {
           setPreview(data.photoPreview);
         }
+
+        // Restore photo file from base64 if present
+        const base64 = sessionStorage.getItem('animalReportPhotoBase64');
+        if (base64) {
+          // Convert base64 to File object
+          const arr = base64.split(",");
+          if (arr.length === 2) {
+            const mimeMatch = arr[0].match(/:(.*?);/);
+            const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            const file = new File([u8arr], "photo.jpg", { type: mime });
+            setPhotoFile(file);
+          }
+          sessionStorage.removeItem('animalReportPhotoBase64');
+        }
+
         sessionStorage.removeItem("animalReportFormData");
       } catch (error) {
         console.error("Failed to restore form data:", error);

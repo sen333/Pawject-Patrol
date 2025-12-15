@@ -799,7 +799,7 @@ export default function CatalogPage() {
         </div>
 
         {/* Bottom Section – Social Links */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center gap-3 mt-6">
           <a
             href="#"
             className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80"

@@ -21,17 +21,16 @@ export async function getUserDashboardStats() {
     .eq('user_id', user.id)
     .eq('report_status', 'Accepted');
     
-  // Volunteer stats
+  // Volunteer stats: count only opportunities the user has joined
   const { count: volunteersJoined } = await supabase
     .from('volunteer_response')
-    .select('*', { count: 'exact', head: true })
+    .select('response_id', { count: 'exact', head: true })
     .eq('user_id', user.id);
     
   return {
     totalReports: totalReports || 0,
     acceptedReports: acceptedReports || 0,
     volunteersJoined: volunteersJoined || 0,
-    impactScore: (acceptedReports || 0) + (volunteersJoined || 0)
   };
 }
 
@@ -78,28 +77,37 @@ export async function getUserRecentReports(limit: number = 5) {
 // Get upcoming volunteer calls
 export async function getUpcomingVolunteerCalls(limit: number = 3) {
   const supabase = await createClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  const { data, error } = await supabase
-    .from('volunteer_call')
-    .select('call_id, call_title, call_starttime, call_location, capacity, call_status')
-    .eq('call_status', 'Active')
-    .gte('call_starttime', new Date().toISOString())
-    .order('call_starttime', { ascending: true })
-    .limit(limit);
-    
-  if (!user || error) return { data: data || [], userJoined: [] };
-  
-  // Get user's joined calls
+
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
+  if (!user) return { data: [], userJoined: [] };
+
+  // Get all call_ids the user has joined
   const { data: joined } = await supabase
     .from('volunteer_response')
     .select('call_id')
     .eq('user_id', user.id);
-    
-  return { 
-    data: data || [], 
-    userJoined: joined?.map(j => j.call_id) || [] 
+
+  const joinedCallIds: string[] = joined?.map((j: { call_id: string }) => j.call_id) || [];
+
+  let data: any[] = [];
+  let error: any = null;
+  if (joinedCallIds.length > 0) {
+    const result = await supabase
+      .from('volunteer_call')
+      .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
+      .in('call_id', joinedCallIds)
+      .order('call_starttime', { ascending: true })
+      .limit(limit);
+    data = result.data as any[] || [];
+    error = result.error;
+  }
+
+  if (error) return { data: [], userJoined: [] };
+
+  return {
+    data,
+    userJoined: joinedCallIds
   };
 }
 

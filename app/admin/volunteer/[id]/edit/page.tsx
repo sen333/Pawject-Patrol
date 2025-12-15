@@ -1,9 +1,15 @@
+"use client";
+
 // Import necessary modules and actions
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn } from "lucide-react";
+import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import { getVolunteerCall } from "@/actions/volunteer/admin";
 import { updateAction } from "@/actions/volunteer/admin";
+import Sidebar from "@/components/Sidebar";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
 
 // Convert a UTC datetime string to local datetime-local input format
 function toInputLocal(value?: string | null) {
@@ -19,31 +25,92 @@ function toInputLocal(value?: string | null) {
 }
 
 // Main component for Edit Volunteer Page
-export default async function EditVolunteerPage(props: any) {
-  // Extract volunteer ID from route parameters
-  const id = props?.params?.id;
-  const v: any = await getVolunteerCall(id);
+export default function EditVolunteerPage(props: any) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [id, setId] = useState<string | undefined>(undefined);
+  const [v, setV] = useState<any>(undefined);
+  const router = useRouter();
 
-  // Handle not found volunteer call
+  const resolvedParams: any = React.use(props.params);
+  const idValue = resolvedParams?.id;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setId(idValue);
+      const volunteerCall = await getVolunteerCall(idValue);
+      setV(volunteerCall);
+    };
+    fetchData();
+  }, [idValue]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/admin/login');
+        return;
+      }
+      setUserName(user.user_metadata?.name || "Admin");
+      setUserEmail(user.email || "admin@pawjectpatrol.com");
+    };
+    checkAuth();
+  }, [router]);
+
+  // Loading state
+  if (v === undefined) {
+    return (
+      <main className="min-h-screen bg-[#E6E6E6]">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+            Loading...
+          </div>
+        </div>
+      </main>
+    );
+  }
   if (!v) {
     return (
-      <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
-        <div className="max-w-4xl mx-auto px-4 py-8">
+      <main className="min-h-screen bg-[#E6E6E6]">
+        <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Volunteer request not found.</div>
         </div>
       </main>
     );
   }
 
-  // Render the edit volunteer page
+  if (!v) {
+    return (
+      <main className="min-h-screen bg-[#E6E6E6]">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="py-24 text-center" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Volunteer request not found.</div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
-      {/* Navigation header */}
-      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-        <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <Link href="/admin" className="p-2 hover:bg-gray-100 rounded-lg transition">
+    <main className="min-h-screen bg-[#E6E6E6]">
+      {/* Sidebar */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+      />
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
+        <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
+          <button
+            type="button"
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
             <Menu className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
           <div className="flex-1 flex justify-center items-center h-full">
             <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
           </div>
@@ -53,84 +120,206 @@ export default async function EditVolunteerPage(props: any) {
         </div>
       </div>
 
-      {/* Page Header */}
-      <div className="py-8" style={{ backgroundColor: '#E6E6E6' }}>
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-1"
+      <section className="max-w-6xl mx-auto px-4 py-6 pl-[24px] pr-[24px]">
+        {/* Header Text */}
+        <div className="mb-6">
+          <h1
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
             style={{
-              color: '#C2C876',
-              WebkitTextStrokeWidth: '.5px',
-              WebkitTextStrokeColor: '#3C3333',
+              color: "#C2C876",
+              WebkitTextStrokeWidth: ".5px",
+              WebkitTextStrokeColor: "#3C3333",
               fontFamily: '"Kawaii RT", sans-serif',
-              fontStyle: 'normal',
+              fontStyle: "normal",
               fontWeight: 400,
-              lineHeight: 'normal',
-              outlineColor: '#3C3333',
+              lineHeight: "normal",
+              outlineColor: "#3C3333",
             }}
           >
             Edit Volunteer Request
-          </h2>
-          <p className="text-xs sm:text-sm md:text-md" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>
+          </h1>
+
+          <p
+            className="text-xs sm:text-sm md:text-md"
+            style={{ color: "#3C3333", fontFamily: '"Genty Sans", sans-serif' }}
+          >
             Update volunteer request information
           </p>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 pb-8">
-
-        <form action={updateAction} className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <input type="hidden" name="id" value={id} />
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Title *</label>
-              <input name="call_title" defaultValue={v.call_title || ''} required className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="e.g. Park Cleanup" />
+        {/* Form Container */}
+        <div
+          className="rounded-xl bg-[#E1E69D] border border-[#3C3333] p-6"
+          style={{
+            display: "flex",
+            minWidth: "327px",
+            flexDirection: "column",
+            gap: "15px",
+            alignSelf: "stretch",
+          }}
+        >
+          <form action={updateAction} className="grid gap-[16px]">
+            <input type="hidden" name="id" value={id} />
+            {/* Title Field */}
+            <div className="rounded-xl bg-[#E1E69D] p-2">
+              <label
+                className="block mb-1"
+                style={{
+                  color: "#3C3333",
+                  fontFamily: '"Genty Sans", sans-serif',
+                  fontSize: "14px",
+                  fontWeight: 500,
+                }}
+              >
+                Title *
+              </label>
+              <input
+                name="call_title"
+                placeholder="Enter volunteer task title"
+                defaultValue={v.call_title || ""}
+                required
+                className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+              />
             </div>
 
-            <div className="md:col-span-2 flex flex-col gap-2">
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Details *</label>
-              <textarea name="call_details" defaultValue={v.call_details || ''} rows={4} required className="border border-gray-300 rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="Describe the task, expectations, and any special instructions" />
+            {/* Details Field */}
+            <div className="rounded-xl bg-[#E1E69D] p-2">
+              <label
+                className="block mb-1"
+                style={{
+                  color: "#3C3333",
+                  fontFamily: '"Genty Sans", sans-serif',
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  lineHeight: "14px",
+                }}
+              >
+                Details *
+              </label>
+              <textarea
+                name="call_details"
+                rows={4}
+                placeholder="Enter volunteer task details"
+                defaultValue={v.call_details || ""}
+                required
+                className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+              />
             </div>
 
-            <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Start Time *</label>
-              <input name="call_starttime" type="datetime-local" defaultValue={toInputLocal(v.call_starttime)} required className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
+            {/* Start and End Time */}
+            <div className="grid md:grid-cols-2 gap-2">
+              <div className="rounded-xl bg-[#E1E69D] p-2">
+                <label
+                  className="block mb-1"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Start Time *
+                </label>
+                <input
+                  name="call_starttime"
+                  type="datetime-local"
+                  defaultValue={toInputLocal(v.call_starttime)}
+                  required
+                  className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                  style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+                />
+              </div>
+              <div className="rounded-xl bg-[#E1E69D] p-2">
+                <label
+                  className="block mb-1"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  End Time
+                </label>
+                <input
+                  name="call_endtime"
+                  type="datetime-local"
+                  defaultValue={toInputLocal(v.call_endtime)}
+                  className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                  style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>End Time</label>
-              <input name="call_endtime" type="datetime-local" defaultValue={toInputLocal(v.call_endtime)} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} />
+            {/* Location and Capacity */}
+            <div className="grid md:grid-cols-2 gap-2">
+              <div className="rounded-xl bg-[#E1E69D] p-2">
+                <label
+                  className="block mb-1"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Location *
+                </label>
+                <input
+                  name="call_location"
+                  placeholder="Enter location"
+                  defaultValue={v.call_location || ""}
+                  required
+                  className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                  style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+                />
+              </div>
+              <div className="rounded-xl bg-[#E1E69D] p-2">
+                <label
+                  className="block mb-1"
+                  style={{
+                    color: "#3C3333",
+                    fontFamily: '"Genty Sans", sans-serif',
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Capacity
+                </label>
+                <input
+                  name="capacity"
+                  type="number"
+                  min={0}
+                  placeholder="Enter capacity"
+                  defaultValue={typeof v.capacity === 'number' ? String(v.capacity) : ""}
+                  className="w-full rounded-lg px-4 py-3 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+                  style={{ backgroundColor: "#C2C876", fontFamily: '"Arial", sans-serif' }}
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Location *</label>
-              <input name="call_location" defaultValue={v.call_location || ''} required className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="e.g. University grounds" />
+            {/* Action Buttons */}
+            <div className="flex gap-3 text-sm mt-6">
+              <Link 
+                href={`/admin/volunteer/${id}`} 
+                className="flex-1 rounded-lg py-3 text-sm bg-[#E6E6E6] hover:bg-[#d4d4d4] transition text-center font-medium"
+                style={{ color: '#8D52A7', fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Cancel
+              </Link>
+              <button 
+                type="submit" 
+                className="flex-1 rounded-lg bg-[#8D52A7] py-3 text-sm text-white hover:bg-[#7B4692] transition font-medium"
+                style={{ fontFamily: '"Genty Sans", sans-serif' }}
+              >
+                Save Changes
+              </button>
             </div>
-
-            <div>
-              <label className="text-sm font-semibold" style={{ color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}>Capacity</label>
-              <input name="capacity" type="number" min={0} defaultValue={typeof v.capacity === 'number' ? String(v.capacity) : ''} className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:ring-2" style={{ fontFamily: '"Genty Sans", sans-serif' }} placeholder="Leave empty for unlimited" />
-            </div>
-          </div>
-
-          <div className="mt-8 flex items-center gap-3">
-            <button 
-              type="submit" 
-              className="px-6 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#C2C876', color: 'white', fontFamily: '"Genty Sans", sans-serif' }}
-            >
-              Save Changes
-            </button>
-            <Link 
-              href={`/admin/volunteer/${id}`} 
-              className="px-6 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#E6E6E6', color: '#3C3333', fontFamily: '"Genty Sans", sans-serif' }}
-            >
-              Cancel
-            </Link>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      </section>
     </main>
   );
 }

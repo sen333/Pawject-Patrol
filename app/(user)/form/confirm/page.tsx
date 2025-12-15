@@ -102,6 +102,62 @@ function ConfirmationContent() {
 		}
 	}
 
+	// Helper to persist photo file as base64 in sessionStorage
+	function handleEditReport() {
+		if (photoFile) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				if (e.target?.result) {
+					sessionStorage.setItem('animalReportPhotoBase64', e.target.result as string);
+				}
+				// Save all form data as before
+				sessionStorage.setItem('animalReportFormData', JSON.stringify({
+					reportTitle,
+					reporterName,
+					animalType,
+					gender,
+					dateSeen,
+					physicalDescription,
+					otherInfo,
+					area,
+					landmark,
+					road,
+					hasHealthIssues: healthIssues !== "None",
+					healthDetails: healthIssues !== "None" ? healthIssues : "",
+					hasCollar: animalCollar !== "None",
+					collarDetails: animalCollar !== "None" ? animalCollar : "",
+					lat,
+					lng,
+					photoPreview: photoUrl,
+				}));
+				router.push('/form');
+			};
+			reader.readAsDataURL(photoFile);
+		} else {
+			// Save all form data as before
+			sessionStorage.setItem('animalReportFormData', JSON.stringify({
+				reportTitle,
+				reporterName,
+				animalType,
+				gender,
+				dateSeen,
+				physicalDescription,
+				otherInfo,
+				area,
+				landmark,
+				road,
+				hasHealthIssues: healthIssues !== "None",
+				healthDetails: healthIssues !== "None" ? healthIssues : "",
+				hasCollar: animalCollar !== "None",
+				collarDetails: animalCollar !== "None" ? animalCollar : "",
+				lat,
+				lng,
+				photoPreview: photoUrl,
+			}));
+			router.push('/form');
+		}
+	}
+
 	return (
 		<main className="min-h-screen bg-[#E6E6E6]">
 			{/* Image Modal */}
@@ -199,7 +255,7 @@ function ConfirmationContent() {
 					{/* Top two-column: picture left, fields right */}
 					<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-stretch">
 						{/* Picture panel */}
-						<div className="rounded-xl bg-[#E6E6E6] p-4 flex flex-col">
+						<div className="rounded-xl bg-[#E1E69D] p-4 flex flex-col">
 							<div 
 								className="w-full h-[300px] rounded-lg bg-white flex items-center justify-center overflow-hidden cursor-pointer transition relative group border-2 border-[#3C3333]"
 								onClick={() => photoUrl && setShowImageModal(true)}
@@ -237,10 +293,7 @@ function ConfirmationContent() {
 								<DisplayField label="Gender" value={gender} />
 								<DisplayField label="Date Seen" value={dateSeen ? new Date(dateSeen).toLocaleDateString() : "—"} />
 							</div>
-							<div className="rounded-xl border border-gray-200 bg-[#F4F1E3] p-4">
-								<label className="block text-sm font-medium text-[#3C3333] mb-2">Physical Description</label>
-								<p className="text-sm text-[#3C3333] whitespace-pre-wrap min-h-[120px]">{physicalDescription || "—"}</p>
-							</div>
+							<DisplayTextArea label="Physical Description" value={physicalDescription || "—"} />
 						</div>
 					</div>
 
@@ -253,7 +306,7 @@ function ConfirmationContent() {
 
 					{/* Map display */}
 					{lat && lng && (
-						<div className="rounded-xl bg-[#E6E6E6] p-4 mt-2">
+						<div className="rounded-xl bg-[#E1E69D] p-4 mt-2">
 							<label 
 								className="block mb-2" 
 								style={{
@@ -287,7 +340,7 @@ function ConfirmationContent() {
 					{/* Action buttons */}
 					<div className="pt-4 flex gap-3">
 						<button
-							onClick={() => router.push('/form')}
+							onClick={handleEditReport}
 							className="flex-1 rounded-md border-2 border-gray-400 bg-white py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 text-center"
 						>
 							Edit Report

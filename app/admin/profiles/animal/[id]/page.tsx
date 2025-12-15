@@ -1172,7 +1172,7 @@ export default function AdminAnimalDetailPage() {
         {/* Back Button Only */}
         <div className="space-y-3 pb-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/admin/profiles")}
             className="w-full py-3 rounded-xl text-white transition-all"
             style={{
               backgroundColor: themeColor,

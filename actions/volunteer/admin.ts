@@ -1,6 +1,38 @@
 // Server-side code for managing volunteer calls in the admin interface
 "use server";
 
+// Server action to uncomplete a volunteer call by updating status to Active
+export async function uncompleteAction(formData: FormData): Promise<void> {
+  try {
+    const id = String(formData.get("id") || "");
+    if (!id) {
+      console.error("uncompleteAction missing id");
+      return;
+    }
+    // Use service client to bypass RLS for status update
+    const serviceClient = getServiceClient();
+    const { error } = await serviceClient
+      .from("volunteer_call")
+      .update({ call_status: "Active" })
+      .eq("call_id", id);
+    if (error) {
+      console.error("uncompleteAction error:", error);
+    } else {
+      try {
+        revalidatePath('/admin/volunteer');
+        revalidatePath(`/admin/volunteer/${id}`);
+      } catch (_) {}
+    }
+    redirect(`/admin/volunteer/${id}`);
+  } catch (e: any) {
+    if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
+      throw e;
+    }
+    console.error(e?.message || "Unexpected error");
+    return;
+  }
+}
+
 // Import necessary modules
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -37,7 +69,7 @@ function getServiceClient() {
 }
 
 // Helper function to get signup count for a volunteer call
-async function getSignupCount(supabase: any, callId: string): Promise<number> {
+export async function getSignupCount(supabase: any, callId: string): Promise<number> {
   try {
     const { count } = await supabase
       .from('volunteer_response')
@@ -122,13 +154,14 @@ export async function syncVolunteerCallStatus(callId: string) {
     
     const currentStatus = (call.call_status || '').toLowerCase();
     
-    // Don't override Cancelled status (admin decision)
-    if (currentStatus === 'cancelled') return;
-    
+    // Don't override Cancelled or Completed status (admin decision)
+    if (currentStatus === 'cancelled' || currentStatus === 'completed') return;
+
     const now = new Date();
+    const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
     const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
-    
-    // Check if the event has ended -> mark as Completed
+
+    // Completed status overrides all except Cancelled
     if (endTime && now > endTime) {
       if (currentStatus !== 'completed') {
         await serviceClient
@@ -138,8 +171,21 @@ export async function syncVolunteerCallStatus(callId: string) {
       }
       return;
     }
+
+    // Check if the event is currently ongoing (started)
+    const isOngoing = startTime && now >= startTime;
+    // For ongoing events, set status to Ongoing
+    if (isOngoing) {
+      if (currentStatus !== 'ongoing') {
+        await serviceClient
+          .from('volunteer_call')
+          .update({ call_status: 'Ongoing' })
+          .eq('call_id', callId);
+      }
+      return;
+    }
     
-    // For ongoing/future events, check capacity
+    // For future events, check capacity
     if (call.capacity) {
       const signupCount = await getSignupCount(serviceClient, callId);
       
@@ -225,53 +271,44 @@ export async function listVolunteerCalls(opts?: { search?: string; limit?: numbe
 
     // Execute the query
     const { data, error } = await q;
-    
-    // Handle any errors
     if (error) {
       console.error("listVolunteerCalls error:", error);
       return [];
     }
 
-    // Additional debugging
-    try {} catch (e) {}
+    // Use service role client for joined count to ensure RLS is bypassed
+    const serviceClient = getServiceClient();
+    const callsWithJoined = await Promise.all(
+      (data || []).map(async (call: VolunteerCall) => {
+        const joined_count = call.call_id ? await getSignupCount(serviceClient, call.call_id) : 0;
+        return { ...call, joined_count };
+      })
+    );
 
-    // Return results based on sort type
-    let result = (data || []) as VolunteerCall[];
-    
-    // If sorting by created_at explicitly, just return database results (ignore status)
+    let result = callsWithJoined;
     if (opts?.sortBy === 'created_at') {
       return result;
     }
-    
-    // For default sort (no sortBy specified), apply status priority
     if (!opts?.sortBy) {
-      // Define status priority: Active > Filled > Completed > Cancelled
       const statusPriority: { [key: string]: number } = {
         'active': 1,
         'filled': 2,
         'completed': 3,
         'cancelled': 4,
       };
-      
       result = result.sort((a, b) => {
         const statusA = (a.call_status || '').toLowerCase();
         const statusB = (b.call_status || '').toLowerCase();
         const priorityA = statusPriority[statusA] || 99;
         const priorityB = statusPriority[statusB] || 99;
-        
-        // Sort by status priority only
         if (priorityA !== priorityB) {
           return priorityA - priorityB;
         }
-        
-        // Within same status, sort by created_at (newest first)
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
     }
-
-    // Return the list of volunteer calls
     return result;
   } catch (e) {
     // Log unexpected errors
@@ -327,8 +364,8 @@ export async function createAction(formData: FormData): Promise<void> {
       call_title: String(formData.get("call_title") || "").trim() || null,
       call_details: String(formData.get("call_details") || "").trim() || null,
       call_location: String(formData.get("call_location") || "").trim() || null,
-      call_starttime: String(formData.get("call_starttime") || null) || null,
-      call_endtime: String(formData.get("call_endtime") || null) || null,
+      call_starttime: formData.get("call_starttime") ? String(formData.get("call_starttime")) : null,
+      call_endtime: formData.get("call_endtime") ? String(formData.get("call_endtime")) : null,
       capacity: formData.get("capacity") ? Number(String(formData.get("capacity"))) : null,
       call_status: String(formData.get("call_status") || "Active") || "Active",
     };
@@ -423,11 +460,17 @@ export async function updateAction(formData: FormData): Promise<void> {
     const updateData: any = {};
 
     // Populate updateData with provided fields
-    if (formData.has("call_title")) updateData.call_title = String(formData.get("call_title") || null) || null;
-    if (formData.has("call_details")) updateData.call_details = String(formData.get("call_details") || null) || null;
-    if (formData.has("call_location")) updateData.call_location = String(formData.get("call_location") || null) || null;
-    if (formData.has("call_starttime")) updateData.call_starttime = String(formData.get("call_starttime") || null) || null;
-    if (formData.has("call_endtime")) updateData.call_endtime = String(formData.get("call_endtime") || null) || null;
+    if (formData.has("call_title")) updateData.call_title = String(formData.get("call_title") || "").trim() || null;
+    if (formData.has("call_details")) updateData.call_details = String(formData.get("call_details") || "").trim() || null;
+    if (formData.has("call_location")) updateData.call_location = String(formData.get("call_location") || "").trim() || null;
+    if (formData.has("call_starttime")) {
+      const val = formData.get("call_starttime");
+      updateData.call_starttime = val ? String(val) : null;
+    }
+    if (formData.has("call_endtime")) {
+      const val = formData.get("call_endtime");
+      updateData.call_endtime = val ? String(val) : null;
+    }
     if (formData.has("capacity")) updateData.capacity = formData.get("capacity") ? Number(String(formData.get("capacity"))) : null;
     if (formData.has("call_status")) updateData.call_status = String(formData.get("call_status") || "") || null;
 
@@ -660,18 +703,15 @@ export async function deleteAction(formData: FormData): Promise<void> {
       if (error) console.error("deleteAction error:", error);
     }
 
-    // Revalidate the admin volunteer list so the UI updates immediately, then redirect
-    try { revalidatePath('/admin/volunteer'); } catch (_) {}
-    redirect("/admin/volunteer");
+      // Revalidate the admin volunteer list so the UI updates immediately
+      try { revalidatePath('/admin/volunteer'); } catch (_) {}
+      // Do not redirect; let client handle UI update
   } catch (e: any) {
     // If Next's redirect throws, rethrow so the runtime can handle navigation
     if (e && typeof e === 'object' && (String((e as any).digest || '').startsWith('NEXT_REDIRECT') || String((e as any).message || '').includes('NEXT_REDIRECT'))) {
       throw e;
     }
     
-    // Log unexpected errors
-    console.error(e?.message || "Unexpected error");
-
     // End function
     return;
   }

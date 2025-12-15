@@ -21,76 +21,33 @@ import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false); // Add mounted state
-  // State for user info
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isGuest, setIsGuest] = useState(true);
 
+  // Fetch user info from Supabase on mount
   useEffect(() => {
-    setMounted(true); // Set mounted true after hydration
-
-    // Check if the user is authenticated
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      setLoading(false);
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@") [0] || "");
         setUserEmail(user.email || "");
-        // Try to get name from user metadata, fallback to email username
-        const nameFromMeta =
-          user.user_metadata?.full_name || user.user_metadata?.name || "";
-        setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+        // Check if user is admin by querying the admin table using auth_id
+        const { data: adminData, error } = await supabase
+          .from('admin')
+          .select('auth_id')
+          .eq('auth_id', user.id)
+          .single();
+        setIsAdmin(!!adminData && !error);
+        setIsGuest(false);
       } else {
-        setUserName("");
-        setUserEmail("");
+        setIsGuest(true);
       }
     };
-
-    checkAuth();
-
-    // Listen for auth state changes (like logout)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session?.user);
-      if (session?.user) {
-        setUserEmail(session.user.email || "");
-        const nameFromMeta =
-          session.user.user_metadata?.full_name ||
-          session.user.user_metadata?.name ||
-          "";
-        setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
-      } else {
-        setUserName("");
-        setUserEmail("");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    fetchUser();
   }, []);
-
-  // Return loading state
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#E1E69D] flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </main>
-    );
-  }
-
-  // If authenticated, show user dashboard instead
-  if (isAuthenticated) {
-    // Dynamically import the UserDashboard component
-    const UserDashboard = require("./(user)/page").default;
-    return <UserDashboard />;
-  }
 
   return (
     <main className="relative min-h-screen bg-[#E1E69D] flex flex-col items-center overflow-hidden">
@@ -100,7 +57,7 @@ export default function Home() {
         setSidebarOpen={setSidebarOpen} 
         userName={userName} 
         userEmail={userEmail} 
-        variant={"guest"} 
+        variant={isGuest ? "guest" : isAdmin ? "admin" : "user"} 
         router={router} 
       />
 
@@ -214,20 +171,16 @@ export default function Home() {
               priority
             />
           </div>
-
-        {/* Login Button */}
-          <Button
-            asChild
-            className="relative z-10 w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg transition-all lg:-mb-2"
-          >
-            <Link href="/login">Login</Link>
-          </Button>
-          {/* View Catalog Button */}
+          {/* Back to Home Button */}
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
-            <Button className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all">
-              <Link href="/catalog">View Catalog</Link>
+            <Button
+              className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all"
+              onClick={() => router.push(isAdmin ? "/admin" : "/")}
+            >
+              Back to Home
             </Button>
           </div>
+
         </div>
 
         {/* --- Navigation Section --- */}
@@ -445,8 +398,7 @@ export default function Home() {
               >
                 A compassionate and informed community committed to fostering
                 kindness, empathy, and respect for all animals through
-                education, responsible pet ownership, and collaborative
-                efforts.
+                education, responsible pet ownership, and collaborative efforts.
               </p>
             </div>
           </div>
@@ -650,7 +602,7 @@ export default function Home() {
                   Our Mission
                 </button>
               </li>
-<li>
+              <li>
                 <a href="#" className="hover:underline">
                   Programs
                 </a>

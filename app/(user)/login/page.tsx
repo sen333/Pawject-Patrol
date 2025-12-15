@@ -1,32 +1,101 @@
+"use client";
+
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 // Login Page Component
 
-"use client";
+
 
 import Image from "next/image";
 import Link from "next/link";
 import { signInWithGoogle } from "@/actions/login/user";
 import { useState } from "react";
+import { supabase } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+
 
 export default function LoginPage() {
-  // Loading and error state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Enforce @up.edu.ph restriction on mount and on auth state change
+  useEffect(() => {
+    // Show error from query param if redirected from dashboard
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setError(decodeURIComponent(urlError));
+    }
+    const checkEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.email && !user.email.endsWith("@up.edu.ph")) {
+        await supabase.auth.signOut();
+        setError("Please use your UP Email.");
+        setIsLoading(false);
+        // Stay on login page
+      }
+    };
+    checkEmail();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user && session.user.email && !session.user.email.endsWith("@up.edu.ph")) {
+        supabase.auth.signOut().then(() => {
+          setError("Please use your UP Email.");
+          setIsLoading(false);
+          // Stay on login page
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [router, searchParams]);
 
   // Handle Google login
   const handleGoogleLogin = async () => {
-    // Set loading state and clear previous errors
     setIsLoading(true);
     setError("");
 
-    // Call server action to sign in with Google
-    const result = await signInWithGoogle();
+    try {
+      // Call server action to sign in with Google
+      const result = await signInWithGoogle();
 
-    // Handle potential error
-    if (result && !result.success) {
-      setError(result.message);
+      // Handle potential error from server action
+      if (result && !result.success) {
+        // Check for INCORRECT_DOMAIN error from Supabase trigger
+        if (result.message && result.message.includes("INCORRECT_DOMAIN")) {
+          setError("Please use your @up.edu.ph email address to sign up.");
+        } else {
+          setError(result.message);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Wait for auth state to update, then check email
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.email) {
+          if (!user.email.endsWith("@up.edu.ph")) {
+            // Not a UP email, sign out and show error
+            await supabase.auth.signOut();
+            setError("Please use your UP Email.");
+            setIsLoading(false);
+            // Do NOT redirect to dashboard, stay on login
+            return;
+          } else {
+            // Only redirect if UP email
+            router.replace("/user");
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      // Handle error thrown by Supabase client
+      if (err && typeof err === "object" && "message" in err && typeof err.message === "string" && err.message.includes("INCORRECT_DOMAIN")) {
+        setError("Please use your @up.edu.ph email address to sign up.");
+      } else {
+        setError("An unexpected error occurred.");
+      }
       setIsLoading(false);
     }
-    // If successful, user will be redirected automatically
   };
 
   return (

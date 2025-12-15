@@ -188,7 +188,7 @@ export default function HeaderAndBackground() {
       const { count: callCount } = await supabase
         .from("volunteer_call")
         .select("*", { count: "exact", head: true })
-        .in("call_status", ["Active", "Filled"]);
+        .in("call_status", ["Active", "Filled", "Ongoing"]);
 
       // Fetch recent entries for quick preview (latest 3)
       const { data: recentAnimalsData } = await supabase
