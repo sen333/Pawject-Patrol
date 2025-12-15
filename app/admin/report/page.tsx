@@ -143,6 +143,7 @@ export default function AdminReportsPage() {
 		<>
 			{/* Sidebar */}
 			<Sidebar
+				variant="admin"
 				sidebarOpen={sidebarOpen}
 				setSidebarOpen={setSidebarOpen}
 				userName={userName}
@@ -283,7 +284,7 @@ export default function AdminReportsPage() {
 										{r.report_id ? (
 											<Link
 												href={`/admin/report/${r.report_id}`}
-												className="px-5 py-2 sm:px-7 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold border-2 border-[#8D52A7] bg-[#8D52A7] text-white shadow-md transition-all hover:bg-[#6D28D9] hover:border-[#6D28D9] hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#7C3AED] w-full sm:w-auto text-center"
+												className="px-5 py-2 sm:px-7 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold border-2 border-[#8D52A7] bg-[#8D52A7] text-white shadow-md transition-all hover:opacity-90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#7C3AED] w-full sm:w-auto text-center"
 												style={{ fontFamily: 'Genty Sans', minWidth: 0 }}
 											>
 												View Details

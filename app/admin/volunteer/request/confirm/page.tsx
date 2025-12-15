@@ -99,6 +99,7 @@ export default function ConfirmPage(props: any) {
     <main className="min-h-screen" style={{ backgroundColor: '#E6E6E6' }}>
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}

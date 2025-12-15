@@ -210,6 +210,7 @@ export default function AdminVolunteerPage() {
 
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}

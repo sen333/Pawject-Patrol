@@ -9,6 +9,7 @@ import { supabase } from "@/utils/supabase/client";
 import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import { updateAnimalProfile } from "@/actions/profiles/admin";
 import dynamic from "next/dynamic";
+import Sidebar from "@/components/Sidebar";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -283,9 +284,10 @@ export default function EditAnimalPage() {
 				gender,
 				vaccinationStatus,
 				photo: photoFile || undefined,
-				// new fields (include both snake_case and camelCase aliases)
-				recorder_name: recorderName || undefined,
-				recorderName: recorderName || undefined,
+							<Sidebar
+							variant="admin"
+							sidebarOpen={sidebarOpen}
+							setSidebarOpen={setSidebarOpen}
 				animal_theme: theme || undefined,
 				animalTheme: theme || undefined,
 				date_seen: dateSeen || undefined,
@@ -324,188 +326,17 @@ export default function EditAnimalPage() {
 		}
 	};
 
-	// Sidebar Component
-	const Sidebar = () => (
-		<>
-			{/* Backdrop */}
-			<div
-				className={`fixed inset-0 bg-black/50 z-30 transition-opacity ${
-					sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-				}`}
-				onClick={() => setSidebarOpen(false)}
-			/>
-
-			{/* Sidebar */}
-			<div
-				className={`fixed left-0 top-0 h-screen w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
-					sidebarOpen ? "translate-x-0" : "-translate-x-full"
-				} overflow-y-auto`}
-				style={{
-					display: "flex",
-					padding: "24px",
-					flexDirection: "column",
-					justifyContent: "space-between",
-					alignItems: "center",
-				}}
-			>
-				{/* Close Button */}
-				<button
-					onClick={() => setSidebarOpen(false)}
-					className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-lg transition"
-				>
-					<X className="w-6 h-6 text-gray-800" />
-				</button>
-
-				{/* Top Section */}
-				<div className="flex flex-col gap-6 items-center w-full">
-					<Image
-						src="/YFALogo.png"
-						alt="Youth for Animals Logo"
-						width={92}
-						height={77}
-					/>
-
-					<div className="flex flex-col gap-6 items-center w-full">
-						{/* Account Information */}
-						<div
-							className="w-full"
-							style={{
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "flex-start",
-								gap: "5px",
-								alignSelf: "stretch",
-								borderRadius: "16px",
-								border: "1px solid #3C3333",
-								backgroundColor: "#E6E6E6",
-								padding: "12px",
-							}}
-						>
-							<div className="flex items-center gap-3 w-full">
-								<div className="w-10 h-10 rounded-full bg-gray-400" />
-								<div className="flex-1">
-									<p className="text-sm font-semibold text-gray-800">{userName || "Admin"}</p>
-									<p className="text-xs text-gray-600">{userEmail || ""}</p>
-								</div>
-							</div>
-						</div>
-
-						{/* Navigation */}
-						<nav
-							className="w-full"
-							style={{
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "flex-start",
-								gap: "5px",
-								alignSelf: "stretch",
-								borderRadius: "16px",
-								border: "1px solid #3C3333",
-								backgroundColor: "#E6E6E6",
-								padding: "12px",
-							}}
-						>
-							{[
-								{ label: "Home", icon: <div className="w-6 h-6" /> },
-								{ label: "About Us", icon: <div className="w-6 h-6" /> },
-								{ label: "Mission", icon: <div className="w-6 h-6" /> },
-								{ label: "Vision", icon: <div className="w-6 h-6" /> },
-								{ label: "Goals", icon: <div className="w-6 h-6" /> },
-							].map((item) => (
-								<button
-									key={item.label}
-									className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-									onClick={() => setSidebarOpen(false)}
-								>
-									{item.icon}
-									<span className="font-semibold text-gray-800 text-sm">{item.label}</span>
-								</button>
-							))}
-						</nav>
-					</div>
-				</div>
-
-				{/* Animal Actions Section */}
-				<div
-					className="w-full"
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "flex-start",
-						gap: "5px",
-						alignSelf: "stretch",
-						borderRadius: "16px",
-						border: "1px solid #000",
-						backgroundColor: "#E6E6E6",
-						padding: "12px",
-						marginTop: "24px",
-					}}
-				>
-					<Link
-						href="/catalog"
-						className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-						onClick={() => setSidebarOpen(false)}
-					>
-						<div className="w-6 h-6 flex items-center justify-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-								<path d="M3 9L12 2L21 9V20C21 20.53 20.79 21.04 20.41 21.41C20.04 21.79 19.53 22 19 22H5C4.47 22 3.96 21.79 3.59 21.41C3.21 21.04 3 20.53 3 20V9Z" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-								<path d="M9 22V12H15V22" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-						</div>
-						<span className="font-semibold text-gray-800 text-sm">Animal Catalogue</span>
-					</Link>
-
-					<Link
-						href="/form"
-						className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-						onClick={() => setSidebarOpen(false)}
-					>
-						<div className="w-6 h-6 flex items-center justify-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-								<path d="M20.42 4.58C19.92 4.08 19.32 3.68 18.67 3.4C18.01 3.13 17.31 2.99 16.6 2.99C15.89 2.99 15.18 3.13 14.52 3.4C13.87 3.68 13.27 4.08 12.77 4.58L12 5.36L11.23 4.58C10.73 4.08 10.13 3.68 9.48 3.4C8.82 3.13 8.12 2.99 7.41 2.99C6.7 2.99 5.99 3.13 5.33 3.4C4.68 3.68 4.08 4.08 3.58 4.58C1.46 6.7 1.33 10.28 4 13L12 21L20 13C22.67 10.28 22.54 6.7 20.42 4.58Z" stroke="#8D52A7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-						</div>
-						<span className="font-semibold text-gray-800 text-sm">Report Animal</span>
-					</Link>
-
-					<button
-						className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/30 transition text-left w-full"
-						onClick={() => setSidebarOpen(false)}
-					>
-						<div className="w-6 h-6 flex items-center justify-center">
-							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-								<path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-								<path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-								<path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-								<path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="#3C3333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-						</div>
-						<span className="font-semibold text-gray-800 text-sm">Task Volunteer</span>
-					</button>
-				</div>
-
-				{/* Bottom Section – Social Links */}
-				<div className="flex items-center gap-3 mt-6">
-					<a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
-						<Facebook size={18} />
-					</a>
-					<a href="#" className="bg-[#8D52A7] p-2 rounded-full text-white hover:opacity-80">
-						<Instagram size={18} />
-					</a>
-					<a href="#" className="bg-[#5E9BBA] p-2 rounded-full text-white hover:opacity-80">
-						<Twitter size={18} />
-					</a>
-					<a href="#" className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80">
-						<Mail size={18} />
-					</a>
-				</div>
-			</div>
-		</>
-	);
-
 	return (
 		<main className="min-h-screen bg-[#E6E6E6]">
-			<Sidebar />
+			{/* Sidebar */}
+			<Sidebar
+			variant="admin"
+			sidebarOpen={sidebarOpen}
+			setSidebarOpen={setSidebarOpen}
+			userName={userName}
+			userEmail={userEmail}
+			router={router}
+			/>
 			<header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
 				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
 					<button

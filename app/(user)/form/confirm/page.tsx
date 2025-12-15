@@ -9,6 +9,18 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { createAnimalReport } from "@/actions/form/user";
 import { getGlobalPhotoFile } from "@/app/(user)/form/page";
+import Sidebar from "@/components/Sidebar";
+import { supabase } from "@/utils/supabase/client";
+import Link from "next/link";
+import {
+  Menu,
+  LogIn,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+} from "lucide-react";
 
 // Dynamically import AdminMapView with no SSR
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
@@ -23,6 +35,12 @@ function ConfirmationContent() {
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
 	const [showImageModal, setShowImageModal] = useState(false);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	// Auth-connected sidebar state
+	const [userName, setUserName] = useState("");
+	const [userEmail, setUserEmail] = useState("");
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
 
 	// Extract all data from URL params
 	const reportTitle = searchParams.get("reportTitle") || "";
@@ -48,6 +66,45 @@ function ConfirmationContent() {
 		if (file) {
 			setPhotoFile(file);
 		}
+	}, []);
+
+	// Auth-connected sidebar state
+	useEffect(() => {
+		const setupAuth = async () => {
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+			setIsAuthenticated(!!user);
+			if (user) {
+				const nameFromMeta =
+					(user.user_metadata?.full_name as string) ||
+					(user.user_metadata?.name as string) ||
+					"";
+				setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+				setUserEmail(user.email || "");
+			} else {
+				setUserName("");
+				setUserEmail("");
+			}
+		};
+		setupAuth();
+		const { data: listener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+			setIsAuthenticated(!!session?.user);
+			if (session?.user) {
+				const nameFromMeta =
+					(session.user.user_metadata?.full_name as string) ||
+					(session.user.user_metadata?.name as string) ||
+					"";
+				setUserName(nameFromMeta || session.user.email?.split("@")[0] || "");
+				setUserEmail(session.user.email || "");
+			} else {
+				setUserName("");
+				setUserEmail("");
+			}
+		});
+		return () => {
+			listener.subscription.unsubscribe();
+		};
 	}, []);
 
 
@@ -160,6 +217,16 @@ function ConfirmationContent() {
 
 	return (
 		<main className="min-h-screen bg-[#E6E6E6]">
+			{/* Sidebar */}
+			<Sidebar
+				sidebarOpen={sidebarOpen}
+				setSidebarOpen={setSidebarOpen}
+				userName={userName}
+				userEmail={userEmail ?? undefined}
+				router={router}
+				variant="user"
+			/>
+
 			{/* Image Modal */}
 			{showImageModal && photoUrl && (
 				<div
@@ -187,31 +254,27 @@ function ConfirmationContent() {
 			{/* Header matching form */}
 			<header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
 				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-					<button 
-						type="button" 
-						className="p-2 hover:bg-gray-100 rounded-lg transition" 
-						aria-label="Menu"
-						onClick={() => router.push("/form")}
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-							<line x1="3" y1="12" x2="21" y2="12"></line>
-							<line x1="3" y1="6" x2="21" y2="6"></line>
-							<line x1="3" y1="18" x2="21" y2="18"></line>
-						</svg>
-					</button>
-					<div className="flex-1 flex justify-center items-center h-full">
-						<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} className="flex-shrink-0" />
-					</div>
-					<button
-						onClick={() => router.push("/")}
-						className="p-2 hover:bg-gray-100 rounded-lg transition"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-							<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-							<polyline points="10 17 15 12 10 7"></polyline>
-							<line x1="15" y1="12" x2="3" y2="12"></line>
-						</svg>
-					</button>
+				<button
+					className="p-2 hover:bg-gray-100 rounded-lg transition"
+					onClick={() => setSidebarOpen(true)}
+				>
+					<Menu className="w-6 h-6 text-gray-800" />
+				</button>
+				<div className="flex-1 flex justify-center items-center h-full">
+					<Image
+					src="/Moodboard2.png"
+					alt="Pawject Patrol Logo"
+					width={77}
+					height={36}
+					className="flex-shrink-0"
+					/>
+				</div>
+				<Link
+					href="/"
+					className="p-2 hover:bg-gray-100 rounded-lg transition"
+				>
+					<LogIn className="w-6 h-6 text-gray-800" />
+				</Link>
 				</div>
 			</header>
 

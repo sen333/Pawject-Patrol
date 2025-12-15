@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/utils/supabase/client";
 import Link from "next/link";
+import Sidebar from "@/components/Sidebar";
 
 const AdminMapView = dynamic(() => import("@/components/AdminMapView"), { ssr: false });
 
@@ -209,109 +210,17 @@ function ConfirmationContent() {
     }
   }
 
-  // Sidebar Component
-  const Sidebar = () => (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-30 transition-opacity ${
-          sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setSidebarOpen(false)}
-      />
-
-      {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-screen w-[375px] bg-[#E1E69D] z-40 transition-transform transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } overflow-y-auto`}
-        style={{
-          display: "flex",
-          padding: "24px",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-lg transition"
-        >
-          <X className="w-6 h-6 text-gray-800" />
-        </button>
-
-        <div className="flex flex-col gap-6 items-center w-full">
-          <Image src="/YFALogo.png" alt="Youth for Animals Logo" width={92} height={77} />
-
-          <div className="flex flex-col gap-6 items-center w-full">
-            <div
-              className="w-full"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: "5px",
-                borderRadius: "16px",
-                border: "1px solid #3C3333",
-                backgroundColor: "#E6E6E6",
-                padding: "12px",
-              }}
-            >
-              <div className="flex items-center gap-3 w-full">
-                <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center">
-                  <span className="text-sm font-bold text-white">
-                    {(userName || "?").charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span
-                    className="font-semibold text-gray-800 text-sm"
-                    style={{
-                      color: "#3C3333",
-                      fontFamily: "Genty Sans",
-                      fontSize: "16px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {userName || "Admin"}
-                  </span>
-                  <span
-                    className="text-xs text-gray-600"
-                    style={{
-                      color: "#3C3333",
-                      fontSize: "12px",
-                      fontWeight: 400,
-                    }}
-                  >
-                    {userEmail || "admin@pawjectpatrol.com"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 mt-6">
-          <a href="#" className="bg-[#C575AD] p-2 rounded-full text-white hover:opacity-80">
-            <Facebook size={18} />
-          </a>
-          <a href="#" className="bg-[#8D52A7] p-2 rounded-full text-white hover:opacity-80">
-            <Instagram size={18} />
-          </a>
-          <a href="#" className="bg-[#5E9BBA] p-2 rounded-full text-white hover:opacity-80">
-            <Twitter size={18} />
-          </a>
-          <a href="#" className="bg-[#9BBF94] p-2 rounded-full text-white hover:opacity-80">
-            <Mail size={18} />
-          </a>
-        </div>
-      </div>
-    </>
-  );
-
   return (
     <main className="min-h-screen bg-[#E1E69D]">
-      <Sidebar />
+      {/* Sidebar */}
+      <Sidebar
+          variant="admin"
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        userName={userName}
+        userEmail={userEmail}
+        router={router}
+      />
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
@@ -325,12 +234,12 @@ function ConfirmationContent() {
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
-          <button
-            onClick={() => router.push("/admin")}
-            className="px-4 py-1.5 rounded-md text-sm bg-[#8D52A7] text-white hover:bg-[#7B4692]"
+          <Link
+            href="/"
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
-            Dashboard
-          </button>
+            <LogIn className="w-6 h-6 text-gray-800" />
+          </Link>
         </div>
       </header>
 

@@ -94,6 +94,7 @@ export default function EditVolunteerPage(props: any) {
     <main className="min-h-screen bg-[#E6E6E6]">
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}

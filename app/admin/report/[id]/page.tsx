@@ -275,6 +275,7 @@ export default function AdminReportDetail({
     <main className="min-h-screen" style={{ backgroundColor: "#E1E69D" }}>
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}
