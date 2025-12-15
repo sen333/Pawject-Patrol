@@ -110,13 +110,6 @@ export default function UserDashboard() {
         return;
       }
 
-      // Enforce @up.edu.ph email restriction
-      if (!user.email || !user.email.endsWith("@up.edu.ph")) {
-        await supabase.auth.signOut();
-        router.replace("/login?error=Please%20use%20your%20UP%20Email.");
-        return;
-      }
-
       setUserEmail(user.email ?? null);
       const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
       setUserName(name);
