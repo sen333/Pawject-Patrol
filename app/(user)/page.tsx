@@ -65,14 +65,9 @@ type CatalogAnimal = {
   created_at: string | null;
 };
 
+export default function UserDashboard() {
   const [activeVolunteerIdx, setActiveVolunteerIdx] = useState(0);
   const router = useRouter();
-
-  // Handle user logout and redirect to login page
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  };
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -105,40 +100,43 @@ type CatalogAnimal = {
 
     const checkUser = async () => {
       const {
-        return (
-          <main className="min-h-screen bg-[#E6E6E6]">
-            {/* Sidebar */}
-            <Sidebar
-              variant="user"
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
-              userName={userName}
-              userEmail={userEmail}
-              router={router}
-            />
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (!isMounted) return;
 
-            <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
-              <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-                <button
-                  className="p-2 hover:bg-gray-100 rounded-lg transition"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <Menu className="w-6 h-6 text-gray-800" />
-                </button>
-                <div className="flex-1 flex justify-center items-center h-full">
-                  <Image
-                    src="/Moodboard2.png"
-                    alt="Pawject Patrol Logo"
-                    width={77}
-                    height={36}
-                    className="flex-shrink-0"
-                  />
-                </div>
-                <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition" >
-                  <LogIn className="w-6 h-6 text-gray-800" />
-                </button>
-              </div>
-            </header>
+      if (error || !user) {
+        router.replace("/login");
+        return;
+      }
+
+      setUserEmail(user.email ?? null);
+      const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      setUserName(name);
+      
+      // Fetch all dashboard data
+      const [statsData, communityData, reportsData, volunteersData, catalogData] = await Promise.all([
+        getUserDashboardStats(),
+        getCommunityStats(),
+        getUserRecentReports(50),
+        getUpcomingVolunteerCalls(50),
+        getRecentCatalogAnimals(3)
+      ]);
+      
+      if (isMounted) {
+        setStats(statsData);
+        setCommunityStats(communityData);
+        setRecentReports(reportsData.data || []);
+        setVolunteerCalls(volunteersData.data || []);
+        setUserJoinedCalls(volunteersData.userJoined || []);
+        setCatalogAnimals(catalogData.data || []);
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+
+    return () => {
       isMounted = false;
     };
   }, [router]);
