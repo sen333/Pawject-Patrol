@@ -234,12 +234,15 @@ function ConfirmationContent() {
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
-          <Link
-            href="/"
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.replace("/admin/login");
+            }}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
             <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
         </div>
       </header>
 

@@ -78,6 +78,12 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
   const [modalMessage, setModalMessage] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -280,7 +286,7 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
             </div>
 
             <button
-              onClick={() => router.push('/login')}
+              onClick={handleLogout}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
               <LogIn className="w-6 h-6 text-gray-800" />

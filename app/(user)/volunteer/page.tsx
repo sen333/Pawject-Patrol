@@ -85,6 +85,12 @@ export default function UserVolunteerPage() {
   const [userStatuses, setUserStatuses] = useState<{ [key: string]: string | null }>({});
   const [actionLoading, setActionLoading] = useState<string | null>(null); // call_id of loading action
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -212,10 +218,7 @@ export default function UserVolunteerPage() {
           <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
             <button
               className="p-2 hover:bg-gray-100 rounded-lg transition"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.replace("/");
-              }}
+              onClick={handleLogout}
             >
               <LogIn className="w-6 h-6 text-gray-800" />
             </button>

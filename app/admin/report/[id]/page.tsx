@@ -299,12 +299,15 @@ export default function AdminReportDetail({
               height={36}
             />
           </div>
-          <Link
-            href="/admin/login"
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.replace("/admin/login");
+            }}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
             <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -807,17 +810,17 @@ export default function AdminReportDetail({
                     </p>
                   </div>
                   {data.latitude && data.longitude && (
-                    <div className="mt-4">
+                    <div className="mt-4 relative z-0">
                       <p
                         className="text-sm mb-2"
                         style={{
                           color: "#4A5565",
-                          fontFamily: '"Genty Sans", sans-serif',
+                          fontFamily: 'Genty Sans, sans-serif',
                         }}
                       >
                         Map View
                       </p>
-                      <div className="rounded-lg h-48 overflow-hidden">
+                      <div className="rounded-lg h-48 overflow-hidden relative z-0">
                         <AdminMapView
                           latitude={data.latitude}
                           longitude={data.longitude}
@@ -830,7 +833,7 @@ export default function AdminReportDetail({
                         className="text-xs mt-2 inline-block hover:opacity-90"
                         style={{
                           color: "#8D52A7",
-                          fontFamily: '"Genty Sans", sans-serif',
+                          fontFamily: 'Genty Sans, sans-serif',
                         }}
                       >
                         View on OpenStreetMap →

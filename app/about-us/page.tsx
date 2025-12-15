@@ -123,7 +123,10 @@ export default function Home() {
                 className="flex-shrink-0"
               />
             </div>
-            <Link href="/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <Link
+              href={isAdmin ? "/admin/login" : "/login"}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
               <LogIn className="w-6 h-6 text-gray-800" />
             </Link>
           </div>

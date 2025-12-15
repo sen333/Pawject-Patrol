@@ -108,6 +108,50 @@ export default function AdminAnimalDetailPage() {
     };
   }, [id]);
 
+  // Fetch current user and verify admin privileges for sidebar display
+	useEffect(() => {
+		let mounted = true;
+
+		const checkAdmin = async () => {
+			try {
+				const { data: { user }, error } = await supabase.auth.getUser();
+				if (!mounted) return;
+
+				if (error || !user) {
+					router.replace("/admin/login");
+					return;
+				}
+
+				setUserEmail(user.email || "");
+				const nameFromMeta = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || "";
+				setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+
+				// Verify admin table contains this user
+				const { data: adminData, error: adminError } = await supabase
+					.from("admin")
+					.select("auth_id")
+					.eq("auth_id", user.id)
+					.single();
+
+				if (!mounted) return;
+
+				if (adminError || !adminData) {
+					router.replace("/admin/login");
+					return;
+				}
+			} catch (e) {
+				console.error("Admin check failed:", e);
+				if (mounted) router.replace("/admin/login");
+			}
+		};
+
+		checkAdmin();
+
+		return () => {
+			mounted = false;
+		};
+	}, [router]);
+
   const handleDelete = async () => {
     if (!id) return;
 
@@ -158,6 +202,12 @@ export default function AdminAnimalDetailPage() {
 
   const themeColor = getThemeColor(animal.animal_theme);
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
+
   return (
     <main className="min-h-screen bg-[#E1E69D]">
       {/* Sidebar */}
@@ -172,7 +222,10 @@ export default function AdminAnimalDetailPage() {
       {/* Navigation header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <div className="flex-1 flex justify-center items-center h-full">
@@ -183,7 +236,10 @@ export default function AdminAnimalDetailPage() {
               height={36}
             />
           </div>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <LogIn className="w-6 h-6 text-gray-800" />
           </button>
         </div>

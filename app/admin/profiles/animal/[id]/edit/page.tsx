@@ -284,10 +284,9 @@ export default function EditAnimalPage() {
 				gender,
 				vaccinationStatus,
 				photo: photoFile || undefined,
-							<Sidebar
-							variant="admin"
-							sidebarOpen={sidebarOpen}
-							setSidebarOpen={setSidebarOpen}
+				// new fields (include both snake_case and camelCase aliases)
+				recorder_name: recorderName || undefined,
+				recorderName: recorderName || undefined,
 				animal_theme: theme || undefined,
 				animalTheme: theme || undefined,
 				date_seen: dateSeen || undefined,
@@ -330,12 +329,12 @@ export default function EditAnimalPage() {
 		<main className="min-h-screen bg-[#E6E6E6]">
 			{/* Sidebar */}
 			<Sidebar
-			variant="admin"
-			sidebarOpen={sidebarOpen}
-			setSidebarOpen={setSidebarOpen}
-			userName={userName}
-			userEmail={userEmail}
-			router={router}
+				variant="admin"
+				sidebarOpen={sidebarOpen}
+				setSidebarOpen={setSidebarOpen}
+				userName={userName}
+				userEmail={userEmail}
+				router={router}
 			/>
 			<header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
 				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">

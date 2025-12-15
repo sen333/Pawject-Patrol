@@ -93,6 +93,12 @@ export default function ReportFormSample() {
   const [userEmail, setUserEmail] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   useEffect(() => {
     const savedData = sessionStorage.getItem("animalReportFormData");
     if (savedData) {
@@ -301,12 +307,12 @@ export default function ReportFormSample() {
               className="flex-shrink-0"
             />
           </div>
-          <Link
-            href="/"
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+          <button 
+            onClick={handleLogout} 
+            className="p-2 hover:bg-gray-100 rounded-lg transition" 
+          > 
+            <LogIn className="w-6 h-6 text-gray-800" /> 
+          </button>
         </div>
       </header>
 
@@ -603,7 +609,7 @@ export default function ReportFormSample() {
 
                 {/* Map */}
                 <div className="rounded-xl bg-[#E6E6E6] p-4 mt-2">
-                  <div className="rounded-lg h-64 bg-[#E1E69D] overflow-hidden relative">
+                  <div className="rounded-lg h-64 bg-[#E1E69D] overflow-hidden relative z-0">
                     <div className="absolute inset-0 z-10">
                       <MapView
                         latitude={lat!}

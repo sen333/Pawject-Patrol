@@ -383,7 +383,7 @@ function ConfirmationContent() {
 							>
 								Location on Map
 							</label>
-							<div className="rounded-lg h-72 md:h-80 bg-[#E1E69D] overflow-hidden">
+							<div className="rounded-lg h-72 md:h-80 bg-[#E1E69D] overflow-hidden relative z-0">
 								<AdminMapView latitude={lat} longitude={lng} />
 							</div>
 						</div>

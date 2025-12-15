@@ -162,9 +162,15 @@ export default function AdminReportsPage() {
 						<div className="flex-1 flex justify-center items-center h-full">
 							<Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} className="w-16 h-auto sm:w-[77px]" />
 						</div>
-						<Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+						<button
+							onClick={async () => {
+								await supabase.auth.signOut();
+								router.replace("/admin/login");
+							}}
+							className="p-2 hover:bg-gray-100 rounded-lg transition"
+						>
 							<LogIn className="w-6 h-6 text-gray-800" />
-						</Link>
+						</button>
 					</div>
 				</div>
 

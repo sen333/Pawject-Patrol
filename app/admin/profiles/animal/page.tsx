@@ -308,6 +308,17 @@ export default function ReportFormSample() {
     router.push(`/admin/profiles/animal/confirm?${params.toString()}`);
   }
 
+
+  // Logout logic for admin
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+      router.replace("/admin/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#E6E6E6] ">
       {/* Sidebar */}
@@ -337,12 +348,13 @@ export default function ReportFormSample() {
               className="flex-shrink-0"
             />
           </div>
-          <Link
-            href="/"
+          <button
+            onClick={handleLogout}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
+            aria-label="Logout"
           >
-            <LogIn className="w-6 h-6 text-gray-800" />
-          </Link>
+            <X className="w-6 h-6 text-gray-800" />
+          </button>
         </div>
       </header>
 
