@@ -19,34 +19,70 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase/client";
 import Sidebar from "@/components/Sidebar";
 
+
 export default function Home() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isGuest, setIsGuest] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sidebarVariant, setSidebarVariant] = useState<"user" | "admin" | "guest">("guest");
 
-  // Fetch user info from Supabase on mount
+  // Fetch user info and set sidebar variant
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndVariant = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
       if (user) {
         setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@") [0] || "");
         setUserEmail(user.email || "");
-        // Check if user is admin by querying the admin table using auth_id
-        const { data: adminData, error } = await supabase
-          .from('admin')
-          .select('auth_id')
-          .eq('auth_id', user.id)
-          .single();
-        setIsAdmin(!!adminData && !error);
-        setIsGuest(false);
+        if (user.email && user.email.endsWith("@up.edu.ph")) {
+          setSidebarVariant("user");
+        } else {
+          // Check if admin by querying the admin table using auth_id
+          const { data: adminData, error } = await supabase
+            .from('admin')
+            .select('auth_id')
+            .eq('auth_id', user.id)
+            .single();
+          if (adminData && !error) {
+            setSidebarVariant("admin");
+          } else {
+            setSidebarVariant("user");
+          }
+        }
       } else {
-        setIsGuest(true);
+        setSidebarVariant("guest");
       }
     };
-    fetchUser();
+    fetchUserAndVariant();
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) {
+        setUserName(session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@") [0] || "");
+        setUserEmail(session.user.email || "");
+        if (session.user.email && session.user.email.endsWith("@up.edu.ph")) {
+          setSidebarVariant("user");
+        } else {
+          const { data: adminData, error } = await supabase
+            .from('admin')
+            .select('auth_id')
+            .eq('auth_id', session.user.id)
+            .single();
+          if (adminData && !error) {
+            setSidebarVariant("admin");
+          } else {
+            setSidebarVariant("user");
+          }
+        }
+      } else {
+        setSidebarVariant("guest");
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -57,7 +93,7 @@ export default function Home() {
         setSidebarOpen={setSidebarOpen} 
         userName={userName} 
         userEmail={userEmail} 
-        variant={isGuest ? "guest" : isAdmin ? "admin" : "user"} 
+        variant={sidebarVariant} 
         router={router} 
       />
 
@@ -123,12 +159,38 @@ export default function Home() {
                 className="flex-shrink-0"
               />
             </div>
-            <Link
-              href={isAdmin ? "/admin/login" : "/login"}
+            {/* Login/Logout Button */}
+            <button
               className="p-2 hover:bg-gray-100 rounded-lg transition"
+              onClick={async () => {
+                // If not authenticated, go to /login
+                if (!isAuthenticated) {
+                  router.push("/login");
+                  return;
+                }
+                // Check if admin by querying admin table
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  const { data: adminData, error } = await supabase
+                    .from('admin')
+                    .select('auth_id')
+                    .eq('auth_id', user.id)
+                    .single();
+                  if (adminData && !error) {
+                    // Admin: logout and go to /admin/login
+                    await supabase.auth.signOut();
+                    router.replace("/admin/login");
+                    return;
+                  }
+                }
+                // User: logout and go to /login
+                await supabase.auth.signOut();
+                router.replace("/login");
+              }}
+              aria-label={isAuthenticated ? "Logout" : "Login"}
             >
-              <LogIn className="w-6 h-6 text-gray-800" />
-            </Link>
+                <LogIn className="w-6 h-6 text-gray-800" />
+            </button>
           </div>
         </header>
 
@@ -178,7 +240,7 @@ export default function Home() {
           <div className="absolute bottom-[-20px] sm:bottom-[-24px] md:bottom-[-20px] flex justify-center">
             <Button
               className="flex w-[155px] sm:w-[165px] md:w-[175px] h-[35px] sm:h-[38px] md:h-[40px] px-4 py-2 items-start gap-[10px] bg-[#8D52A7] hover:bg-[#7B4692] text-white font-bold text-sm sm:text-base rounded-lg shadow-lg transition-all"
-              onClick={() => router.push(isAdmin ? "/admin" : "/")}
+              onClick={() => router.push(sidebarVariant === "admin" ? "/admin" : "/")}
             >
               Back to Home
             </Button>
