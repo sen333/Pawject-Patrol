@@ -30,6 +30,7 @@ type FieldProps = {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   name?: string;
   id?: string;
+  required?: boolean;
 };
 
 type SelectFieldProps = {
@@ -39,6 +40,7 @@ type SelectFieldProps = {
   onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   name?: string;
   id?: string;
+  required?: boolean;
 };
 
 type TextAreaProps = {
@@ -48,9 +50,12 @@ type TextAreaProps = {
   onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
   name?: string;
   id?: string;
+  required?: boolean;
 };
 
 export default function ReportFormSample() {
+  // Error state for each field
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const router = useRouter();
 
   const [preview, setPreview] = useState<string | null>(null);
@@ -69,7 +74,7 @@ export default function ReportFormSample() {
   const [gender, setGender] = useState("Unknown");
   const [dateSeen, setDateSeen] = useState("");
   const [physicalDescription, setPhysicalDescription] = useState("");
-  const [vaccinationStatus, setVaccinationStatus] = useState("");
+  const [vaccinationStatus, setVaccinationStatus] = useState("Unknown");
   const [animalStatus, setAnimalStatus] = useState("Unknown");
   const [otherInfo, setOtherInfo] = useState("");
   const [area, setArea] = useState("");
@@ -203,9 +208,31 @@ export default function ReportFormSample() {
 
   async function handleConfirm() {
     setResultMsg(null);
+    const newErrors: { [key: string]: string } = {};
 
-    if (lat == null || lng == null) {
-      setResultMsg("Please capture location before proceeding.");
+    // Required field validations
+    if (!animalName.trim()) newErrors.animalName = "Please enter animal name.";
+    if (!animalType.trim()) newErrors.animalType = "Please enter type of animal.";
+    if (!breed.trim()) newErrors.breed = "Please enter breed of animal.";
+    if (!dateSeen) newErrors.dateSeen = "Please enter date seen.";
+    if (!physicalDescription.trim()) newErrors.physicalDescription = "Please enter physical description of animal.";
+    if (!area.trim()) newErrors.area = "Please enter area where animal was found.";
+    if (!landmark.trim()) newErrors.landmark = "Please enter landmark where animal was found.";
+    if (!road.trim()) newErrors.road = "Please enter road where animal was found.";
+    if (lat == null || lng == null) newErrors.location = "Please capture location before proceeding.";
+    if (gender === "Unknown") newErrors.gender = "Please select animal gender.";
+    if (vaccinationStatus === "Unknown") newErrors.vaccinationStatus = "Please select the vaccination status of animal.";
+    if (animalStatus === "Unknown") newErrors.animalStatus = "Please select the animal status.";
+    // Health issues validation
+    if (typeof hasHealthIssues !== "boolean") newErrors.hasHealthIssues = "Please specify if the animal has health issues.";
+    if (hasHealthIssues && !healthDetails.trim()) newErrors.healthDetails = "Please enter health issues of animal.";
+    // Collar validation
+    if (typeof hasCollar !== "boolean") newErrors.hasCollar = "Please specify if the animal has a collar.";
+    if (hasCollar && !collarDetails.trim()) newErrors.collarDetails = "Please enter collar details.";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setResultMsg("Please fill in all required fields.");
       return;
     }
 
@@ -528,45 +555,74 @@ export default function ReportFormSample() {
                 <Field
                   label="Recorder Name"
                   placeholder="Your name"
-                    value={recorderName}
-                    onChange={(e) => setRecorderName(e.target.value)}
-                    name="recorder_name"
-                    id="recorder_name"
+                  value={recorderName}
+                  onChange={(e) => setRecorderName(e.target.value)}
+                  name="recorder_name"
+                  id="recorder_name"
+                  required={false}
                 />
                 <Field
-                  label="Animal Name (Optional)"
+                  label="Animal Name"
                   placeholder="Animal's name"
-                    value={animalName}
-                    onChange={(e) => setAnimalName(e.target.value)}
-                    name="animal_name"
-                    id="animal_name"
+                  value={animalName}
+                  onChange={(e) => {
+                    setAnimalName(e.target.value);
+                    if (errors.animalName && e.target.value.trim()) {
+                      setErrors((prev) => { const { animalName, ...rest } = prev; return rest; });
+                    }
+                  }}
+                  name="animal_name"
+                  id="animal_name"
+                  required
+                  error={errors.animalName}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field
                   label="Type of animal"
                   placeholder="Dog, Cat, etc."
-                    value={animalType}
-                    onChange={(e) => setAnimalType(e.target.value)}
-                    name="animal_type"
-                    id="animal_type"
+                  value={animalType}
+                  onChange={(e) => {
+                    setAnimalType(e.target.value);
+                    if (errors.animalType && e.target.value.trim()) {
+                      setErrors((prev) => { const { animalType, ...rest } = prev; return rest; });
+                    }
+                  }}
+                  name="animal_type"
+                  id="animal_type"
+                  required
+                  error={errors.animalType}
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
                     label="Gender"
                     options={["Unknown", "Male", "Female"]}
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      name="animal_gender"
-                      id="animal_gender"
+                    value={gender}
+                    onChange={(e) => {
+                      setGender(e.target.value);
+                      if (errors.gender && e.target.value !== "Unknown") {
+                        setErrors((prev) => { const { gender, ...rest } = prev; return rest; });
+                      }
+                    }}
+                    name="animal_gender"
+                    id="animal_gender"
+                    required
+                    error={errors.gender}
                   />
                   <Field
                     label="Date Seen"
                     type="date"
-                      value={dateSeen}
-                      onChange={(e) => setDateSeen(e.target.value)}
-                      name="date_seen"
-                      id="date_seen"
+                    value={dateSeen}
+                    onChange={(e) => {
+                      setDateSeen(e.target.value);
+                      if (errors.dateSeen && e.target.value) {
+                        setErrors((prev) => { const { dateSeen, ...rest } = prev; return rest; });
+                      }
+                    }}
+                    name="date_seen"
+                    id="date_seen"
+                    required
+                    error={errors.dateSeen}
                   />
                 </div>
               </div>
@@ -576,26 +632,47 @@ export default function ReportFormSample() {
                   label="Breed"
                   placeholder="e.g. Labrador"
                   value={breed}
-                  onChange={(e) => setBreed(e.target.value)}
+                  onChange={(e) => {
+                    setBreed(e.target.value);
+                    if (errors.breed && e.target.value.trim()) {
+                      setErrors((prev) => { const { breed, ...rest } = prev; return rest; });
+                    }
+                  }}
                   name="animal_breed"
                   id="animal_breed"
+                  required
+                  error={errors.breed}
                 />
                 <SelectField
                   label="Vaccination Status"
-                  options={["","Fully Vaccinated","Partially Vaccinated","Not Vaccinated","Vaccination In Progress","Overdue for Vaccination","Unknown"]}
+                  options={["Unknown","Fully Vaccinated","Partially Vaccinated","Not Vaccinated","Vaccination In Progress","Overdue for Vaccination"]}
                   value={vaccinationStatus}
-                  onChange={(e) => setVaccinationStatus(e.target.value)}
+                  onChange={(e) => {
+                    setVaccinationStatus(e.target.value);
+                    if (errors.vaccinationStatus && e.target.value !== "Unknown") {
+                      setErrors((prev) => { const { vaccinationStatus, ...rest } = prev; return rest; });
+                    }
+                  }}
                   name="vaccination_status"
                   id="vaccination_status"
+                  required
+                  error={errors.vaccinationStatus}
                 />
               </div>
                 <TextArea
                   label="Physical Description"
                   placeholder="Color, size, markings, etc."
                   value={physicalDescription}
-                  onChange={(e) => setPhysicalDescription(e.target.value)}
+                  onChange={(e) => {
+                    setPhysicalDescription(e.target.value);
+                    if (errors.physicalDescription && e.target.value.trim()) {
+                      setErrors((prev) => { const { physicalDescription, ...rest } = prev; return rest; });
+                    }
+                  }}
                   name="animal_description"
                   id="animal_description"
+                  required
+                  error={errors.physicalDescription}
                 />
             </div>
           </div>
@@ -606,25 +683,46 @@ export default function ReportFormSample() {
               label="Area Seen (Location)"
               placeholder="General area"
               value={area}
-              onChange={(e) => setArea(e.target.value)}
+              onChange={(e) => {
+                setArea(e.target.value);
+                if (errors.area && e.target.value.trim()) {
+                  setErrors((prev) => { const { area, ...rest } = prev; return rest; });
+                }
+              }}
               name="area"
               id="area"
+              required
+              error={errors.area}
             />
             <Field
               label="Landmark Near Location"
               placeholder="Known landmark"
               value={landmark}
-              onChange={(e) => setLandmark(e.target.value)}
+              onChange={(e) => {
+                setLandmark(e.target.value);
+                if (errors.landmark && e.target.value.trim()) {
+                  setErrors((prev) => { const { landmark, ...rest } = prev; return rest; });
+                }
+              }}
               name="landmark"
               id="landmark"
+              required
+              error={errors.landmark}
             />
             <Field
               label="What Road?"
               placeholder="Street / road name"
               value={road}
-              onChange={(e) => setRoad(e.target.value)}
+              onChange={(e) => {
+                setRoad(e.target.value);
+                if (errors.road && e.target.value.trim()) {
+                  setErrors((prev) => { const { road, ...rest } = prev; return rest; });
+                }
+              }}
               name="road"
               id="road"
+              required
+              error={errors.road}
             />
           </div>
 
@@ -674,7 +772,7 @@ export default function ReportFormSample() {
                   lineHeight: "14px",
                 }}
               >
-                Health Issues?
+                Health Issues? <span style={{ color: 'red' }}>*</span>
               </label>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <label className="inline-flex items-center gap-1">
@@ -684,6 +782,7 @@ export default function ReportFormSample() {
                     className="accent-[#8D52A7] outline-none"
                     checked={!hasHealthIssues}
                     onChange={() => setHasHealthIssues(false)}
+                    required={!hasHealthIssues}
                   />
                   No
                 </label>
@@ -694,21 +793,30 @@ export default function ReportFormSample() {
                     className="accent-[#8D52A7] outline-none"
                     checked={hasHealthIssues}
                     onChange={() => setHasHealthIssues(true)}
+                    required={hasHealthIssues}
                   />
                   Yes
+                  {hasHealthIssues && (
+                    <input
+                      className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
+                      style={{ backgroundColor: "#C2C876" }}
+                      placeholder="Describe"
+                      value={healthDetails}
+                      onChange={(e) => {
+                        setHealthDetails(e.target.value);
+                        if (errors.healthDetails && e.target.value.trim()) {
+                          setErrors((prev) => { const { healthDetails, ...rest } = prev; return rest; });
+                        }
+                      }}
+                      name="health_issues"
+                      id="health_issues"
+                      required
+                    />
+                  )}
                 </label>
-                {hasHealthIssues && (
-                  <input
-                    className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
-                    style={{ backgroundColor: "#C2C876" }}
-                    placeholder="Describe"
-                    value={healthDetails}
-                    onChange={(e) => setHealthDetails(e.target.value)}
-                    name="health_issues"
-                    id="health_issues"
-                  />
-                )}
               </div>
+              {errors.hasHealthIssues && <p className="text-xs text-red-600 mt-1">{errors.hasHealthIssues}</p>}
+              {hasHealthIssues && errors.healthDetails && <p className="text-xs text-red-600 mt-1">{errors.healthDetails}</p>}
             </div>
 
             {/* Collar */}
@@ -723,7 +831,7 @@ export default function ReportFormSample() {
                   lineHeight: "14px",
                 }}
               >
-                Has Collar?
+                Has Collar? <span style={{ color: 'red' }}>*</span>
               </label>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <label className="inline-flex items-center gap-1">
@@ -733,6 +841,7 @@ export default function ReportFormSample() {
                     className="accent-[#8D52A7] outline-none"
                     checked={!hasCollar}
                     onChange={() => setHasCollar(false)}
+                    required={!hasCollar}
                   />
                   No
                 </label>
@@ -743,21 +852,30 @@ export default function ReportFormSample() {
                     className="accent-[#8D52A7] outline-none"
                     checked={hasCollar}
                     onChange={() => setHasCollar(true)}
+                    required={hasCollar}
                   />
                   Yes
+                  {hasCollar && (
+                    <input
+                      className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
+                      style={{ backgroundColor: "#C2C876" }}
+                      placeholder="Describe"
+                      value={collarDetails}
+                      onChange={(e) => {
+                        setCollarDetails(e.target.value);
+                        if (errors.collarDetails && e.target.value.trim()) {
+                          setErrors((prev) => { const { collarDetails, ...rest } = prev; return rest; });
+                        }
+                      }}
+                      name="animal_collar"
+                      id="animal_collar"
+                      required
+                    />
+                  )}
                 </label>
-                {hasCollar && (
-                  <input
-                    className="flex-1 min-w-[140px] rounded-lg px-2 py-1 text-sm text-[#3C3333] outline-none focus:ring-2 focus:ring-[#8D52A7]"
-                    style={{ backgroundColor: "#C2C876" }}
-                    placeholder="Describe"
-                    value={collarDetails}
-                    onChange={(e) => setCollarDetails(e.target.value)}
-                    name="animal_collar"
-                    id="animal_collar"
-                  />
-                )}
               </div>
+              {errors.hasCollar && <p className="text-xs text-red-600 mt-1">{errors.hasCollar}</p>}
+              {hasCollar && errors.collarDetails && <p className="text-xs text-red-600 mt-1">{errors.collarDetails}</p>}
             </div>
           </div>
 
@@ -767,9 +885,16 @@ export default function ReportFormSample() {
               label="Animal Status"
               options={["Unknown", "Available for Adoption", "Adopted", "In Campus", "Under Treatment", "Lost/Missing"]}
               value={animalStatus}
-              onChange={(e) => setAnimalStatus(e.target.value)}
+              onChange={(e) => {
+                setAnimalStatus(e.target.value);
+                if (errors.animalStatus && e.target.value !== "Unknown") {
+                  setErrors((prev) => { const { animalStatus, ...rest } = prev; return rest; });
+                }
+              }}
               name="animal_status"
               id="animal_status"
+              required
+              error={errors.animalStatus}
             />
           </div>
 
@@ -843,7 +968,7 @@ export default function ReportFormSample() {
   );
 }
 
-function Field({ label, placeholder, type = "text", value, onChange, name, id }: FieldProps) {
+function Field({ label, placeholder, type = "text", value, onChange, name, id, required = false, error }: FieldProps & { error?: string }) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
@@ -856,7 +981,7 @@ function Field({ label, placeholder, type = "text", value, onChange, name, id }:
         }}
         htmlFor={id}
       >
-        {label}
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </label>
       <input
         type={type}
@@ -865,14 +990,16 @@ function Field({ label, placeholder, type = "text", value, onChange, name, id }:
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        required={required}
+        className={`w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333] ${error ? 'border border-red-500' : ''}`}
         style={{ backgroundColor: "#C2C876" }}
       />
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
   );
 }
 
-function SelectField({ label, options, value, onChange, name, id }: SelectFieldProps) {
+function SelectField({ label, options, value, onChange, name, id, required = false, error }: SelectFieldProps & { error?: string }) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
@@ -885,27 +1012,29 @@ function SelectField({ label, options, value, onChange, name, id }: SelectFieldP
         }}
         htmlFor={id}
       >
-        {label}
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </label>
       <select
         value={value}
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        required={required}
+        className={`w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] focus:outline-none focus:ring-2 focus:ring-[#3C3333] ${error ? 'border border-red-500' : ''}`}
         style={{ backgroundColor: "#C2C876" }}
       >
         {options.map((o) => (
-          <option key={o} value={o}>
+          <option key={o} value={o} disabled={o === "Unknown"}>
             {o}
           </option>
         ))}
       </select>
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
   );
 }
 
-function TextArea({ label, placeholder, value, onChange, name, id }: TextAreaProps) {
+function TextArea({ label, placeholder, value, onChange, name, id, required = false, error }: TextAreaProps & { error?: string }) {
   return (
     <div className="rounded-xl bg-[#E1E69D] p-2">
       <label
@@ -919,7 +1048,7 @@ function TextArea({ label, placeholder, value, onChange, name, id }: TextAreaPro
         }}
         htmlFor={id}
       >
-        {label}
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </label>
       <textarea
         rows={4}
@@ -928,9 +1057,11 @@ function TextArea({ label, placeholder, value, onChange, name, id }: TextAreaPro
         onChange={onChange}
         {...(name ? { name } : {})}
         {...(id ? { id } : {})}
-        className="w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333]"
+        required={required}
+        className={`w-full rounded-lg px-3 py-2 text-sm text-[#3C3333] placeholder:rgba(60,51,51,0.6) focus:outline-none focus:ring-2 focus:ring-[#3C3333] ${error ? 'border border-red-500' : ''}`}
         style={{ backgroundColor: "#C2C876" }}
       />
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
   );
 }

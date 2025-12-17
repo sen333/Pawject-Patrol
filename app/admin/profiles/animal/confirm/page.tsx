@@ -236,7 +236,7 @@ export default function AnimalProfileConfirmPage() {
               className="text-xs "
               style={{ color: "#FFF", fontFamily: '"Genty Sans", sans-serif' }}
             >
-              Submitted on {new Date().toLocaleDateString()}
+              To be submitted on {new Date().toLocaleDateString()}
             </p>
             <p
               className="flex w-fit justify-center items-center gap-[10px] py-[4px] px-[10px] rounded-full bg-white/20 text-xs uppercase mt-2"
@@ -562,7 +562,13 @@ export default function AnimalProfileConfirmPage() {
             {submitting ? "Submitting..." : "Confirm & Submit"}
           </button>
         </div>
-        {resultMsg && <p className="mt-2 text-sm text-gray-800 text-center font-medium">{resultMsg}</p>}
+        {resultMsg && (
+          <p
+            className={`mt-2 text-sm text-center font-medium ${resultMsg.toLowerCase().includes('success') ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {resultMsg}
+          </p>
+        )}
       </div>
 
       {/* Image Modal */}

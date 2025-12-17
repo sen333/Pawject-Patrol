@@ -405,7 +405,15 @@ function ConfirmationContent() {
 										{/* Summary */}
 										<div className="w-full mb-0">
 											<p className="text-sm mb-0" style={{ color: '#4A5565', fontFamily: 'Genty Sans, sans-serif' }}>Summary</p>
-											<p className="text-sm leading-relaxed mb-0" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>{otherInfo || physicalDescription || 'No summary provided'}</p>
+											<p className="text-sm leading-relaxed mb-0" style={{ color: '#3C3333', fontFamily: 'Genty Sans, sans-serif' }}>
+												{(
+													otherInfo && otherInfo !== 'None'
+												) ? otherInfo : (
+													physicalDescription && physicalDescription !== 'None'
+														? physicalDescription
+														: 'No summary provided'
+												)}
+											</p>
 										</div>
 									</>
 								)}
