@@ -29,115 +29,126 @@ type Report = {
 
 // Admin Reports Page Component
 export default function AdminReportsPage() {
-		// Helper function to format date and time
-		function formatDateTime(value?: string | null) {
-			if (!value) return '';
-			const d = new Date(value);
-			if (isNaN(d.getTime())) return value || '';
-			const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-			const month = months[d.getMonth()];
-			const day = d.getDate().toString().padStart(2, "0");
-			const year = d.getFullYear();
-			let hour = d.getHours();
-			const minute = d.getMinutes().toString().padStart(2, "0");
-			const second = d.getSeconds().toString().padStart(2, "0");
-			const ampm = hour >= 12 ? "PM" : "AM";
-			hour = hour % 12;
-			if (hour === 0) hour = 12;
-			const hourStr = hour.toString().padStart(2, "0");
-			return `${month} ${day}, ${year}, ${hourStr}:${minute}:${second} ${ampm}`;
-		}
-	// State for reports and loading
-	const router = useRouter();
-	const [reports, setReports] = useState<Report[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [fetchError, setFetchError] = useState<string | null>(null);
-	const [search, setSearch] = useState("");
-	const [statusFilter, setStatusFilter] = useState<string>("");
-	const [sidebarOpen, setSidebarOpen] = useState(false);
+       // Helper function to format date and time (same format as before)
+       function formatDateTime(value?: string | null) {
+	       if (!value) return '';
+	       const d = new Date(value);
+	       if (isNaN(d.getTime())) return value || '';
+	       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	       const month = months[d.getMonth()];
+	       const day = d.getDate().toString().padStart(2, "0");
+	       const year = d.getFullYear();
+	       let hour = d.getHours();
+	       const minute = d.getMinutes().toString().padStart(2, "0");
+	       const second = d.getSeconds().toString().padStart(2, "0");
+	       const ampm = hour >= 12 ? "PM" : "AM";
+	       hour = hour % 12;
+	       if (hour === 0) hour = 12;
+	       const hourStr = hour.toString().padStart(2, "0");
+	       return `${month} ${day}, ${year}, ${hourStr}:${minute}:${second} ${ampm}`;
+       }
+       // State for reports and loading
+       const router = useRouter();
+       const [reports, setReports] = useState<Report[]>([]);
+       const [loading, setLoading] = useState(true);
+       const [fetchError, setFetchError] = useState<string | null>(null);
+       const [search, setSearch] = useState("");
+       const [statusFilter, setStatusFilter] = useState<string>("");
+       const [sidebarOpen, setSidebarOpen] = useState(false);
+       // Store formatted dates for client-only rendering
+       const [formattedDates, setFormattedDates] = useState<Record<string, string>>({});
 
 	// User info state for sidebar
 	const [userName, setUserName] = useState("");
 	const [userEmail, setUserEmail] = useState("");
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-	// Fetch reports on mount
-	useEffect(() => {
-		// Mounting flag to prevent state updates after unmount
-		let mounted = true;
+	       // Fetch reports on mount
+	       useEffect(() => {
+		       // Mounting flag to prevent state updates after unmount
+		       let mounted = true;
 
-		// Fetch recent animal reports
-		const run = async () => {
-			// Verify authenticated user
-			const { data: { user } } = await supabase.auth.getUser();
-			
-			// Check if still mounted
-			if (!mounted) return;
+		       // Fetch recent animal reports
+		       const run = async () => {
+			       // Verify authenticated user
+			       const { data: { user } } = await supabase.auth.getUser();
+                       
+			       // Check if still mounted
+			       if (!mounted) return;
 
-			// Verify admin user
-			if (!user) {
-				router.replace("/admin/login");
-				return;
-			}
+			       // Verify admin user
+			       if (!user) {
+				       router.replace("/admin/login");
+				       return;
+			       }
 
-			// Verify admin privileges
-			const { data: admin } = await supabase
-				.from("admin")
-				.select("auth_id")
-				.eq("auth_id", user.id)
-				.maybeSingle();
+			       // Verify admin privileges
+			       const { data: admin } = await supabase
+				       .from("admin")
+				       .select("auth_id")
+				       .eq("auth_id", user.id)
+				       .maybeSingle();
 
-			// Check if still mounted
-			if (!mounted) return;
+			       // Check if still mounted
+			       if (!mounted) return;
 
-			// If not an admin, redirect to login with error
-			if (!admin) {
-				await supabase.auth.signOut();
-				router.replace("/admin/login?error=unauthorized");
-				return;
-			}
+			       // If not an admin, redirect to login with error
+			       if (!admin) {
+				       await supabase.auth.signOut();
+				       router.replace("/admin/login?error=unauthorized");
+				       return;
+			       }
 
-			// Set user info for sidebar
-			setUserEmail(user.email || "");
-			const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
-			setUserName(nameFromMeta || user.email?.split("@")[0] || "");
-			setIsAuthenticated(true);
+			       // Set user info for sidebar
+			       setUserEmail(user.email || "");
+			       const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || "";
+			       setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+			       setIsAuthenticated(true);
 
-			// Fetch animal reports
-			const { data, error } = await supabase
-				.from("animal_report")
-				.select(
-					"report_id, report_title, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
-				)
-				.order("created_at", { ascending: false })
-				.limit(50);
-			
-			// Check if still mounted
-			if (!mounted) return;
+			       // Fetch animal reports
+			       const { data, error } = await supabase
+				       .from("animal_report")
+				       .select(
+					       "report_id, report_title, animal_type, animal_gender, date_seen, area, landmark, created_at, photo_url, latitude, longitude, report_status, health_issues, animal_collar, other_information"
+				       )
+				       .order("created_at", { ascending: false })
+				       .limit(50);
+                       
+			       // Check if still mounted
+			       if (!mounted) return;
 
-			// Handle fetch results
-			if (!error && data) {
-				// Prioritize: Pending > Accepted > Rejected
-				const sorted = (data as Report[]).sort((a, b) => {
-					const statusOrder: Record<string, number> = { 'Pending': 0, 'Accepted': 1, 'Rejected': 2 };
-					const aOrder = statusOrder[a.report_status || 'Pending'] ?? 3;
-					const bOrder = statusOrder[b.report_status || 'Pending'] ?? 3;
-					return aOrder - bOrder;
-				});
-				// Set the sorted reports
-				setReports(sorted);
-			} else if (error) {
-				setFetchError(error.message ?? String(error));
-			}
-			// Finalize loading state
-			setLoading(false);
-		};
-		// Run the fetch
-		run();
-		return () => {
-			mounted = false;
-		};
-	}, [router]);
+			       // Handle fetch results
+			       if (!error && data) {
+				       // Prioritize: Pending > Accepted > Rejected
+				       const sorted = (data as Report[]).sort((a, b) => {
+					       const statusOrder: Record<string, number> = { 'Pending': 0, 'Accepted': 1, 'Rejected': 2 };
+					       const aOrder = statusOrder[a.report_status || 'Pending'] ?? 3;
+					       const bOrder = statusOrder[b.report_status || 'Pending'] ?? 3;
+					       return aOrder - bOrder;
+				       });
+				       // Set the sorted reports
+				       setReports(sorted);
+				       // After setting reports, set formatted dates on client
+				       if (typeof window !== 'undefined') {
+					       const formatted: Record<string, string> = {};
+					       for (const rep of sorted) {
+						       const dateVal = rep.date_seen || rep.created_at;
+						       formatted[rep.report_id] = formatDateTime(dateVal);
+					       }
+					       setFormattedDates(formatted);
+				       }
+			       } else if (error) {
+				       setFetchError(error.message ?? String(error));
+			       }
+			       // Finalize loading state
+			       setLoading(false);
+		       };
+		       // Run the fetch
+		       run();
+		       return () => {
+			       mounted = false;
+		       };
+	       }, [router]);
 
 	return (
 		<>
@@ -275,7 +286,7 @@ export default function AdminReportsPage() {
 											</p>
 											<p className="text-xs flex items-center gap-1" style={{ color: '#6B7280', fontFamily: 'Genty Sans, sans-serif' }}>
 												<span className="inline-block align-middle"><svg width="14" height="14" fill="none" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#6B7280" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#6B7280" strokeWidth="2"/></svg></span>
-												{r.date_seen ? formatDateTime(r.date_seen) : r.created_at ? formatDateTime(r.created_at) : ''}
+												{typeof window !== 'undefined' && formattedDates[r.report_id] ? formattedDates[r.report_id] : ''}
 											</p>
 											<div className="flex items-center gap-2 mt-1">
 												<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${

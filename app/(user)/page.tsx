@@ -158,15 +158,20 @@ export default function UserDashboard() {
     }
   };
 
-  const formatTime = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true
-    });
-  };
+    // Format time as 08:00:00 AM
+  const formatTime = (dateString?: string | null) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    let hour = d.getHours();
+    const minute = d.getMinutes().toString().padStart(2, '0');
+    const second = d.getSeconds().toString().padStart(2, '0');
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+    const hourStr = hour.toString().padStart(2, '0');
+    return `${hourStr}:${minute}:${second} ${ampm}`;
+  }
 
   const formatDateTime = (dateStr: string | null) => {
     if (!dateStr) return '—';
@@ -1418,14 +1423,20 @@ export default function UserDashboard() {
                             <h4 className="text-[#3C3333] text-sm leading-tight font-['Genty_Sans']">
                               {report.report_title || "Untitled Report"}
                             </h4>
-                            <span className="text-[#3C3333] text-xs font-['Genty_Sans']">
+                            <span className="text-[#3C3333] text-xs font-['Genty_Sans'] flex items-center gap-1">
+                              {/* Type Icon: PawPrint */}
+                              <PawPrint size={12} color="gray" className="inline-block align-middle" />
                               {report.animal_type || "Unknown"} ({report.animal_gender || "Unknown"})
                             </span>
-                            <span className="text-gray-500 text-[10px] leading-tight font-['Genty_Sans']">
-                              {report.area || "Unknown"}{report.landmark ? ` • near ${report.landmark}` : ""}
+                            <span className="text-gray-500 text-[10px] leading-tight font-['Genty_Sans'] flex items-center gap-1">
+                              {/* Area Icon */}
+                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 21c-4.418 0-8-4.03-8-9a8 8 0 0 1 16 0c0 4.97-3.582 9-8 9Z" stroke="gray" strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke="gray" strokeWidth="2"/></svg>
+                              {report.area || "Unknown"}{report.landmark ? ` - near ${report.landmark}` : ""}
                             </span>
-                            <span className="text-gray-500 text-[10px] leading-tight font-['Genty_Sans']">
-                              {formatDate(report.created_at)}
+                            <span className="text-gray-500 text-[10px] leading-tight font-['Genty_Sans'] flex items-center gap-1">
+                              {/* Created At Icon */}
+                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke="gray" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="gray" strokeWidth="2"/></svg>
+                              {typeof window !== 'undefined' && report.created_at ? `${formatDate(report.created_at)}, ${formatTime(report.created_at)}` : ''}
                             </span>
 
                             {/* Status Badge */}
