@@ -385,7 +385,7 @@ export default function AdminAnimalDetailPage() {
                 <img
                   src={animal.animal_photo}
                   alt={animal.animal_name || "Animal"}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full max-h-104 object-cover"
                 />
               ) : (
                 <svg

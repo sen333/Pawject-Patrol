@@ -188,16 +188,13 @@ export default function CatalogPage() {
                   height={36}
                 />
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    router.replace("/admin/login");
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition"
-                >
-                  <LogIn className="w-6 h-6 text-gray-800" />
-                </button>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition"
+                onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/admin/login");
+                }}
+              >
+                <LogIn className="w-6 h-6 text-gray-800" />
               </button>
             </div>
           </div>

@@ -14,6 +14,7 @@ import {
   getRecentCatalogAnimals
 } from "@/actions/dashboard/user";
 import Sidebar from "@/components/Sidebar";
+import MapView from "@/components/MapView";
 
 // Type definitions
 type ReportData = {
@@ -195,154 +196,253 @@ export default function UserDashboard() {
     return themeMap[theme?.toLowerCase() || ''] || "#689668";
   };
 
-  // Report Detail Modal Component
+  // Report Detail Modal Component (Tabbed, Admin Style)
   const ReportDetailsModal = ({ report, isOpen, onClose }: { report: ReportData | null; isOpen: boolean; onClose: () => void }) => {
-    if (!report) return null;
+    const [activeTab, setActiveTab] = useState<'overview' | 'animalinfo' | 'location' | 'health'>('overview');
+    // For recentering the map
+    const [mapKey, setMapKey] = useState(0);
+    // For image modal
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    if (!report || !isOpen) return null;
 
     return (
-      <div
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-        onClick={onClose}
-      >
-        <div
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-2xl w-full my-8 relative"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Image Section */}
-          <div className="relative h-80 w-full overflow-hidden">
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 left-4 flex justify-center items-center rounded-full border border-white/60 backdrop-blur-md z-50 transition-all duration-200 hover:bg-white/20 hover:scale-105"
-              style={{
-                width: "36px",
-                height: "36px",
-                background: "transparent",
-              }}
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-
-            {/* Report Photo */}
-            {report.photo_url ? (
-              <img
-                src={report.photo_url}
-                alt={report.report_title || 'Report'}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                <PawPrint className="w-16 h-16 text-gray-400" />
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-2xl w-full my-8 relative" onClick={e => e.stopPropagation()}>
+          {/* Header Section (Purple) */}
+          <div className="w-full p-6" style={{ backgroundColor: '#8D52A7' }}>
+            <div className="flex w-full flex-col gap-1">
+              <div className="flex w-full items-center justify-between">
+                <p className="text-xs text-white opacity-80" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
+                  Report ID: {report.report_id}
+                </p>
+                <button
+                  onClick={onClose}
+                  className="flex justify-center items-center rounded-full border border-white/60 backdrop-blur-md z-50 transition-all duration-200 hover:bg-white/20 hover:scale-105 ml-2"
+                  style={{ width: '36px', height: '36px', background: 'transparent' }}
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
               </div>
-            )}
-
-            {/* Title Overlay */}
-            <div className="absolute bottom-4 left-4 text-white drop-shadow-lg">
-              <h2 className="text-3xl font-extrabold" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
+              <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
                 {report.report_title || 'Untitled Report'}
               </h2>
-              <p className="text-sm font-medium" style={{ fontFamily: '"Genty Sans", sans-serif' }}>
-                {report.animal_type || 'Unknown Animal'}
-              </p>
+              <div className="flex w-full items-center justify-between">
+                <p className="text-sm text-white opacity-90 m-0" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
+                  {report.animal_type || 'Animal'} • {report.animal_gender || 'Unknown'}
+                </p>
+                <span className="text-sm font-semibold px-3 py-1 rounded-full ml-2" style={{
+                  backgroundColor: report.report_status === 'Accepted' ? '#9BBF94' : report.report_status === 'Rejected' ? '#FCA5A5' : '#FDE68A',
+                  color: report.report_status === 'Accepted' ? '#166534' : report.report_status === 'Rejected' ? '#991B1B' : '#92400E',
+                  fontFamily: 'Genty Sans, sans-serif',
+                }}>
+                  {report.report_status || 'Pending'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Content Section */}
-          <div className="p-6" style={{ fontFamily: '"Genty Sans", sans-serif', backgroundColor: '#C2C876', color: '#3C3333' }}>
-            {/* Status Badge */}
-            <div className="mb-4">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(report.report_status)}`}>
-                {report.report_status || 'Pending'}
-              </span>
-            </div>
+          {/* Tab Navigation */}
+          <div className="flex flex-wrap md:flex-nowrap w-full items-start bg-[#E6E6E6] p-2 gap-2">
+            {/* Overview Tab */}
+            <button
+              onClick={() => setActiveTab('overview')}
+              className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+              style={{ backgroundColor: activeTab === 'overview' ? '#8D52A7' : '#E6E6E6', height: '42px', padding: '10px' }}
+              aria-label="Overview"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke={activeTab === 'overview' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+                <line x1="12" y1="8" x2="12" y2="12" stroke={activeTab === 'overview' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" strokeLinecap="round" />
+                <circle cx="12" cy="16" r="1" fill={activeTab === 'overview' ? '#FFFFFF' : '#3C3333'} />
+              </svg>
+            </button>
+            {/* Animal Info Tab */}
+            <button
+              onClick={() => setActiveTab('animalinfo')}
+              className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+              style={{ backgroundColor: activeTab === 'animalinfo' ? '#8D52A7' : '#E6E6E6', height: '42px', padding: '10px' }}
+              aria-label="Animal Info"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4" stroke={activeTab === 'animalinfo' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+                <path d="M4 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke={activeTab === 'animalinfo' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+              </svg>
+            </button>
+            {/* Location Tab */}
+            <button
+              onClick={() => setActiveTab('location')}
+              className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+              style={{ backgroundColor: activeTab === 'location' ? '#8D52A7' : '#E6E6E6', height: '42px', padding: '10px' }}
+              aria-label="Location"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6L9 3L15 6L21 3V18L15 21L9 18L3 21V6Z" stroke={activeTab === 'location' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+                <path d="M9 3V18" stroke={activeTab === 'location' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+                <path d="M15 6V21" stroke={activeTab === 'location' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+              </svg>
+            </button>
+            {/* Health Tab */}
+            <button
+              onClick={() => setActiveTab('health')}
+              className="flex justify-center items-center gap-1 transition rounded-2xl w-[calc(50%-4px)] md:w-auto md:flex-1"
+              style={{ backgroundColor: activeTab === 'health' ? '#8D52A7' : '#E6E6E6', height: '42px', padding: '10px' }}
+              aria-label="Health"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M11 2C10.47 2 9.96 2.21 9.59 2.59C9.21 2.96 9 3.47 9 4V9H4C3.47 9 2.96 9.21 2.59 9.59C2.21 9.96 2 10.47 2 11V13C2 14.1 2.9 15 4 15H9V20C9 21.1 9.9 22 11 22H13C13.53 22 14.04 21.79 14.41 21.41C14.79 21.04 15 20.53 15 20V15H20C20.53 15 21.04 14.79 21.41 14.41C21.79 14.04 22 13.53 22 13V11C22 10.47 21.79 9.96 21.41 9.59C21.04 9.21 20.53 9 20 9H15V4C15 3.47 14.79 2.96 14.41 2.59C14.04 2.21 13.53 2 13 2H11Z" stroke={activeTab === 'health' ? '#FFFFFF' : '#3C3333'} strokeWidth="2" />
+              </svg>
+            </button>
+          </div>
 
-            {/* Report Details */}
-            <div className="space-y-3">
-              {/* Report ID */}
-              <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                <h3 className="font-semibold mb-1 text-xs">Report ID</h3>
-                <p className="text-sm">{report.report_id}</p>
-              </div>
-
-              {/* Reporter Information */}
-              {report.reporter_name && (
-                <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                  <h3 className="font-semibold mb-1 text-xs">Reported By</h3>
-                  <p className="text-sm">{report.reporter_name}</p>
+          {/* Tab Content */}
+          <div className="flex flex-col w-full p-6 gap-[24px]" style={{ fontFamily: 'Genty Sans, sans-serif' }}>
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <>
+                <div className="flex h-[200px] pl-0 justify-center items-center self-stretch">
+                  <div className="w-full h-full rounded-2xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#8D52A7', aspectRatio: '1', cursor: report.photo_url ? 'pointer' : 'default' }}
+                    onClick={() => { if (report.photo_url) setIsImageModalOpen(true); }}
+                  >
+                    {report.photo_url ? (
+                      <img src={report.photo_url} alt={report.report_title || 'Report'} className="w-full h-full object-cover transition-transform duration-200 hover:scale-105" />
+                    ) : (
+                      <svg className="w-16 h-16 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </div>
+                  {/* Image Modal */}
+                  {isImageModalOpen && report.photo_url && (
+                    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80" onClick={() => setIsImageModalOpen(false)}>
+                      <button
+                        className="fixed top-6 right-6 rounded-full p-2 shadow z-[100000]"
+                        style={{ lineHeight: 0 }}
+                        onClick={e => { e.stopPropagation(); setIsImageModalOpen(false); }}
+                        aria-label="Close image modal"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="white" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div className="relative max-w-3xl w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                        <img src={report.photo_url} alt={report.report_title || 'Report'} className="max-h-[80vh] max-w-full rounded-2xl shadow-2xl" />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* Animal Information */}
-              <div className="grid grid-cols-2 gap-3">
-                {report.animal_name && (
-                  <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                    <h3 className="font-semibold mb-1 text-xs">Animal Name</h3>
-                    <p className="text-sm">{report.animal_name}</p>
+                <div className="w-full">
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Recorded By</p>
+                  <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.reporter_name}</p>
+                </div>
+                {report.date_seen && (
+                  <div className="w-full">
+                    <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Date Seen</p>
+                    <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{formatDate(report.date_seen)}</p>
                   </div>
                 )}
-                {report.animal_gender && (
-                  <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                    <h3 className="font-semibold mb-1 text-xs">Gender</h3>
-                    <p className="text-sm capitalize">{report.animal_gender}</p>
+                {report.area && (
+                  <div className="w-full">
+                    <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Location</p>
+                    <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.area}</p>
+                  </div>
+                )}
+                <div className="w-full">
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Summary</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#3C3333' }}>{ report.other_information || report.animal_description || 'No summary provided'}</p>
+                </div>
+              </>
+            )}
+
+            {/* Animal Info Tab */}
+            {activeTab === 'animalinfo' && (
+              <>
+                <div className="w-full gap-[24px]">
+                  {report.animal_type && (
+                    <div className="w-full ">
+                      <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Type of Animal</p>
+                      <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.animal_type}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="w-full">
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Gender</p>
+                  <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.animal_gender}</p>
+                </div>
+                <div className="w-full">
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Physical Description</p>
+                  <p className="text-sm leading-relaxed" style={{ color: '#3C3333' }}>{report.animal_description || report.other_information || 'No Description provided'}</p>
+                </div>
+              </>
+            )}
+
+            {/* Location Tab */}
+            {activeTab === 'location' && (
+              <div className="w-full space-y-4">
+                <div>
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Area Seen</p>
+                  <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.area || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Nearby Landmarks</p>
+                  <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.landmark || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Road/Street</p>
+                  <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.road || '—'}</p>
+                </div>
+                {typeof report.latitude === 'number' && typeof report.longitude === 'number' && !isNaN(report.latitude) && !isNaN(report.longitude) && (
+                  <div className="relative w-full h-64 rounded-xl overflow-hidden border border-gray-300">
+                    <MapView latitude={report.latitude} longitude={report.longitude} key={mapKey + '-' + report.latitude + ',' + report.longitude} />
+                    {/* Recenter button is placed last to ensure highest stacking context */}
+                    <button
+                      type="button"
+                      className="absolute top-3 right-3 z-[9999] bg-white/90 hover:bg-white text-primary-700 border border-gray-300 rounded-lg px-3 py-1 text-xs font-semibold shadow transition"
+                      style={{ pointerEvents: 'auto', zIndex: 9999 }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMapKey(prev => prev + 1);
+                      }}
+                    >
+                      Recenter
+                    </button>
                   </div>
                 )}
               </div>
+            )}
 
-              {/* Description */}
-              {report.animal_description && (
-                <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                  <h3 className="font-semibold mb-1 text-xs">Description</h3>
-                  <p className="text-sm">{report.animal_description}</p>
+            {/* Health Tab */}
+            {activeTab === 'health' && (
+              <div className="w-full space-y-4">
+                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                  <p className="text-sm" style={{ color: '#3C3333' }}>Health Issues</p>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium" style={{
+                    backgroundColor: report.health_issues && report.health_issues !== 'None' && report.health_issues !== '' ? '#DBEAFE' : '#F3F4F6',
+                    color: report.health_issues && report.health_issues !== 'None' && report.health_issues !== '' ? '#1E40AF' : '#6B7280',
+                  }}>{report.health_issues && report.health_issues !== 'None' && report.health_issues !== '' ? 'Yes' : 'No'}</span>
                 </div>
-              )}
-
-              {/* Location Details */}
-              <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                <h3 className="font-semibold mb-2 text-xs">Location</h3>
-                <div className="space-y-1 text-sm">
-                  {report.area && <p><span className="font-medium">Area:</span> {report.area}</p>}
-                  {report.landmark && <p><span className="font-medium">Landmark:</span> {report.landmark}</p>}
-                  {report.road && <p><span className="font-medium">Road:</span> {report.road}</p>}
-                </div>
-              </div>
-
-              {/* Health & Collar */}
-              <div className="grid grid-cols-2 gap-3">
                 {report.health_issues && (
-                  <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                    <h3 className="font-semibold mb-1 text-xs">Health Issues</h3>
-                    <p className="text-sm">{report.health_issues}</p>
+                  <div className="pl-4">
+                    <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Health Issues</p>
+                    <p className="text-sm font-medium" style={{ color: '#3C3333' }}>{report.health_issues || 'Not specified'}</p>
                   </div>
                 )}
+                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                  <p className="text-sm" style={{ color: '#3C3333' }}>Has Collar</p>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium" style={{
+                    backgroundColor: report.animal_collar && report.animal_collar !== 'None' && report.animal_collar !== '' ? '#DBEAFE' : '#F3F4F6',
+                    color: report.animal_collar && report.animal_collar !== 'None' && report.animal_collar !== '' ? '#1E40AF' : '#6B7280',
+                  }}>{report.animal_collar && report.animal_collar !== 'None' && report.animal_collar !== '' ? 'Yes' : 'No'}</span>
+                </div>
                 {report.animal_collar && (
-                  <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                    <h3 className="font-semibold mb-1 text-xs">Collar</h3>
-                    <p className="text-sm">{report.animal_collar}</p>
+                  <div className="pl-4">
+                    <p className="text-sm mb-1" style={{ color: '#4A5565' }}>Collar Details</p>
+                    <p className="text-sm" style={{ color: '#3C3333' }}>{report.animal_collar || 'Not specified'}</p>
                   </div>
                 )}
               </div>
-
-              {/* Other Information */}
-              {report.other_information && (
-                <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                  <h3 className="font-semibold mb-1 text-xs">Additional Information</h3>
-                  <p className="text-sm">{report.other_information}</p>
-                </div>
-              )}
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                  <h3 className="font-semibold mb-1 text-xs">Date Seen</h3>
-                  <p className="text-sm">{formatDate(report.date_seen)}</p>
-                </div>
-                <div className="bg-white/20 rounded-lg p-3 border border-white/40">
-                  <h3 className="font-semibold mb-1 text-xs">Submitted On</h3>
-                  <p className="text-sm">{formatDate(report.created_at)}</p>
-                </div>
-              </div>
-            </div>
-
+            )}
             {/* Close Button */}
             <button
               onClick={onClose}

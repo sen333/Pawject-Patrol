@@ -663,8 +663,8 @@ export default function AdminReportDetail({
                         fontFamily: '"Genty Sans", sans-serif',
                       }}
                     >
-                      {data.animal_description ||
-                        data.other_information ||
+                      {data.other_information ||
+                        data.animal_description ||
                         "No summary provided"}
                     </p>
                   </div>
@@ -944,7 +944,7 @@ export default function AdminReportDetail({
                         fontFamily: '"Genty Sans", sans-serif',
                       }}
                     >
-                      Physical Description
+                      Other Information
                     </p>
                     <p
                       className="text-sm"
@@ -953,7 +953,7 @@ export default function AdminReportDetail({
                         fontFamily: '"Genty Sans", sans-serif',
                       }}
                     >
-                      {data.animal_description || "No description provided"}
+                      {data.other_information || "No description provided"}
                     </p>
                   </div>
                 </div>
