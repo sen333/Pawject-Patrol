@@ -21,7 +21,7 @@ function Field({ label, placeholder, type = "text", value, onChange, required }:
           fontWeight: 500,
         }}
       >
-        {label}
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </label>
       <input
         type={type}
@@ -79,7 +79,7 @@ function TextArea({ label, placeholder, value, onChange, required }: any) {
           lineHeight: "14px",
         }}
       >
-        {label}
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </label>
       <textarea
         rows={4}
@@ -107,7 +107,15 @@ export default function RequestPage() {
     call_location: "",
     capacity: "",
   });
-  const [errors, setErrors] = useState<{ start?: string; end?: string }>({});
+  const [errors, setErrors] = useState<{
+    call_title?: string;
+    call_details?: string;
+    call_starttime?: string;
+    call_endtime?: string;
+    call_location?: string;
+    start?: string;
+    end?: string;
+  }>({});
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -164,9 +172,34 @@ export default function RequestPage() {
     e.preventDefault();
     const nowISO = new Date().toISOString().slice(0, 16);
     let hasError = false;
-    const newErrors: { start?: string; end?: string } = {};
+    const newErrors: {
+      call_title?: string;
+      call_details?: string;
+      call_starttime?: string;
+      call_endtime?: string;
+      call_location?: string;
+      start?: string;
+      end?: string;
+    } = {};
+    // Validate required fields (except capacity)
+    if (!formData.call_title.trim()) {
+      newErrors.call_title = "Please enter title.";
+      hasError = true;
+    }
+    if (!formData.call_details.trim()) {
+      newErrors.call_details = "Please enter details.";
+      hasError = true;
+    }
+    if (!formData.call_starttime) {
+      newErrors.call_starttime = "Please enter start time.";
+      hasError = true;
+    }
+    if (!formData.call_location.trim()) {
+      newErrors.call_location = "Please enter location.";
+      hasError = true;
+    }
     // Validate start time
-    if (!formData.call_starttime || formData.call_starttime < nowISO) {
+    if (formData.call_starttime && formData.call_starttime < nowISO) {
       newErrors.start = "Start time must not be before the current date and time.";
       hasError = true;
     }
@@ -188,6 +221,7 @@ export default function RequestPage() {
     <main className="min-h-screen bg-[#E6E6E6]">
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}
@@ -264,31 +298,56 @@ export default function RequestPage() {
           <form onSubmit={handleSubmit} className="grid gap-[16px]">
             {/* Title Field */}
             <Field
-              label="Title *"
+              label="Title"
               placeholder="Enter volunteer task title"
               value={formData.call_title}
-              onChange={(e: any) => handleInputChange('call_title', e.target.value)}
+              onChange={(e: any) => {
+                handleInputChange('call_title', e.target.value);
+                if (errors.call_title && e.target.value.trim()) {
+                  setErrors(prev => { const { call_title, ...rest } = prev; return rest; });
+                }
+              }}
               required={true}
             />
+            {errors.call_title && (
+              <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.call_title}</p>
+            )}
 
             {/* Details Field */}
             <TextArea
-              label="Details *"
+              label="Details"
               placeholder="Enter volunteer task details"
               value={formData.call_details}
-              onChange={(e: any) => handleInputChange('call_details', e.target.value)}
+              onChange={(e: any) => {
+                handleInputChange('call_details', e.target.value);
+                if (errors.call_details && e.target.value.trim()) {
+                  setErrors(prev => { const { call_details, ...rest } = prev; return rest; });
+                }
+              }}
+              required={true}
             />
+            {errors.call_details && (
+              <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.call_details}</p>
+            )}
 
             {/* Start and End Time */}
             <div className="grid md:grid-cols-2 gap-2">
               <div className="flex flex-col">
                 <Field
-                  label="Start Time *"
+                  label="Start Time"
                   type="datetime-local"
                   value={formData.call_starttime}
                   required={true}
-                  onChange={(e: any) => handleInputChange('call_starttime', e.target.value)}
+                  onChange={(e: any) => {
+                    handleInputChange('call_starttime', e.target.value);
+                    if (errors.call_starttime && e.target.value) {
+                      setErrors(prev => { const { call_starttime, ...rest } = prev; return rest; });
+                    }
+                  }}
                 />
+                {errors.call_starttime && (
+                  <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.call_starttime}</p>
+                )}
                 {errors.start && (
                   <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.start}</p>
                 )}
@@ -298,8 +357,16 @@ export default function RequestPage() {
                   label="End Time"
                   type="datetime-local"
                   value={formData.call_endtime}
-                  onChange={(e: any) => handleInputChange('call_endtime', e.target.value)}
+                  onChange={(e: any) => {
+                    handleInputChange('call_endtime', e.target.value);
+                    if (errors.call_endtime && e.target.value) {
+                      setErrors(prev => { const { call_endtime, ...rest } = prev; return rest; });
+                    }
+                  }}
                 />
+                {errors.call_endtime && (
+                  <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.call_endtime}</p>
+                )}
                 {errors.end && (
                   <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.end}</p>
                 )}
@@ -309,12 +376,20 @@ export default function RequestPage() {
             {/* Location and Capacity */}
             <div className="grid md:grid-cols-2 gap-2">
               <Field
-                label="Location *"
+                label="Location"
                 placeholder="Enter location"
                 value={formData.call_location}
-                onChange={(e: any) => handleInputChange('call_location', e.target.value)}
+                onChange={(e: any) => {
+                  handleInputChange('call_location', e.target.value);
+                  if (errors.call_location && e.target.value.trim()) {
+                    setErrors(prev => { const { call_location, ...rest } = prev; return rest; });
+                  }
+                }}
                 required={true}
               />
+              {errors.call_location && (
+                <p className="text-red-600 text-xs mt-1 ml-2.5">{errors.call_location}</p>
+              )}
               <Field
                 label="Capacity"
                 type="number"

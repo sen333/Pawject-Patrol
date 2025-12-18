@@ -121,22 +121,39 @@ export default function AdminVolunteerPage() {
       const defaultAsc = column === 'call_title' || column === 'call_starttime';
       const sortOrder = defaultAsc ? 'asc' : 'desc';
 
-      const data = await listVolunteerCalls({
+      let data = await listVolunteerCalls({
         search: search || undefined,
         sortBy: column,
         sortOrder: sortOrder,
         limit: 200
       });
-      setItems(data as Volunteer[]);
 
-      // No need to fetch joined counts client-side; now included in backend response
+      // Custom sort for default (no sortBy): status hierarchy then start time
+      if (!sortBy) {
+        const statusRank = (status?: string | null) => {
+          const s = (status || '').toLowerCase();
+          if (s.includes('active') || s.includes('filled')) return 1;
+          if (s.includes('ongoing')) return 2;
+          if (s.includes('cancel')) return 3;
+          if (s.includes('completed')) return 4;
+          return 5;
+        };
+        data = (data as Volunteer[]).slice().sort((a, b) => {
+          const rankA = statusRank(a.call_status);
+          const rankB = statusRank(b.call_status);
+          if (rankA !== rankB) return rankA - rankB;
+          // If same status, sort by start time (earliest first)
+          const tA = a.call_starttime ? new Date(a.call_starttime).getTime() : 0;
+          const tB = b.call_starttime ? new Date(b.call_starttime).getTime() : 0;
+          return tA - tB;
+        });
+      }
+
+      setItems(data as Volunteer[]);
       setLoading(false);
     };
 
-     // Execute authentication check and data fetch on mount
     checkAdminAndFetchData();
-
-    // Cleanup function to prevent state updates after unmount
     return () => {
       mounted = false;
     };
@@ -210,6 +227,7 @@ export default function AdminVolunteerPage() {
 
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}
@@ -264,9 +282,15 @@ export default function AdminVolunteerPage() {
             <div className="flex-1 flex justify-center items-center h-full">
               <Image src="/Moodboard2.png" alt="Pawject Patrol Logo" width={77} height={36} />
             </div>
-            <Link href="/admin/login" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/admin/login");
+              }}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
               <LogIn className="w-6 h-6 text-gray-800" />
-            </Link>
+            </button>
           </div>
         </div>
 

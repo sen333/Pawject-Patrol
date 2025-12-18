@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, LogIn, X, Facebook, Instagram, Twitter, Mail } from "lucide-react";
+import {
+  Menu,
+  LogIn,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -177,7 +185,7 @@ export default function HeaderAndBackground() {
         .select("*", { count: "exact", head: true })
         .eq("report_status", "Pending");
 
-      // Count only active, filled, or ongoing volunteer requests
+      // Count only active or filled volunteer requests
       const { count: callCount } = await supabase
         .from("volunteer_call")
         .select("*", { count: "exact", head: true })
@@ -234,12 +242,12 @@ export default function HeaderAndBackground() {
     <main className="relative min-h-screen flex flex-col items-center overflow-hidden bg-[#E1E69D]">
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}
         userEmail={userEmail}
         router={router}
-        variant="admin"
       />
       {/* --- Paw Background Decorations --- */}
       <div className="absolute inset-0 opacity-50 pointer-events-none">
@@ -264,7 +272,7 @@ export default function HeaderAndBackground() {
       </div>
 
       <div className="relative z-10 w-full flex flex-col items-center flex-1">
-        {/* Header */}
+        {/* Header with menu, logo, and logout button */}
         <header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto">
           <div className="w-full max-w-[1400px] mx-auto flex items-center justify-between">
             <button
@@ -389,7 +397,7 @@ export default function HeaderAndBackground() {
                       {loading ? "..." : volunteerRequests}
                     </span>
                     <span className="text-sm md:text-lg lg:text-lg text-[#E6E6E6]">
-                      Volunteer Task
+                      Volunteer Tasks
                     </span>
                   </div>
                 </section>
@@ -417,9 +425,9 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/profiles"
                   className="
-    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    flex h-[86px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
-    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E] p-[]
+    rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#DCB57E]
   "
                 >
                   <div className="flex-1 px-1">
@@ -458,9 +466,7 @@ export default function HeaderAndBackground() {
                 >
                   {/* Preview Items */}
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {loading ? (
-                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal profiles...</div>
-                  ) : recentAnimals.length === 0 ? (
+                  {recentAnimals.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent animals</div>
                   ) : (
                     recentAnimals.slice(0, 4).map((animal, idx) => (
@@ -528,23 +534,23 @@ export default function HeaderAndBackground() {
                   </div>
 
                   {/* View All Button */}
-                <Link href="/admin/profiles" className="
-                      flex h-[33px] px-[16px] py-[8px]
-                      items-start gap-[10px] self-stretch
-                      rounded-lg bg-[#DCB57E]
-                      text-xs font-medium
-                      hover:bg-[#d4a86b] transition-colors mt-[10px]
-                      justify-center
-                    ">
-                  <button
-                    style={{
-                      fontFamily: '"Genty Sans", sans-serif',
-                      color: "#FFF",
-                    }}
-                  >
-                    View All Animals
-                  </button>
-                </Link>
+<Link href="/admin/profiles" className="
+      flex h-[33px] px-[16px] py-[8px]
+      items-start gap-[10px] self-stretch
+      rounded-lg bg-[#DCB57E]
+      text-xs font-medium
+      hover:bg-[#d4a86b] transition-colors mt-[10px]
+      justify-center
+    ">
+  <button
+    style={{
+      fontFamily: '"Genty Sans", sans-serif',
+      color: "#FFF",
+    }}
+  >
+    View All Animals
+  </button>
+</Link>
                 </div>
               </div>
 
@@ -554,7 +560,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/report"
                   className="
-    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    flex h-[86px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#5E9BBA]
   "
@@ -595,14 +601,11 @@ export default function HeaderAndBackground() {
                 >
                   {/* Preview Items */}
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {loading ? (
-                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading animal reports...</div>
-                  ) : recentReports.length === 0 ? (
+                  {recentReports.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent reports</div>
                   ) : (
                     recentReports.slice(0, 3).map((report, idx) => {
                       const isResolved = report.report_status === 'Resolved' || report.report_status === 'Accepted';
-                      const isRejected = report.report_status === 'Rejected';
                       const timeAgo = (() => {
                         if (!report.created_at) return 'Unknown';
                         const now = new Date();
@@ -651,20 +654,6 @@ export default function HeaderAndBackground() {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                   />
-                                </g>
-                              </svg>
-                            ) : isRejected ? (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 14 14"
-                                fill="none"
-                              >
-                                <g>
-                                  <circle cx="7" cy="7" r="6" stroke="#DC2626" strokeWidth="2" fill="none" />
-                                  <line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
-                                  <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
                                 </g>
                               </svg>
                             ) : (
@@ -814,7 +803,7 @@ export default function HeaderAndBackground() {
                 <a
                   href="/admin/volunteer"
                   className="
-    flex h-[86px] lg:h-[107px] min-w-[270px] pl-[10px]
+    flex h-[86px] min-w-[270px] pl-[10px]
     justify-between items-center self-stretch
     rounded-t-[12px] bg-[#E6E6E6] shadow-md border-b-2 border-[#C575AD]
   "
@@ -854,9 +843,7 @@ export default function HeaderAndBackground() {
   "
                 >
                   <div className="flex flex-col gap-[10px] flex-1 w-full">
-                  {loading ? (
-                    <div className="text-sm text-gray-500 flex items-center justify-center w-full h-[55px]">Loading volunteer requests...</div>
-                  ) : recentVolunteers.length === 0 ? (
+                  {recentVolunteers.length === 0 ? (
                     <div className="text-sm text-gray-500">No recent requests</div>
                   ) : (
                     recentVolunteers.slice(0, 4).map((volunteer, idx) => (
@@ -897,12 +884,13 @@ export default function HeaderAndBackground() {
                   <button
                     onClick={() => router.push('/admin/volunteer')}
                     className="
-                      flex h-[33px] px-[16px] py-[8px]
-                      items-center gap-[10px] self-stretch
-                      rounded-lg bg-[#C575AD]
-                      text-xs font-medium
-                      hover:bg-[#b05a9a] transition-colors mt-[10px]
-                      justify-center"
+    flex h-[33px] px-[16px] py-[8px]
+    items-center gap-[10px] self-stretch
+    rounded-lg bg-[#C575AD]
+    text-xs font-medium
+    hover:bg-[#b05a9a] transition-colors mt-[10px]
+    justify-center
+  "
                     style={{
                       fontFamily: '"Genty Sans", sans-serif',
                       color: "#FFF",

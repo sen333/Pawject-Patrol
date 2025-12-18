@@ -163,16 +163,16 @@ export default function CatalogPage() {
       <main className="min-h-screen bg-[#E6E6E6]">
         {/* Sidebar */}
         <Sidebar
+          variant="admin"
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           userName={userName}
           userEmail={userEmail}
           router={router}
-          variant="admin"
         />
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-0">
+        <div className="max-w-6xl mx-auto px-4 py-0 pl-[24px] pr-[24px]">
           {/* Navigation header */}
-          <div className="flex items-center justify-between px-2 sm:px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
+          <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
             <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -188,12 +188,17 @@ export default function CatalogPage() {
                   height={36}
                 />
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition"
+                onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/admin/login");
+                }}
+              >
                 <LogIn className="w-6 h-6 text-gray-800" />
               </button>
             </div>
           </div>
-          {/* Page header below navigation*/}
+          {/* Page header below navigation, styled like animal profile form */}
           <header className="flex flex-col items-start justify-center py-6 mb-6">
             <h1
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
@@ -208,7 +213,7 @@ export default function CatalogPage() {
                 outlineColor: "#3C3333",
               }}
             >
-              Animal Catalog
+              Animal Profiles
             </h1>
             <p
               className="text-xs sm:text-sm md:text-md"
@@ -222,11 +227,11 @@ export default function CatalogPage() {
           </header>
 
           {/* Filter Buttons and Search input in one row */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 items-stretch sm:items-center justify-between">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-6 items-center justify-between">
+            <div className="flex gap-2">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                className={`px-6 py-2 rounded-full font-medium transition-all ${
                   filter === "all"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -236,7 +241,7 @@ export default function CatalogPage() {
               </button>
               <button
                 onClick={() => setFilter("cat")}
-                className={`px-4 sm:px-6 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                className={`px-6 py-2 rounded-full font-medium transition-all ${
                   filter === "cat"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -246,7 +251,7 @@ export default function CatalogPage() {
               </button>
               <button
                 onClick={() => setFilter("dog")}
-                className={`px-3 sm:px-4 py-2 rounded-full font-medium transition-all text-sm sm:text-base ${
+                className={`px-4 py-2 rounded-full font-medium transition-all ${
                   filter === "dog"
                     ? "bg-purple-600 text-white shadow-lg"
                     : "bg-white text-gray-700 hover:bg-purple-50 border border-gray-200"
@@ -255,19 +260,19 @@ export default function CatalogPage() {
                 🐶 Dogs
               </button>
             </div>
-            <div className="flex-1 flex justify-end min-w-full sm:min-w-[250px] md:min-w-[300px]">
+            <div className="flex-1 flex justify-end min-w-[300px]">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, breed, or species..."
-                className="w-full max-w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               />
             </div>
           </div>
 
           {/* Pet Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAnimals.map((pet: Animal) => {
               // Convert animal_theme name to hex color
               const color = getThemeColor(pet.animal_theme);
@@ -384,19 +389,15 @@ export default function CatalogPage() {
             </div>
           )}
         </div>
-
-        {/* Floating Action Button */}
+        {/* Floating Add Volunteer Request Button */}
         <Link
           href="/admin/profiles/animal"
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 w-12 h-12 sm:w-14 sm:h-14 bg-[#C2C876] text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50"
-          title="Add New Animal"
-          style={{
-            backgroundColor: '#C2C876',
-          }}
+          aria-label="Add Animal Profile"
+          className="fixed bottom-4 right-6 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 bg-[#E1E69D] text-[#3C3333] hover:text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:bg-[#C2C876] transition-colors z-20"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 animate-pulse">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </Link>
       </main>

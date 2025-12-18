@@ -21,20 +21,11 @@ export async function getUserDashboardStats() {
     .eq('user_id', user.id)
     .eq('report_status', 'Accepted');
     
-  // Volunteer stats: count responses for this user where the related call is Active, Ongoing, or Filled
+  // Volunteer stats: count only opportunities the user has joined
   const { count: volunteersJoined } = await supabase
     .from('volunteer_response')
     .select('response_id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .in('call_id',
-      (
-        (await supabase
-          .from('volunteer_call')
-          .select('call_id')
-          .in('call_status', ['Active', 'Ongoing', 'Filled'])
-        ).data?.map(c => c.call_id) || []
-      )
-    );
+    .eq('user_id', user.id);
     
   return {
     totalReports: totalReports || 0,
@@ -83,66 +74,39 @@ export async function getUserRecentReports(limit: number = 5) {
   return { success: !error, data: data || [], error: error?.message };
 }
 
-// Get upcoming volunteer calls that the user has joined
+// Get upcoming volunteer calls
 export async function getUpcomingVolunteerCalls(limit: number = 3) {
   const supabase = await createClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  
+
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
   if (!user) return { data: [], userJoined: [] };
-  
-  // Get user's joined call IDs first
+
+  // Get all call_ids the user has joined
   const { data: joined } = await supabase
     .from('volunteer_response')
     .select('call_id')
     .eq('user_id', user.id);
-    
-  const joinedCallIds = joined?.map(j => j.call_id) || [];
-  
-  if (joinedCallIds.length === 0) {
-    return { data: [], userJoined: [] };
+
+  const joinedCallIds: string[] = joined?.map((j: { call_id: string }) => j.call_id) || [];
+
+  let data: any[] = [];
+  let error: any = null;
+  if (joinedCallIds.length > 0) {
+    const result = await supabase
+      .from('volunteer_call')
+      .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
+      .in('call_id', joinedCallIds)
+      .order('call_starttime', { ascending: true })
+      .limit(limit);
+    data = result.data as any[] || [];
+    error = result.error;
   }
-  
-  // Fetch only the calls the user has joined
-  const { data, error } = await supabase
-    .from('volunteer_call')
-    .select('call_id, call_title, call_starttime, call_endtime, call_location, capacity, call_status')
-    .in('call_id', joinedCallIds)
-    .order('call_starttime', { ascending: true })
-    .limit(limit * 3); // Fetch more to account for filtering
-  
-  // Sync statuses and filter out completed/cancelled
-  const now = new Date();
-  const syncedData = (data || [])
-    .map(call => {
-      const startTime = call.call_starttime ? new Date(call.call_starttime) : null;
-      const endTime = call.call_endtime ? new Date(call.call_endtime) : null;
-      const currentStatus = (call.call_status || '').toLowerCase();
-      
-      // Status priority: Cancelled > Completed > Ongoing (time-based) > others
-      if (currentStatus === 'cancelled') {
-        return { ...call, call_status: 'Cancelled' };
-      } else if (currentStatus === 'completed') {
-        return { ...call, call_status: 'Completed' };
-      } else if (startTime && endTime && now >= startTime && now <= endTime) {
-        // Ongoing (between start and end time)
-        return { ...call, call_status: 'Ongoing' };
-      } else if (endTime && now > endTime) {
-        // Past end time - mark as completed
-        return { ...call, call_status: 'Completed' };
-      }
-      
-      return call;
-    })
-    .filter(call => {
-      const status = (call.call_status || '').toLowerCase();
-      // Only show active, filled, or ongoing - hide completed and cancelled
-      return status !== 'completed' && status !== 'cancelled';
-    })
-    .slice(0, limit); // Apply limit after filtering
-    
-  return { 
-    data: syncedData, 
+
+  if (error) return { data: [], userJoined: [] };
+
+  return {
+    data,
     userJoined: joinedCallIds
   };
 }
@@ -160,6 +124,9 @@ export async function getRecentCatalogAnimals(limit: number = 6) {
   if (error) {
     console.error('Error fetching catalog animals:', error);
   }
+  
+  console.log('Catalog animals fetched:', data?.length || 0, 'animals');
+  console.log('Sample animal data:', data?.[0]);
     
   return { success: !error, data: data || [], error: error?.message };
 }

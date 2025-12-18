@@ -118,35 +118,6 @@ export default function EditAnimalPage() {
 	const [userName, setUserName] = useState<string>("");
 	const [userEmail, setUserEmail] = useState<string>("");
 
-	// Helper to reset all form fields to the original animal data
-	const resetFormToAnimal = (animalData: Animal) => {
-		setRecorderName((animalData as any).recorder_name || (animalData as any).recorderName || "");
-		setName(animalData.animal_name || "");
-		setSpecies(animalData.animal_species || "");
-		setBreed(animalData.animal_breed || "");
-		setVaccinationStatus(animalData.vaccination_status || "");
-		setStatus(animalData.animal_status || "Unknown");
-		setGender(animalData.animal_gender || "Unknown");
-		setDateSeen((animalData as any).date_seen || (animalData as any).dateSeen || "");
-		setDescription(animalData.animal_description || "");
-		setOtherInfo((animalData as any).other_information || (animalData as any).otherInformation || "");
-		setArea((animalData as any).area || "");
-		setLandmark((animalData as any).landmark || "");
-		setRoad((animalData as any).road || "");
-		setTheme(((animalData as any).animal_theme as ReportTheme) || (animalData as any).animalTheme || "blue");
-		const healthIssuesVal = (animalData as any).health_issues || (animalData as any).healthIssues || "";
-		setHasHealthIssues(!!healthIssuesVal && healthIssuesVal !== "None");
-		setHealthDetails(healthIssuesVal === "None" ? "" : healthIssuesVal);
-		const collarVal = (animalData as any).animal_collar || (animalData as any).animalCollar || "";
-		setHasCollar(!!collarVal && collarVal !== "None");
-		setCollarDetails(collarVal === "None" ? "" : collarVal);
-		setLat((animalData as any).latitude ?? 7.0858);
-		setLng((animalData as any).longitude ?? 125.4853);
-		setPhotoFile(null);
-		setPhotoPreview(animalData.animal_photo || null);
-		setSubmitMsg(null);
-	};
-
 	// Fetch animal data
 	useEffect(() => {
 		// Check for valid ID
@@ -174,12 +145,34 @@ export default function EditAnimalPage() {
 				setError(error.message);
 				setAnimal(null);
 			} 
-      
+			
 			// Set data state and pre-populate form
 			else if (data) {
 				const animalData = data as Animal;
 				setAnimal(animalData);
-				resetFormToAnimal(animalData);
+				setRecorderName((animalData as any).recorder_name || (animalData as any).recorderName || "");
+				setName(animalData.animal_name || "");
+				setSpecies(animalData.animal_species || "");
+				setBreed(animalData.animal_breed || "");
+				setVaccinationStatus(animalData.vaccination_status || "");
+				setStatus(animalData.animal_status || "Unknown");
+				setGender(animalData.animal_gender || "Unknown");
+				setDateSeen((animalData as any).date_seen || (animalData as any).dateSeen || "");
+				setDescription(animalData.animal_description || "");
+				setOtherInfo((animalData as any).other_information || (animalData as any).otherInformation || "");
+				setArea((animalData as any).area || "");
+				setLandmark((animalData as any).landmark || "");
+				setRoad((animalData as any).road || "");
+				setTheme(((animalData as any).animal_theme as ReportTheme) || (animalData as any).animalTheme || "blue");
+				const healthIssuesVal = (animalData as any).health_issues || (animalData as any).healthIssues || "";
+				setHasHealthIssues(!!healthIssuesVal && healthIssuesVal !== "None");
+				setHealthDetails(healthIssuesVal === "None" ? "" : healthIssuesVal);
+				const collarVal = (animalData as any).animal_collar || (animalData as any).animalCollar || "";
+				setHasCollar(!!collarVal && collarVal !== "None");
+				setCollarDetails(collarVal === "None" ? "" : collarVal);
+				setLat((animalData as any).latitude ?? 7.0858);
+				setLng((animalData as any).longitude ?? 125.4853);
+				setPhotoPreview(animalData.animal_photo || null);
 			}
 
 			// Finalize loading state
@@ -334,14 +327,15 @@ export default function EditAnimalPage() {
 
 	return (
 		<main className="min-h-screen bg-[#E6E6E6]">
+			{/* Sidebar */}
 			<Sidebar
+				variant="admin"
 				sidebarOpen={sidebarOpen}
 				setSidebarOpen={setSidebarOpen}
 				userName={userName}
 				userEmail={userEmail}
 				router={router}
-				variant="admin"
-				/>
+			/>
 			<header className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
 				<div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
 					<button
@@ -587,21 +581,9 @@ export default function EditAnimalPage() {
 									<button
 										type="button"
 										onClick={grabCurrentLocation}
-										className="absolute bottom-14 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
+										className="absolute bottom-4 right-4 z-20 rounded-md bg-[#8D52A7] px-4 py-2 text-xs font-semibold text-white hover:bg-[#7B4692]"
 									>
 										Use My Location
-									</button>
-									<button
-										type="button"
-										onClick={() => {
-										// Reset to UP Oblation default coordinates
-										setLat(7.0858);
-										setLng(125.4853);
-										setSubmitMsg(null);
-										}}
-										className="absolute bottom-3 right-3 px-3 py-1.5 rounded-md bg-[#8D52A7] text-white text-xs hover:bg-[#7B4692] shadow z-50"
-									>
-										Return to UP Oblation
 									</button>
 								</div>
 							</div>
@@ -741,33 +723,20 @@ export default function EditAnimalPage() {
 							</div>
 
 							{/* Submit */}
-							<div className="w-full flex flex-col sm:flex-row gap-3">
+							<div className="w-full">
 								<button
 									type="submit"
 									disabled={submitting}
-									className="flex-1 rounded-md bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692] disabled:opacity-50"
+									className="w-full rounded-md bg-[#8D52A7] py-3 text-sm font-semibold text-white hover:bg-[#7B4692] disabled:opacity-50"
 								>
 									{submitting ? 'Saving Changes...' : 'Save Changes'}
 								</button>
-								{animal && (
-									<button
-										type="button"
-										disabled={submitting}
-										className="flex-1 rounded-md bg-gray-400 py-3 text-sm font-semibold text-white hover:bg-gray-500 disabled:opacity-50"
-										onClick={() => {
-											resetFormToAnimal(animal);
-											router.push(`/admin/profiles/animal/${id}`);
-										}}
-									>
-										Cancel
-									</button>
+								{submitMsg && (
+									<p className={`mt-2 text-sm text-center ${submitMsg.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+										{submitMsg}
+									</p>
 								)}
 							</div>
-							{submitMsg && (
-								<p className={`mt-2 text-sm text-center ${submitMsg.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-									{submitMsg}
-								</p>
-							)}
 						</div>
 					</form>
 				</section>

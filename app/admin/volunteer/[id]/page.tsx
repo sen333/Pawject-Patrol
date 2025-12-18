@@ -128,6 +128,7 @@ export default function AdminVolunteerDetailPage(props: any) {
     <>
       {sidebarOpen && (
         <Sidebar
+          variant="admin"
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           userName={userName}

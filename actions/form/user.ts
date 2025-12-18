@@ -91,14 +91,25 @@ export async function createAnimalReport(data: AnimalReportInsert) {
 	// If photo is provided, upload it and update the report
 	if (data.photo && inserted?.report_id) {
 		const photoUrl = await uploadAnimalPhoto(data.photo, inserted.report_id);
-		
 		if (photoUrl) {
-			// Update the report with the photo URL
-			// You'll need a photo_url column in your animal_report table
-			await supabase
+			// Update the report with the photo URL and check for errors
+			const { error: photoUpdateError } = await supabase
 				.from('animal_report')
 				.update({ photo_url: photoUrl })
 				.eq('report_id', inserted.report_id);
+			if (photoUpdateError) {
+				console.error('Failed to update photo_url:', photoUpdateError);
+				return { success: false, error: 'Photo uploaded but failed to update report with photo URL.' };
+			}
+			// Optionally, re-fetch the updated report to confirm
+			// const { data: updatedReport } = await supabase
+			//     .from('animal_report')
+			//     .select('photo_url')
+			//     .eq('report_id', inserted.report_id)
+			//     .single();
+			// return { success: true, reportId: inserted.report_id, photo_url: updatedReport?.photo_url };
+		} else {
+			return { success: false, error: 'Photo upload failed.' };
 		}
 	}
 

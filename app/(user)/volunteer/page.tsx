@@ -85,6 +85,12 @@ export default function UserVolunteerPage() {
   const [userStatuses, setUserStatuses] = useState<{ [key: string]: string | null }>({});
   const [actionLoading, setActionLoading] = useState<string | null>(null); // call_id of loading action
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -212,10 +218,7 @@ export default function UserVolunteerPage() {
           <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition">
             <button
               className="p-2 hover:bg-gray-100 rounded-lg transition"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.replace("/");
-              }}
+              onClick={handleLogout}
             >
               <LogIn className="w-6 h-6 text-gray-800" />
             </button>
@@ -320,20 +323,63 @@ export default function UserVolunteerPage() {
                   className="relative bg-[#F7F7E8] border-2 border-[#8D52A7] rounded-2xl shadow-lg hover:shadow-xl transition-shadow flex flex-col justify-between min-h-[260px]"
                   style={{ fontFamily: 'Genty Sans', padding: '0' }}
                 >
-                  {/* Status badge */}
+                  {/* Status badge, Filled badge, or Joined badge (with override for ongoing, cancelled, completed) */}
                   <div className="absolute top-6 left-5">
-                    <span
-                      className={`px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md`}
-                      style={{
-                        fontFamily: '"Genty Sans", sans-serif',
-                        fontWeight: 600,
-                        letterSpacing: '0.02em',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                        ...statusBadgeClasses(it.call_status),
-                      }}
-                    >
-                      {it.call_status || 'Active'}
-                    </span>
+                    {(() => {
+                      const status = (it.call_status || '').toLowerCase();
+                      // Hierarchy: completed = cancelled > ongoing > joined > active = filled
+                      if (status.includes('completed') || status.includes('cancel')) {
+                        // Completed or Cancelled (highest priority)
+                        return (
+                          <span className={`px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md ${status.includes('completed') ? 'bg-gray-300 text-gray-700 border-gray-400' : 'bg-red-100 text-red-700 border-red-400'}`}
+                            style={{ fontFamily: '"Genty Sans", sans-serif', fontWeight: 600, letterSpacing: '0.02em', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                            {status.includes('completed') ? 'Completed' : 'Cancelled'}
+                          </span>
+                        );
+                      }
+                      if (status.includes('ongoing')) {
+                        // Ongoing (next priority)
+                        return (
+                          <span className="px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md bg-purple-100 text-purple-700 border-purple-400"
+                            style={{ fontFamily: '"Genty Sans", sans-serif', fontWeight: 600, letterSpacing: '0.02em', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                            Ongoing
+                          </span>
+                        );
+                      }
+                      if (userStatus) {
+                        // Joined (next priority)
+                        return (
+                          <span className="px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md bg-gray-200 text-gray-700 border-gray-400"
+                            style={{ fontFamily: '"Genty Sans", sans-serif', fontWeight: 600, letterSpacing: '0.02em', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                            Joined
+                          </span>
+                        );
+                      }
+                      if (hasCapacity && spotsLeft === 0) {
+                        // Filled (same as active, but visually distinct if full)
+                        return (
+                          <span className="px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md bg-yellow-200 text-yellow-800 border-yellow-400"
+                            style={{ fontFamily: '"Genty Sans", sans-serif', fontWeight: 600, letterSpacing: '0.02em', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                            Filled
+                          </span>
+                        );
+                      }
+                      // Default: Active or other status
+                      return (
+                        <span
+                          className={`px-7 py-3 rounded-xl text-xs font-semibold border-2 shadow-md`}
+                          style={{
+                            fontFamily: '"Genty Sans", sans-serif',
+                            fontWeight: 600,
+                            letterSpacing: '0.02em',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                            ...statusBadgeClasses(it.call_status),
+                          }}
+                        >
+                          {it.call_status || 'Active'}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   {/* Card content */}
@@ -376,7 +422,6 @@ export default function UserVolunteerPage() {
                         </div>
                     </div>
                   </div>
-
                   {/* Card actions */}
                   <div className="flex gap-4 px-6 pb-6">
                     <Link

@@ -67,6 +67,7 @@ export default function MapView({ latitude, longitude, onLocationSelect, classNa
 	// Render the map
 	return (
 		<MapContainer
+			key={`${latitude}-${longitude}`}
 			center={[latitude, longitude]}
 			zoom={15}
 			className={className}
@@ -77,7 +78,7 @@ export default function MapView({ latitude, longitude, onLocationSelect, classNa
 				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 			/>
-			<Marker key={`marker-${latitude}-${longitude}`} position={[latitude, longitude]} icon={icon}>
+			<Marker position={[latitude, longitude]} icon={icon}>
 				<Popup>
 					Location: {latitude.toFixed(5)}, {longitude.toFixed(5)}
 				</Popup>

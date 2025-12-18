@@ -193,7 +193,7 @@ export default function LoginPage() {
               <EyeIcon onClick={() => setShowPassword(!showPassword)} />
             </div>
 
-            {/* Forgot Password Link */}
+            {/* Forgot Passoword Link
             <div className="text-center">
               <a
                 href="#"
@@ -205,6 +205,7 @@ export default function LoginPage() {
                 Forgot Password?
               </a>
             </div>
+            */}
 
             {/* Login Button */}
             <button

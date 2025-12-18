@@ -108,21 +108,49 @@ export default function AdminAnimalDetailPage() {
     };
   }, [id]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      if (user) {
-        setUserEmail(user.email || '');
-        const nameFromMeta = user.user_metadata?.full_name || user.user_metadata?.name || '';
-        setUserName(nameFromMeta || user.email?.split('@')[0] || '');
-      } else {
-        setUserName('');
-        setUserEmail('');
-      }
-    };
-    checkAuth();
-  }, []);
+  // Fetch current user and verify admin privileges for sidebar display
+	useEffect(() => {
+		let mounted = true;
+
+		const checkAdmin = async () => {
+			try {
+				const { data: { user }, error } = await supabase.auth.getUser();
+				if (!mounted) return;
+
+				if (error || !user) {
+					router.replace("/admin/login");
+					return;
+				}
+
+				setUserEmail(user.email || "");
+				const nameFromMeta = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || "";
+				setUserName(nameFromMeta || user.email?.split("@")[0] || "");
+
+				// Verify admin table contains this user
+				const { data: adminData, error: adminError } = await supabase
+					.from("admin")
+					.select("auth_id")
+					.eq("auth_id", user.id)
+					.single();
+
+				if (!mounted) return;
+
+				if (adminError || !adminData) {
+					router.replace("/admin/login");
+					return;
+				}
+			} catch (e) {
+				console.error("Admin check failed:", e);
+				if (mounted) router.replace("/admin/login");
+			}
+		};
+
+		checkAdmin();
+
+		return () => {
+			mounted = false;
+		};
+	}, [router]);
 
   const handleDelete = async () => {
     if (!id) return;
@@ -173,23 +201,31 @@ export default function AdminAnimalDetailPage() {
   }
 
   const themeColor = getThemeColor(animal.animal_theme);
+
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
+
   return (
     <main className="min-h-screen bg-[#E1E69D]">
       {/* Sidebar */}
       <Sidebar
+        variant="admin"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         userName={userName}
         userEmail={userEmail}
         router={router}
-        variant="admin"
       />
       {/* Navigation header */}
       <div className="flex items-center justify-between px-4 w-full h-[52px] bg-[#E6E6E6] mx-auto z-10">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between">
           <button
-          onClick={() => setSidebarOpen(true)} 
-          className="p-2 hover:bg-gray-100 rounded-lg transition">
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <Menu className="w-6 h-6 text-gray-800" />
           </button>
           <div className="flex-1 flex justify-center items-center h-full">
@@ -200,7 +236,10 @@ export default function AdminAnimalDetailPage() {
               height={36}
             />
           </div>
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
             <LogIn className="w-6 h-6 text-gray-800" />
           </button>
         </div>
@@ -313,7 +352,7 @@ export default function AdminAnimalDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
          {/* Left Column - Photo */}
           <div
-            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl max-h-[600px]"
+            className="flex flex-col justify-center items-center gap-4 flex-[1_0_0] self-stretch p-6 rounded-2xl"
             style={{ backgroundColor: "#E6E6E6" }}
           >
             <h3
@@ -338,7 +377,7 @@ export default function AdminAnimalDetailPage() {
             </h3>
             
             <div
-              className="w-full flex-1 min-h-[300px] max-h-[450px] rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
+              className="w-full flex-1 min-h-0 rounded-[14px] flex items-center justify-center cursor-pointer hover:opacity-90 transition overflow-hidden"
               style={{ backgroundColor: "#DED8D8" }}
               onClick={() => animal.animal_photo && setShowImageModal(true)}
             >
@@ -346,7 +385,7 @@ export default function AdminAnimalDetailPage() {
                 <img
                   src={animal.animal_photo}
                   alt={animal.animal_name || "Animal"}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full max-h-104 object-cover"
                 />
               ) : (
                 <svg
@@ -475,7 +514,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Recorder
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
                   {animal.recorder_name}
                 </p>
               </div>
@@ -529,7 +568,7 @@ export default function AdminAnimalDetailPage() {
                   </svg>
                   Date Seen
                 </h3>
-                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs font-bold">
+                <p className="flex flex-col items-start gap-[10px] self-stretch text-xs">
                   {new Date(animal.date_seen).toLocaleDateString()}
                 </p>
               </div>
@@ -678,7 +717,7 @@ export default function AdminAnimalDetailPage() {
                 <span className="text-gray-500 text-xs">
                   Vaccination Status
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-medium text-gray-900">
                   {animal.vaccination_status || "Unknown"}
                 </span>
               </div>
@@ -702,7 +741,7 @@ export default function AdminAnimalDetailPage() {
                   <span className="text-gray-500 text-xs">
                     Health Description
                   </span>
-                  <span className="font-bold text-gray-900">{animal.health_issues}</span>
+                  <span className="font-medium text-gray-900">{animal.health_issues}</span>
                 </div>
               )}
 
@@ -730,7 +769,7 @@ export default function AdminAnimalDetailPage() {
                     <span className="text-gray-500 text-xs">
                       Collar Details
                     </span>
-                    <span className="font-bold text-gray-900">{animal.animal_collar}</span>
+                    <span className="font-medium text-gray-900">{animal.animal_collar}</span>
                   </div>
                 )}
             </div>
@@ -784,7 +823,7 @@ export default function AdminAnimalDetailPage() {
               </svg>
               Additional Information
             </h3>
-            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700 font-bold">
+            <p className="flex flex-col items-start gap-[10px] self-stretch text-xs text-gray-700">
               {animal.other_information || "No additional information provided"}
             </p>
           </div>
@@ -793,7 +832,7 @@ export default function AdminAnimalDetailPage() {
         {/* Back Button Only */}
         <div className="space-y-3 pb-6">
           <button
-            onClick={() => router.push('/admin/profiles')}
+            onClick={() => router.push("/admin/profiles")}
             className="w-full py-3 rounded-xl text-white transition-all"
             style={{
               backgroundColor: themeColor,
@@ -807,9 +846,9 @@ export default function AdminAnimalDetailPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[1px] flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-transparent bg-opacity-90 flex items-center justify-center z-50 p-4">
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transition-transform duration-300 ease-out transform animate-slide-down"
+            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
             style={{ fontFamily: '"Genty Sans", sans-serif' }}
           >
             <h3 className="text-lg mb-2" style={{ color: "#3C3333" }}>

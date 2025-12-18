@@ -1,32 +1,152 @@
-// Login Page Component
-
 "use client";
 
+import { useEffect, useCallback } from "react";
+
+type SupabaseUser = {
+  email?: string;
+};
+import { useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { signInWithGoogle } from "@/actions/login/user";
 import { useState } from "react";
+import { supabase } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+
+async function fetchAllowedDomains() {
+  const { data, error } = await supabase
+    .from('allowed_domains')
+    .select('domain');
+  if (error) return [];
+  return data.map((row: { domain: string }) => row.domain.toLowerCase());
+}
 
 export default function LoginPage() {
-  // Loading and error state
   const [isLoading, setIsLoading] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Checks the user's email domain and signs out if not allowed
+  const checkAndHandleDomain = useCallback(
+    async (user: SupabaseUser | null | undefined) => {
+      if (user && user.email) {
+        const allowedDomains = await fetchAllowedDomains();
+        const emailDomain = user.email.split('@')[1].toLowerCase();
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log("[DEBUG] User email:", user.email, "| Extracted domain:", emailDomain, "| Allowed:", allowedDomains);
+        if (!allowedDomains.includes(emailDomain)) {
+          await supabase.auth.signOut();
+          setError("Please use your UP email account to sign in.");
+          setIsLoading(false);
+          // Don't setChecking(false) here, since redirect will unmount
+          if (pathname !== "/login") {
+            router.replace("/login?error=Please use your UP email account to sign in.");
+          }
+          return false;
+        } else {
+          // Only redirect to / if not already there
+          if (pathname !== "/") {
+            router.replace("/");
+          }
+          return true;
+        }
+      } else {
+        setChecking(false);
+        return false;
+      }
+    },
+    [router, pathname]
+  );
+
+  // Enforce allowed domain on mount and on auth state change
+  useEffect(() => {
+    // Show error from query param if redirected from dashboard
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setError(decodeURIComponent(urlError));
+    }
+    setChecking(true);
+
+    const codeParam = searchParams.get("code");
+    let cancelled = false;
+    let unsubscribe = undefined;
+
+    if (codeParam) {
+      // Only poll for user after OAuth redirect, do not use onAuthStateChange
+      const pollForUser = async () => {
+        let user = null;
+        for (let i = 0; i < 20; i++) { // up to 4 seconds
+          if (cancelled) return;
+          const { data } = await supabase.auth.getUser();
+          user = data.user;
+          if (user) break;
+          await new Promise((res) => setTimeout(res, 200));
+        }
+        if (!cancelled) {
+          const handled = await checkAndHandleDomain(user);
+          if (!handled) setChecking(false);
+        }
+      };
+      pollForUser();
+      return () => {
+        cancelled = true;
+      };
+    } else {
+      // Normal flow: use onAuthStateChange and check current user
+      const checkEmail = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        const handled = await checkAndHandleDomain(user);
+        if (!handled) setChecking(false);
+      };
+      checkEmail();
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const handled = await checkAndHandleDomain(session?.user);
+        if (!handled) setChecking(false);
+      });
+      unsubscribe = () => subscription.unsubscribe();
+      return unsubscribe;
+    }
+  }, [router, searchParams, checkAndHandleDomain]);
 
   // Handle Google login
   const handleGoogleLogin = async () => {
-    // Set loading state and clear previous errors
     setIsLoading(true);
+    setChecking(true);
     setError("");
 
-    // Call server action to sign in with Google
-    const result = await signInWithGoogle();
+    try {
+      // Call server action to sign in with Google
+      const result = await signInWithGoogle();
 
-    // Handle potential error
-    if (result && !result.success) {
-      setError(result.message);
+      // Handle potential error from server action
+      if (result && !result.success) {
+        setError(result.message || "Login failed.");
+        setIsLoading(false);
+        setChecking(false);
+        return;
+      }
+
+      // Wait for auth state to update, then check email domain robustly
+      let user = null;
+      for (let i = 0; i < 20; i++) { // up to 4 seconds
+        const { data } = await supabase.auth.getUser();
+        user = data.user;
+        if (user) break;
+        await new Promise((res) => setTimeout(res, 200));
+      }
+
+      // Always check and handle domain after login
+      const handled = await checkAndHandleDomain(user);
+      if (!handled) setChecking(false);
+    } catch (err) {
+      setError("An unexpected error occurred.");
       setIsLoading(false);
+      setChecking(false);
     }
-    // If successful, user will be redirected automatically
   };
 
   return (
@@ -136,13 +256,17 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            disabled={isLoading}
+            disabled={isLoading || checking}
             className="w-full rounded-lg bg-[#8D52A7] px-4 py-3 text-white text-base font-medium hover:bg-[#7B4692] focus:outline-none focus:ring-2 focus:ring-[#8D52A7] focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               fontFamily: '"Genty Sans", sans-serif',
             }}
           >
-            {isLoading ? "Redirecting to Google..." : "Login with Google"}
+            {checking
+              ? "Checking your account..."
+              : isLoading
+                ? "Redirecting to Google..."
+                : "Login with Google"}
           </button>
 
           <Link

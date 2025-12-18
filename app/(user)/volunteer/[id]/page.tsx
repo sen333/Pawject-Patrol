@@ -78,6 +78,12 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
   const [modalMessage, setModalMessage] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
 
+  // Handle user logout and redirect to login page
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
+
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -280,7 +286,7 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
             </div>
 
             <button
-              onClick={() => router.push('/login')}
+              onClick={handleLogout}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
               <LogIn className="w-6 h-6 text-gray-800" />
@@ -410,7 +416,9 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
                             <div className="flex flex-col gap-1">
                               <div className="w-full h-3 bg-gray-100 rounded-lg overflow-hidden">
                                 <div style={{
-                                  width: `${signupCount === 0 ? 0 : 100}%`,
+                                  width: typeof volunteer?.capacity === 'number' && volunteer.capacity !== null
+                                    ? `${Math.min(100, Math.round((signupCount / (volunteer.capacity || 1)) * 100))}%`
+                                    : (signupCount === 0 ? '0%' : '100%'),
                                   height: '100%',
                                   background: '#689668',
                                   borderRadius: '6px',
@@ -469,6 +477,14 @@ export default function VolunteerDetailPage({ params }: { params: Promise<{ id: 
                             style={{ fontFamily: 'Genty Sans, sans-serif', fontWeight: 500, boxSizing: 'border-box', textAlign: 'center' }}
                           >
                             {joining ? 'Joining...' : 'Join This Opportunity'}
+                          </button>
+                        ) : volunteer?.call_status?.toLowerCase() === 'ongoing' ? (
+                          <button
+                            disabled
+                            className="flex-1 min-w-0 px-4 py-2 rounded-md text-sm font-medium border border-[#6B4A6B] bg-[#9CA3AF] text-white opacity-50 cursor-not-allowed"
+                            style={{ fontFamily: 'Genty Sans, sans-serif', fontWeight: 500, boxSizing: 'border-box', textAlign: 'center' }}
+                          >
+                            This Opportunity is Ongoing
                           </button>
                         ) : volunteer?.call_status?.toLowerCase() === 'filled' ? (
                           <button
